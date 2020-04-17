@@ -1,243 +1,275 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Dynamic;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Anura.JavaScript.Native.Array;
-using Anura.JavaScript.Native.Boolean;
 using Anura.JavaScript.Native.Date;
-using Anura.JavaScript.Native.Function;
+using Anura.JavaScript.Native.Iterator;
 using Anura.JavaScript.Native.Number;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Native.RegExp;
-using Anura.JavaScript.Native.String;
+using Anura.JavaScript.Native.Symbol;
 using Anura.JavaScript.Runtime;
+using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
 
-namespace Anura.JavaScript.Native {
-    [DebuggerTypeProxy (typeof (JsValueDebugView))]
-    public class JsValue : IEquatable<JsValue> {
-        public readonly static JsValue Undefined = new JsValue (Types.Undefined);
-        public readonly static JsValue Null = new JsValue (Types.Null);
-        public readonly static JsValue False = new JsValue (false);
-        public readonly static JsValue True = new JsValue (true);
+namespace Anura.JavaScript.Native
+{
+    [DebuggerTypeProxy(typeof(JsValueDebugView))]
+    public abstract class JsValue : IEquatable<JsValue>
+    {
+        public static readonly JsValue Undefined = new JsUndefined();
+        public static readonly JsValue Null = new JsNull();
+        internal readonly InternalTypes _type;
 
-        public JsValue (bool value) {
-            _double = value ? 1.0 : 0.0;
-            _object = null;
-            _type = Types.Boolean;
+        protected JsValue(Types type)
+        {
+            _type = (InternalTypes) type;
         }
 
-        public JsValue (double value) {
-            _object = null;
-            _type = Types.Number;
-
-            _double = value;
-        }
-
-        public JsValue (string value) {
-            _double = double.NaN;
-            _object = value;
-            _type = Types.String;
-        }
-
-        public JsValue (ObjectInstance value) {
-            _double = double.NaN;
-            _type = Types.Object;
-
-            _object = value;
-        }
-
-        private JsValue (Types type) {
-            _double = double.NaN;
-            _object = null;
+        internal JsValue(InternalTypes type)
+        {
             _type = type;
         }
 
-        private readonly double _double;
-
-        private readonly object _object;
-
-        private readonly Types _type;
-
         [Pure]
-        public bool IsPrimitive () {
-            return _type != Types.Object && _type != Types.None;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsPrimitive()
+        {
+            return (_type & (InternalTypes.Primitive | InternalTypes.Undefined | InternalTypes.Null)) != 0;
         }
 
         [Pure]
-        public bool IsUndefined () {
-            return _type == Types.Undefined;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsUndefined()
+        {
+            return _type == InternalTypes.Undefined;
         }
 
         [Pure]
-        public bool IsArray () {
-            return IsObject () && AsObject () is ArrayInstance;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsNullOrUndefined()
+        {
+            return _type < InternalTypes.Boolean;
         }
 
         [Pure]
-        public bool IsDate () {
-            return IsObject () && AsObject () is DateInstance;
+        public virtual bool IsArray()
+        {
+            return this is ArrayInstance;
         }
 
         [Pure]
-        public bool IsRegExp () {
-            return IsObject () && AsObject () is RegExpInstance;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsDate()
+        {
+            return this is DateInstance;
         }
 
         [Pure]
-        public bool IsObject () {
-            return _type == Types.Object;
-        }
-
-        [Pure]
-        public bool IsString () {
-            return _type == Types.String;
-        }
-
-        [Pure]
-        public bool IsNumber () {
-            return _type == Types.Number;
-        }
-
-        [Pure]
-        public bool IsBoolean () {
-            return _type == Types.Boolean;
-        }
-
-        [Pure]
-        public bool IsNull () {
-            return _type == Types.Null;
-        }
-
-        [Pure]
-        public ObjectInstance AsObject () {
-            if (_type != Types.Object) {
-                throw new ArgumentException ("The value is not an object");
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsRegExp()
+        {
+            if (!(this is ObjectInstance oi))
+            {
+                return false;
+            }
+            
+            var matcher = oi.Get(GlobalSymbolRegistry.Match);
+            if (!matcher.IsUndefined())
+            {
+                return TypeConverter.ToBoolean(matcher);
             }
 
-            return _object as ObjectInstance;
+            return this is RegExpInstance;
         }
 
         [Pure]
-        public ArrayInstance AsArray () {
-            if (!IsArray ()) {
-                throw new ArgumentException ("The value is not an array");
-            }
-
-            return _object as ArrayInstance;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsObject()
+        {
+            return (_type & InternalTypes.Object) != 0;
         }
 
         [Pure]
-        public DateInstance AsDate () {
-            if (!IsDate ()) {
-                throw new ArgumentException ("The value is not a date");
-            }
-
-            return _object as DateInstance;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsString()
+        {
+            return (_type & InternalTypes.String) != 0;
         }
 
         [Pure]
-        public RegExpInstance AsRegExp () {
-            if (!IsRegExp ()) {
-                throw new ArgumentException ("The value is not a date");
-            }
-
-            return _object as RegExpInstance;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsNumber()
+        {
+            return (_type & (InternalTypes.Number | InternalTypes.Integer)) != 0;
         }
 
         [Pure]
-        public T TryCast<T> (Action<JsValue> fail = null) where T : class {
-            if (IsObject ()) {
-                var o = AsObject ();
-                var t = o as T;
-                if (t != null) {
-                    return t;
-                }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsInteger()
+        {
+            return _type == InternalTypes.Integer;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsBoolean()
+        {
+            return _type == InternalTypes.Boolean;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsNull()
+        {
+            return _type == InternalTypes.Null;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsSymbol()
+        {
+            return _type == InternalTypes.Symbol;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ObjectInstance AsObject()
+        {
+            if (!IsObject())
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("The value is not an object");
+            }
+            return this as ObjectInstance;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TInstance AsInstance<TInstance>() where TInstance : class
+        {
+            if (!IsObject())
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("The value is not an object");
+            }
+            return this as TInstance;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ArrayInstance AsArray()
+        {
+            if (!IsArray())
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("The value is not an array");
+            }
+            return this as ArrayInstance;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal IIterator GetIterator(Engine engine)
+        {
+            if (!TryGetIterator(engine, out var iterator))
+            {
+                return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<IIterator>(engine, "The value is not iterable");
             }
 
-            if (fail != null) {
-                fail (this);
+            return iterator;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool TryGetIterator(Engine engine, out IIterator iterator)
+        {
+            var objectInstance = TypeConverter.ToObject(engine, this);
+
+            if (!objectInstance.TryGetValue(GlobalSymbolRegistry.Iterator, out var value)
+                || !(value is ICallable callable))
+            {
+                iterator = null;
+                return false;
             }
+
+            var obj = callable.Call(this, Arguments.Empty) as ObjectInstance
+                      ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(engine, "Result of the Symbol.iterator method is not an object");
+
+            if (obj is IIterator i)
+            {
+                iterator = i;
+            }
+            else
+            {
+                iterator = new IteratorInstance.ObjectWrapper(obj);
+            }
+            return true;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public DateInstance AsDate()
+        {
+            if (!IsDate())
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("The value is not a date");
+            }
+            return this as DateInstance;
+        }
+
+        [Pure]
+        public RegExpInstance AsRegExp()
+        {
+            if (!IsRegExp())
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("The value is not a regex");
+            }
+
+            return this as RegExpInstance;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T TryCast<T>() where T : class
+        {
+            return this as T;
+        }
+
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T TryCast<T>(Action<JsValue> fail) where T : class
+        {
+            if (this is T o)
+            {
+                return o;
+            }
+
+            fail.Invoke(this);
 
             return null;
         }
-
-        public bool Is<T> () {
-            return IsObject () && AsObject () is T;
-        }
-
-        public T As<T> () where T : ObjectInstance {
-            return _object as T;
-        }
-
+        
         [Pure]
-        public bool AsBoolean () {
-            if (_type != Types.Boolean) {
-                throw new ArgumentException ("The value is not a boolean");
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T As<T>() where T : ObjectInstance
+        {
+            if (IsObject())
+            {
+                return this as T;
             }
-
-            return _double != 0;
+            return null;
         }
 
-        [Pure]
-        public string AsString () {
-            if (_type != Types.String) {
-                throw new ArgumentException ("The value is not a string");
-            }
-
-            if (_object == null) {
-                throw new ArgumentException ("The value is not defined");
-            }
-
-            return _object as string;
+        public Types Type
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _type == InternalTypes.Integer
+                ? Types.Number
+                : (Types) (_type & ~InternalTypes.InternalFlags);
         }
 
-        [Pure]
-        public double AsNumber () {
-            if (_type != Types.Number) {
-                throw new ArgumentException ("The value is not a number");
-            }
-
-            return _double;
-        }
-
-        public bool Equals (JsValue other) {
-            if (other == null) {
-                return false;
-            }
-
-            if (ReferenceEquals (this, other)) {
-                return true;
-            }
-
-            if (_type != other._type) {
-                return false;
-            }
-
-            switch (_type) {
-                case Types.None:
-                    return false;
-                case Types.Undefined:
-                    return true;
-                case Types.Null:
-                    return true;
-                case Types.Boolean:
-                case Types.Number:
-                    return _double == other._double;
-                case Types.String:
-                case Types.Object:
-                    return _object == other._object;
-                default:
-                    throw new ArgumentOutOfRangeException ();
-            }
-        }
-
-        public Types Type {
-            get { return _type; }
-        }
+        internal virtual bool IsConstructor => this is IConstructor;
 
         /// <summary>
         /// Creates a valid <see cref="JsValue"/> instance from any <see cref="Object"/> instance
@@ -245,199 +277,114 @@ namespace Anura.JavaScript.Native {
         /// <param name="engine"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static JsValue FromObject (Engine engine, object value) {
-            if (value == null) {
+        public static JsValue FromObject(Engine engine, object value)
+        {
+            if (value == null)
+            {
                 return Null;
             }
 
-            foreach (var converter in engine.Options._ObjectConverters) {
-                JsValue result;
-                if (converter.TryConvert (value, out result)) {
+            if (value is JsValue jsValue)
+            {
+                return jsValue;
+            }
+
+            var converters = engine.Options._ObjectConverters;
+            var convertersCount = converters.Count;
+            for (var i = 0; i < convertersCount; i++)
+            {
+                var converter = converters[i];
+                if (converter.TryConvert(engine, value, out var result))
+                {
                     return result;
                 }
             }
 
-            var valueType = value.GetType ();
+            var valueType = value.GetType();
 
             var typeMappers = Engine.TypeMappers;
 
-            Func<Engine, object, JsValue> typeMapper;
-            if (typeMappers.TryGetValue (valueType, out typeMapper)) {
-                return typeMapper (engine, value);
-            }
-
-            // if an ObjectInstance is passed directly, use it as is
-            var instance = value as ObjectInstance;
-            if (instance != null) {
-                // Learn conversion.
-                // Learn conversion, racy, worst case we'll try again later
-                Interlocked.CompareExchange (ref Engine.TypeMappers, new Dictionary<Type, Func<Engine, object, JsValue>> (typeMappers) {
-                    [valueType] = (Engine e, object v) => new JsValue ((ObjectInstance) v)
-                }, typeMappers);
-                return new JsValue (instance);
+            if (typeMappers.TryGetValue(valueType, out var typeMapper))
+            {
+                return typeMapper(engine, value);
             }
 
             var type = value as Type;
-            if (type != null) {
-                var typeReference = TypeReference.CreateTypeReference (engine, type);
-                return new JsValue (typeReference);
+            if (type != null)
+            {
+                var typeReference = TypeReference.CreateTypeReference(engine, type);
+                return typeReference;
             }
 
-            var a = value as System.Array;
-            if (a != null) {
-                Func<Engine, object, JsValue> convert = (Engine e, object v) => {
-                    var array = (System.Array) v;
-
-                    var jsArray = engine.Array.Construct (Arguments.Empty);
-                    foreach (var item in array) {
-                        var jsItem = JsValue.FromObject (engine, item);
-                        engine.Array.PrototypeObject.Push (jsArray, Arguments.From (jsItem));
-                    }
-
-                    return jsArray;
-                };
+            if (value is System.Array a)
+            {
                 // racy, we don't care, worst case we'll catch up later
-                Interlocked.CompareExchange (ref Engine.TypeMappers, new Dictionary<Type, Func<Engine, object, JsValue>> (typeMappers) {
-                    [valueType] = convert
+                Interlocked.CompareExchange(ref Engine.TypeMappers, new Dictionary<Type, Func<Engine, object, JsValue>>(typeMappers)
+                {
+                    [valueType] = Convert
                 }, typeMappers);
-                return convert (engine, a);
+
+                return Convert(engine, a);
             }
 
-            var d = value as Delegate;
-            if (d != null) {
-                return new DelegateWrapper (engine, d);
+            if (value is Delegate d)
+            {
+                return new DelegateWrapper(engine, d);
             }
 
-            if (value.GetType ().IsEnum ()) {
-                return new JsValue ((Int32) value);
+            Type t = value.GetType();
+            if (t.IsEnum)
+            {
+                Type ut = Enum.GetUnderlyingType(t);
+
+                if (ut == typeof(ulong))
+                    return JsNumber.Create(System.Convert.ToDouble(value));
+
+                if (ut == typeof(uint) || ut == typeof(long))
+                    return JsNumber.Create(System.Convert.ToInt64(value));
+
+                return JsNumber.Create(System.Convert.ToInt32(value));
             }
 
             // if no known type could be guessed, wrap it as an ObjectInstance
-            return new ObjectWrapper (engine, value);
+            var h = engine.Options._WrapObjectHandler;
+            var o = h?.Invoke(engine, value) ?? new ObjectWrapper(engine, value);
+            return o;
+        }
+
+        private static JsValue Convert(Engine e, object v)
+        {
+            var array = (System.Array) v;
+            var arrayLength = (uint) array.Length;
+
+            var jsArray = new ArrayInstance(e, arrayLength);
+            jsArray._prototype = e.Array.PrototypeObject;
+
+            for (uint i = 0; i < arrayLength; ++i)
+            {
+                var jsItem = FromObject(e, array.GetValue(i));
+                jsArray.WriteArrayValue(i, new PropertyDescriptor(jsItem, PropertyFlag.ConfigurableEnumerableWritable));
+            }
+
+            jsArray.SetOwnProperty(CommonProperties.Length, new PropertyDescriptor(arrayLength, PropertyFlag.OnlyWritable));
+
+            return jsArray;
         }
 
         /// <summary>
         /// Converts a <see cref="JsValue"/> to its underlying CLR value.
         /// </summary>
         /// <returns>The underlying CLR value of the <see cref="JsValue"/> instance.</returns>
-        public object ToObject () {
-            switch (_type) {
-                case Types.None:
-                case Types.Undefined:
-                case Types.Null:
-                    return null;
-                case Types.String:
-                    return _object;
-                case Types.Boolean:
-                    return _double != 0;
-                case Types.Number:
-                    return _double;
-                case Types.Object:
-                    var wrapper = _object as IObjectWrapper;
-                    if (wrapper != null) {
-                        return wrapper.Target;
-                    }
-
-                    switch ((_object as ObjectInstance).Class) {
-                        case "Array":
-                            var arrayInstance = _object as ArrayInstance;
-                            if (arrayInstance != null) {
-                                var len = TypeConverter.ToInt32 (arrayInstance.Get ("length"));
-                                var result = new object[len];
-                                for (var k = 0; k < len; k++) {
-                                    var pk = k.ToString ();
-                                    var kpresent = arrayInstance.HasProperty (pk);
-                                    if (kpresent) {
-                                        var kvalue = arrayInstance.Get (pk);
-                                        result[k] = kvalue.ToObject ();
-                                    } else {
-                                        result[k] = null;
-                                    }
-                                }
-                                return result;
-                            }
-                            break;
-
-                        case "String":
-                            var stringInstance = _object as StringInstance;
-                            if (stringInstance != null) {
-                                return stringInstance.PrimitiveValue.AsString ();
-                            }
-
-                            break;
-
-                        case "Date":
-                            var dateInstance = _object as DateInstance;
-                            if (dateInstance != null) {
-                                return dateInstance.ToDateTime ();
-                            }
-
-                            break;
-
-                        case "Boolean":
-                            var booleanInstance = _object as BooleanInstance;
-                            if (booleanInstance != null) {
-                                return booleanInstance.PrimitiveValue.AsBoolean ();
-                            }
-
-                            break;
-
-                        case "Function":
-                            var function = _object as FunctionInstance;
-                            if (function != null) {
-                                return (Func<JsValue, JsValue[], JsValue>) function.Call;
-                            }
-
-                            break;
-
-                        case "Number":
-                            var numberInstance = _object as NumberInstance;
-                            if (numberInstance != null) {
-                                return numberInstance.PrimitiveValue.AsNumber ();
-                            }
-
-                            break;
-
-                        case "RegExp":
-                            var regeExpInstance = _object as RegExpInstance;
-                            if (regeExpInstance != null) {
-                                return regeExpInstance.Value;
-                            }
-
-                            break;
-
-                        case "Arguments":
-                        case "Object":
-#if __IOS__
-                            IDictionary<string, object> o = new Dictionary<string, object> ();
-#else
-                            IDictionary<string, object> o = new ExpandoObject ();
-#endif
-
-                            foreach (var p in (_object as ObjectInstance).GetOwnProperties ()) {
-                                if (!p.Value.Enumerable.HasValue || p.Value.Enumerable.Value == false) {
-                                    continue;
-                                }
-
-                                o.Add (p.Key, (_object as ObjectInstance).Get (p.Key).ToObject ());
-                            }
-
-                            return o;
-                    }
-
-                    return _object;
-                default:
-                    throw new ArgumentOutOfRangeException ();
-            }
-        }
+        public abstract object ToObject();
 
         /// <summary>
         /// Invoke the current value as function.
         /// </summary>
         /// <param name="arguments">The arguments of the function call.</param>
         /// <returns>The value returned by the function call.</returns>
-        public JsValue Invoke (params JsValue[] arguments) {
-            return Invoke (Undefined, arguments);
+        public JsValue Invoke(params JsValue[] arguments)
+        {
+            return Invoke(Undefined, arguments);
         }
 
         /// <summary>
@@ -446,81 +393,159 @@ namespace Anura.JavaScript.Native {
         /// <param name="thisObj">The this value inside the function call.</param>
         /// <param name="arguments">The arguments of the function call.</param>
         /// <returns>The value returned by the function call.</returns>
-        public JsValue Invoke (JsValue thisObj, JsValue[] arguments) {
-            var callable = TryCast<ICallable> ();
-
-            if (callable == null) {
-                throw new ArgumentException ("Can only invoke functions");
-            }
-
-            return callable.Call (thisObj, arguments);
+        internal JsValue Invoke(JsValue thisObj, JsValue[] arguments)
+        {
+            var callable = this as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException<ICallable>("Can only invoke functions");
+            return callable.Call(thisObj, arguments);
+        }
+        
+        /// <summary>
+        /// Invoke the given property as function.
+        /// </summary>
+        /// <param name="v">Serves as both the lookup point for the property and the this value of the call</param>
+        /// <param name="propertyName">Property that should be ICallable</param>
+        /// <param name="arguments">The arguments of the function call.</param>
+        /// <returns>The value returned by the function call.</returns>
+        internal static JsValue Invoke(JsValue v, JsValue propertyName, JsValue[] arguments)
+        {
+            var func = v.Get(propertyName);
+            var callable = func as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeErrorNoEngine<ICallable>("Can only invoke functions");
+            return callable.Call(v, arguments);
         }
 
-        public override string ToString () {
-            switch (Type) {
-                case Types.None:
-                    return "None";
-                case Types.Undefined:
-                    return "undefined";
-                case Types.Null:
-                    return "null";
-                case Types.Boolean:
-                    return _double != 0 ? bool.TrueString : bool.FalseString;
-                case Types.Number:
-                    return _double.ToString ();
-                case Types.String:
-                case Types.Object:
-                    return _object.ToString ();
-                default:
-                    return string.Empty;
-            }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public JsValue Get(JsValue property)
+        {
+            return Get(property, this);
         }
 
-        public static bool operator == (JsValue a, JsValue b) {
-            if ((object) a == null) {
-                if ((object) b == null) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            return a.Equals (b);
+        /// <summary>
+        /// http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.3
+        /// </summary>
+        public virtual JsValue Get(JsValue property, JsValue receiver)
+        {
+            return Undefined;
         }
 
-        public static bool operator != (JsValue a, JsValue b) {
-            if ((object) a == null) {
-                if ((object) b == null) {
+        /// <summary>
+        /// http://www.ecma-international.org/ecma-262/#sec-ordinary-object-internal-methods-and-internal-slots-set-p-v-receiver
+        /// </summary>
+        public virtual bool Set(JsValue property, JsValue value, JsValue receiver)
+        {
+            return Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException<bool>();
+        }
+
+        public override string ToString()
+        {
+            return "None";
+        }
+
+        public static bool operator ==(JsValue a, JsValue b)
+        {
+            if ((object) a == null)
+            {
+                return (object) b == null;
+            }
+
+            return (object) b != null && a.Equals(b);
+        }
+
+        public static bool operator !=(JsValue a, JsValue b)
+        {
+            if ((object)a == null)
+            {
+                if ((object)b == null)
+                {
                     return false;
                 }
 
                 return true;
             }
 
-            return !a.Equals (b);
+            if ((object)b == null)
+            {
+                return true;
+            }
+
+            return !a.Equals(b);
         }
 
-        static public implicit operator JsValue (double value) {
-            return new JsValue (value);
+        public static implicit operator JsValue(char value)
+        {
+            return JsString.Create(value);
         }
 
-        static public implicit operator JsValue (bool value) {
-            return new JsValue (value);
+        public static implicit operator JsValue(int value)
+        {
+            return JsNumber.Create(value);
         }
 
-        static public implicit operator JsValue (string value) {
-            return new JsValue (value);
+        public static implicit operator JsValue(uint value)
+        {
+            return JsNumber.Create(value);
         }
 
-        static public implicit operator JsValue (ObjectInstance value) {
-            return new JsValue (value);
+        public static implicit operator JsValue(double value)
+        {
+            return JsNumber.Create(value);
         }
 
-        internal class JsValueDebugView {
+        public static implicit operator JsValue(long value)
+        {
+            return JsNumber.Create(value);
+        }
+
+        public static implicit operator JsValue(ulong value)
+        {
+            return JsNumber.Create(value);
+        }
+
+        public static implicit operator JsValue(bool value)
+        {
+            return value ? JsBoolean.True : JsBoolean.False;
+        }
+
+        [DebuggerStepThrough]
+        public static implicit operator JsValue(string value)
+        {
+            if (value == null)
+            {
+                return Null;
+            }
+
+            return JsString.Create(value);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            return obj is JsValue value && Equals(value);
+        }
+
+        public abstract bool Equals(JsValue other);
+
+        public override int GetHashCode()
+        {
+            return _type.GetHashCode();
+        }
+
+        internal class JsValueDebugView
+        {
             public string Value;
-            public JsValueDebugView (JsValue value) {
 
-                switch (value.Type) {
+            public JsValueDebugView(JsValue value)
+            {
+                switch (value.Type)
+                {
                     case Types.None:
                         Value = "None";
                         break;
@@ -531,16 +556,20 @@ namespace Anura.JavaScript.Native {
                         Value = "null";
                         break;
                     case Types.Boolean:
-                        Value = value.AsBoolean () + " (bool)";
+                        Value = ((JsBoolean) value)._value + " (bool)";
                         break;
                     case Types.String:
-                        Value = value.AsString () + " (string)";
+                        Value = value.AsStringWithoutTypeCheck() + " (string)";
                         break;
                     case Types.Number:
-                        Value = value.AsNumber () + " (number)";
+                        Value = ((JsNumber) value)._value + " (number)";
                         break;
                     case Types.Object:
-                        Value = value.AsObject ().GetType ().Name;
+                        Value = value.AsObject().GetType().Name;
+                        break;
+                    case Types.Symbol:
+                        var jsValue = ((JsSymbol) value)._value;
+                        Value = (jsValue.IsUndefined() ? "" : jsValue.ToString()) + " (symbol)";
                         break;
                     default:
                         Value = "Unknown";
@@ -548,18 +577,73 @@ namespace Anura.JavaScript.Native {
                 }
             }
         }
-        public override bool Equals (object obj) {
-            if (ReferenceEquals (null, obj)) return false;
-            return obj is JsValue && Equals ((JsValue) obj);
+
+        /// <summary>
+        /// Some values need to be cloned in order to be assigned, like ConcatenatedString.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal JsValue Clone()
+        {
+            // concatenated string and arguments currently may require cloning
+            return (_type & InternalTypes.RequiresCloning) == 0
+                ? this
+                : DoClone();
         }
 
-        public override int GetHashCode () {
-            unchecked {
-                var hashCode = 0;
-                hashCode = (hashCode * 397) ^ _double.GetHashCode ();
-                hashCode = (hashCode * 397) ^ (_object != null ? _object.GetHashCode () : 0);
-                hashCode = (hashCode * 397) ^ (int) _type;
-                return hashCode;
+        internal virtual JsValue DoClone()
+        {
+            return this;
+        }
+
+        internal static bool SameValue(JsValue x, JsValue y)
+        {
+            var typea = x.Type;
+            var typeb = y.Type;
+
+            if (typea != typeb)
+            {
+                return false;
+            }
+
+            switch (typea)
+            {
+                case Types.Number:
+                    if (x._type == y._type && x._type == InternalTypes.Integer)
+                    {
+                        return x.AsInteger() == y.AsInteger();
+                    }
+
+                    var nx = TypeConverter.ToNumber(x);
+                    var ny = TypeConverter.ToNumber(y);
+
+                    if (double.IsNaN(nx) && double.IsNaN(ny))
+                    {
+                        return true;
+                    }
+
+                    if (nx == ny)
+                    {
+                        if (nx == 0)
+                        {
+                            // +0 !== -0
+                            return NumberInstance.IsNegativeZero(nx) == NumberInstance.IsNegativeZero(ny);
+                        }
+
+                        return true;
+                    }
+
+                    return false;
+                case Types.String:
+                    return TypeConverter.ToString(x) == TypeConverter.ToString(y);
+                case Types.Boolean:
+                    return TypeConverter.ToBoolean(x) == TypeConverter.ToBoolean(y);
+                case Types.Undefined:
+                case Types.Null:
+                    return true;
+                case Types.Symbol:
+                    return x == y;
+                default:
+                    return ReferenceEquals(x, y);
             }
         }
     }

@@ -1,40 +1,66 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Reflection;
 using Anura.JavaScript.Native;
 
-namespace Anura.JavaScript.Runtime.Descriptors.Specialized {
-    public sealed class PropertyInfoDescriptor : PropertyDescriptor {
+namespace Anura.JavaScript.Runtime.Descriptors.Specialized
+{
+    public sealed class PropertyInfoDescriptor : PropertyDescriptor
+    {
         private readonly Engine _engine;
         private readonly PropertyInfo _propertyInfo;
         private readonly object _item;
 
-        public PropertyInfoDescriptor (Engine engine, PropertyInfo propertyInfo, object item) {
+        public PropertyInfoDescriptor(Engine engine, PropertyInfo propertyInfo, object item) : base(PropertyFlag.CustomJsValue)
+        {
             _engine = engine;
             _propertyInfo = propertyInfo;
             _item = item;
 
-            Writable = propertyInfo.CanWrite;
+            Writable = propertyInfo.CanWrite && engine.Options._IsClrWriteAllowed;
         }
 
-        public override JsValue Value {
-            get {
-                return JsValue.FromObject (_engine, _propertyInfo.GetValue (_item, null));
-            }
+        protected internal override JsValue CustomValue
+        {
+            get
+            {
+                object v;
+                try
+                {
+                    v = _propertyInfo.GetValue(_item, null);
+                }
+                catch (TargetInvocationException exception)
+                {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowMeaningfulException(_engine, exception);
+                    throw;
+                }
 
-            set {
-                var currentValue = value;
+                return JsValue.FromObject(_engine, v);
+            }
+            set
+            {
                 object obj;
-                if (_propertyInfo.PropertyType == typeof (JsValue)) {
-                    obj = currentValue;
-                } else {
+                if (_propertyInfo.PropertyType == typeof(JsValue))
+                {
+                    obj = value;
+                }
+                else
+                {
                     // attempt to convert the JsValue to the target type
-                    obj = currentValue.ToObject ();
-                    if (obj != null && obj.GetType () != _propertyInfo.PropertyType) {
-                        obj = _engine.ClrTypeConverter.Convert (obj, _propertyInfo.PropertyType, CultureInfo.InvariantCulture);
+                    obj = value.ToObject();
+                    if (obj != null && obj.GetType() != _propertyInfo.PropertyType)
+                    {
+                        obj = _engine.ClrTypeConverter.Convert(obj, _propertyInfo.PropertyType, CultureInfo.InvariantCulture);
                     }
                 }
 
-                _propertyInfo.SetValue (_item, obj, null);
+                try
+                {
+                    _propertyInfo.SetValue(_item, obj, null);
+                }
+                catch (TargetInvocationException exception)
+                {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowMeaningfulException(_engine, exception);
+                }
             }
         }
     }

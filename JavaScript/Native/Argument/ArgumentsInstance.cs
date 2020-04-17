@@ -1,171 +1,207 @@
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Object;
+using Anura.JavaScript.Native.Symbol;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Descriptors.Specialized;
 using Anura.JavaScript.Runtime.Environments;
+using Anura.JavaScript.Runtime.Interop;
 
-namespace Anura.JavaScript.Native.Argument {
+namespace Anura.JavaScript.Native.Argument
+{
     /// <summary>
     /// http://www.ecma-international.org/ecma-262/5.1/#sec-10.6
     /// </summary>
-    public class ArgumentsInstance : ObjectInstance {
-        private ArgumentsInstance (Engine engine, Action<ArgumentsInstance> initializer) : base (engine) {
-            _initializer = initializer;
-            _initialized = false;
+    public sealed class ArgumentsInstance : ObjectInstance
+    {
+        // cache property container for array iteration for less allocations
+        private static readonly ThreadLocal<HashSet<string>> _mappedNamed = new ThreadLocal<HashSet<string>>(() => new HashSet<string>());
+
+        private FunctionInstance _func;
+        private string[] _names;
+        private JsValue[] _args;
+        private EnvironmentRecord _env;
+        private bool _strict;
+        private bool _canReturnToPool;
+
+        internal ArgumentsInstance(Engine engine)
+            : base(engine, ObjectClass.Arguments, InternalTypes.Object | InternalTypes.RequiresCloning)
+        {
         }
 
-        public bool Strict { get; set; }
+        internal void Prepare(
+            FunctionInstance func, 
+            string[] names, 
+            JsValue[] args, 
+            EnvironmentRecord env, 
+            bool strict)
+        {
+            _func = func;
+            _names = names;
+            _args = args;
+            _env = env;
+            _strict = strict;
 
-        private Action<ArgumentsInstance> _initializer;
-        private bool _initialized;
+            _canReturnToPool = true;
 
-        protected override void EnsureInitialized () {
-            if (_initialized) {
-                return;
-            }
-
-            _initialized = true;
-
-            _initializer (this);
+            ClearProperties();
         }
 
-        public static ArgumentsInstance CreateArgumentsObject (Engine engine, FunctionInstance func, string[] names, JsValue[] args, EnvironmentRecord env, bool strict) {
-            var obj = new ArgumentsInstance (engine, self => {
-                var len = args.Length;
-                self.FastAddProperty ("length", len, true, false, true);
-                var map = engine.Object.Construct (Arguments.Empty);
-                var mappedNamed = new List<string> ();
-                var indx = 0;
-                while (indx <= len - 1) {
-                    var indxStr = TypeConverter.ToString (indx);
-                    var val = args[indx];
-                    self.FastAddProperty (indxStr, val, true, true, true);
-                    if (indx < names.Length) {
-                        var name = names[indx];
-                        if (!strict && !mappedNamed.Contains (name)) {
-                            mappedNamed.Add (name);
-                            Func<JsValue, JsValue> g = n => env.GetBindingValue (name, false);
-                            var p = new Action<JsValue, JsValue> ((n, o) => env.SetMutableBinding (name, o, true));
+        protected override void Initialize()
+        {
+            _canReturnToPool = false;
 
-                            map.DefineOwnProperty (indxStr, new ClrAccessDescriptor (engine, g, p) { Configurable = true }, false);
+            SetOwnProperty(CommonProperties.Length, new PropertyDescriptor(_args.Length, PropertyFlag.NonEnumerable));
+
+            var args = _args;
+            ObjectInstance map = null;
+            if (args.Length > 0)
+            {
+                HashSet<string> mappedNamed = null;
+                if (!_strict)
+                {
+                    mappedNamed = _mappedNamed.Value;
+                    mappedNamed.Clear();
+                }
+
+                for (uint i = 0; i < (uint) args.Length; i++)
+                {
+                    SetOwnProperty(i, new PropertyDescriptor(args[i], PropertyFlag.ConfigurableEnumerableWritable));
+                    if (i < _names.Length)
+                    {
+                        var name = _names[i];
+                        if (!_strict && !mappedNamed.Contains(name))
+                        {
+                            map ??= Engine.Object.Construct(Arguments.Empty);
+                            mappedNamed.Add(name);
+                            map.SetOwnProperty(i, new ClrAccessDescriptor(_env, Engine, name));
                         }
                     }
-                    indx++;
                 }
+            }
 
-                // step 12
-                if (mappedNamed.Count > 0) {
-                    self.ParameterMap = map;
-                }
+            ParameterMap = map;
 
-                // step 13
-                if (!strict) {
-                    self.FastAddProperty ("callee", func, true, false, true);
-                }
-                // step 14
-                else {
-                    var thrower = engine.Function.ThrowTypeError;
-                    self.DefineOwnProperty ("caller", new PropertyDescriptor (get: thrower, set: thrower, enumerable: false, configurable: false), false);
-                    self.DefineOwnProperty ("callee", new PropertyDescriptor (get: thrower, set: thrower, enumerable: false, configurable: false), false);
-                }
-            });
+            // step 13
+            if (!_strict)
+            {
+                DefinePropertyOrThrow(CommonProperties.Callee, new PropertyDescriptor(_func, PropertyFlag.NonEnumerable));
+            }
+            // step 14
+            else
+            {
+                DefinePropertyOrThrow(CommonProperties.Caller, _engine._getSetThrower);
+                DefinePropertyOrThrow(CommonProperties.Callee, _engine._getSetThrower);
+            }
 
-            // These properties are pre-initialized as their don't trigger
-            // the EnsureInitialized() event and are cheap
-            obj.Prototype = engine.Object.PrototypeObject;
-            obj.Extensible = true;
-            obj.Strict = strict;
-
-            return obj;
+            var iteratorFunction = new ClrFunctionInstance(Engine, "iterator", _engine.Array.PrototypeObject.Values, 0, PropertyFlag.Configurable);
+            DefinePropertyOrThrow(GlobalSymbolRegistry.Iterator, new PropertyDescriptor(iteratorFunction, PropertyFlag.Writable | PropertyFlag.Configurable));
         }
 
         public ObjectInstance ParameterMap { get; set; }
 
-        public override string Class {
-            get {
-                return "Arguments";
-            }
-        }
+        public override PropertyDescriptor GetOwnProperty(JsValue property)
+        {
+            EnsureInitialized();
 
-        public override PropertyDescriptor GetOwnProperty (string propertyName) {
-            EnsureInitialized ();
-
-            if (!Strict && ParameterMap != null) {
-                var desc = base.GetOwnProperty (propertyName);
-                if (desc == PropertyDescriptor.Undefined) {
+            if (!_strict && !ReferenceEquals(ParameterMap, null))
+            {
+                var desc = base.GetOwnProperty(property);
+                if (desc == PropertyDescriptor.Undefined)
+                {
                     return desc;
                 }
 
-                var isMapped = ParameterMap.GetOwnProperty (propertyName);
-                if (isMapped != PropertyDescriptor.Undefined) {
-                    desc.Value = ParameterMap.Get (propertyName);
+                if (ParameterMap.TryGetValue(property, out var jsValue) && !jsValue.IsUndefined())
+                {
+                    desc.Value = jsValue;
                 }
 
                 return desc;
             }
 
-            return base.GetOwnProperty (propertyName);
+            return base.GetOwnProperty(property);
         }
 
         /// Implementation from ObjectInstance official specs as the one
         /// in ObjectInstance is optimized for the general case and wouldn't work
         /// for arrays
-        public override void Put (string propertyName, JsValue value, bool throwOnError) {
-            EnsureInitialized ();
+        public override bool Set(JsValue property, JsValue value, JsValue receiver)
+        {
+            EnsureInitialized();
 
-            if (!CanPut (propertyName)) {
-                if (throwOnError) {
-                    throw new JavaScriptException (Engine.TypeError);
-                }
-
-                return;
+            if (!CanPut(property))
+            {
+                return false;
             }
 
-            var ownDesc = GetOwnProperty (propertyName);
+            var ownDesc = GetOwnProperty(property);
 
-            if (ownDesc.IsDataDescriptor ()) {
-                var valueDesc = new PropertyDescriptor (value: value, writable: null, enumerable: null, configurable: null);
-                DefineOwnProperty (propertyName, valueDesc, throwOnError);
-                return;
+            if (ownDesc.IsDataDescriptor())
+            {
+                var valueDesc = new PropertyDescriptor(value, PropertyFlag.None);
+                return DefineOwnProperty(property, valueDesc);
             }
 
             // property is an accessor or inherited
-            var desc = GetProperty (propertyName);
+            var desc = GetProperty(property);
 
-            if (desc.IsAccessorDescriptor ()) {
-                var setter = desc.Set.TryCast<ICallable> ();
-                setter.Call (new JsValue (this), new [] { value });
-            } else {
-                var newDesc = new PropertyDescriptor (value, true, true, true);
-                DefineOwnProperty (propertyName, newDesc, throwOnError);
+            if (desc.IsAccessorDescriptor())
+            {
+                if (!(desc.Set is ICallable setter))
+                {
+                    return false;
+                }
+                setter.Call(receiver, new[] {value});
             }
+            else
+            {
+                var newDesc = new PropertyDescriptor(value, PropertyFlag.ConfigurableEnumerableWritable);
+                return DefineOwnProperty(property, newDesc);
+            }
+
+            return true;
         }
 
-        public override bool DefineOwnProperty (string propertyName, PropertyDescriptor desc, bool throwOnError) {
-            EnsureInitialized ();
+        public override bool DefineOwnProperty(JsValue property, PropertyDescriptor desc)
+        {
+            if (_func is ScriptFunctionInstance scriptFunctionInstance && scriptFunctionInstance._function._hasRestParameter)
+            {
+                // immutable
+                return true;
+            }
 
-            if (!Strict && ParameterMap != null) {
+            EnsureInitialized();
+
+            if (!_strict && !ReferenceEquals(ParameterMap, null))
+            {
                 var map = ParameterMap;
-                var isMapped = map.GetOwnProperty (propertyName);
-                var allowed = base.DefineOwnProperty (propertyName, desc, false);
-                if (!allowed) {
-                    if (throwOnError) {
-                        throw new JavaScriptException (Engine.TypeError);
-                    }
+                var isMapped = map.GetOwnProperty(property);
+                var allowed = base.DefineOwnProperty(property, desc);
+                if (!allowed)
+                {
+                    return false;
                 }
-                if (isMapped != PropertyDescriptor.Undefined) {
-                    if (desc.IsAccessorDescriptor ()) {
-                        map.Delete (propertyName, false);
-                    } else {
-                        if (desc.Value != null && desc.Value != Undefined.Instance) {
-                            map.Put (propertyName, desc.Value, throwOnError);
+
+                if (isMapped != PropertyDescriptor.Undefined)
+                {
+                    if (desc.IsAccessorDescriptor())
+                    {
+                        map.Delete(property);
+                    }
+                    else
+                    {
+                        var descValue = desc.Value;
+                        if (!ReferenceEquals(descValue, null) && !descValue.IsUndefined())
+                        {
+                            map.Set(property, descValue, false);
                         }
 
-                        if (desc.Writable.HasValue && desc.Writable.Value == false) {
-                            map.Delete (propertyName, false);
+                        if (desc.WritableSet && !desc.Writable)
+                        {
+                            map.Delete(property);
                         }
                     }
                 }
@@ -173,24 +209,56 @@ namespace Anura.JavaScript.Native.Argument {
                 return true;
             }
 
-            return base.DefineOwnProperty (propertyName, desc, throwOnError);
+            return base.DefineOwnProperty(property, desc);
         }
 
-        public override bool Delete (string propertyName, bool throwOnError) {
-            EnsureInitialized ();
+        public override bool Delete(JsValue property)
+        {
+            EnsureInitialized();
 
-            if (!Strict && ParameterMap != null) {
+            if (!_strict && !ReferenceEquals(ParameterMap, null))
+            {
                 var map = ParameterMap;
-                var isMapped = map.GetOwnProperty (propertyName);
-                var result = base.Delete (propertyName, throwOnError);
-                if (result && isMapped != PropertyDescriptor.Undefined) {
-                    map.Delete (propertyName, false);
+                var isMapped = map.GetOwnProperty(property);
+                var result = base.Delete(property);
+                if (result && isMapped != PropertyDescriptor.Undefined)
+                {
+                    map.Delete(property);
                 }
 
                 return result;
             }
 
-            return base.Delete (propertyName, throwOnError);
+            return base.Delete(property);
+        }
+
+        internal override JsValue DoClone()
+        {
+            // there's an assignment or return value of function, need to create persistent state
+
+            EnsureInitialized();
+
+            var args = _args;
+            var copiedArgs = new JsValue[args.Length];
+            System.Array.Copy(args, copiedArgs, args.Length);
+            _args = copiedArgs;
+
+            _canReturnToPool = false;
+
+            return this;
+        }
+
+        internal void FunctionWasCalled()
+        {
+            // should no longer expose arguments which is special name
+            ParameterMap = null;
+
+            if (_canReturnToPool)
+            {
+                _engine._argumentsInstancePool.Return(this);
+                // prevent double-return
+                _canReturnToPool = false;
+            }
         }
     }
 }

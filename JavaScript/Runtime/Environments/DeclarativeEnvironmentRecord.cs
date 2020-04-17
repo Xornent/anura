@@ -1,104 +1,472 @@
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Esprima.Ast;
+using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native;
+using Anura.JavaScript.Native.Argument;
+using Anura.JavaScript.Native.Array;
+using Anura.JavaScript.Native.Function;
+using Anura.JavaScript.Native.Iterator;
+using Anura.JavaScript.Runtime.Interpreter.Expressions;
 
-namespace Anura.JavaScript.Runtime.Environments {
+namespace Anura.JavaScript.Runtime.Environments
+{
     /// <summary>
     /// Represents a declarative environment record
     /// http://www.ecma-international.org/ecma-262/5.1/#sec-10.2.1.1
     /// </summary>
-    public sealed class DeclarativeEnvironmentRecord : EnvironmentRecord {
-        private readonly Engine _engine;
-        private readonly IDictionary<string, Binding> _bindings = new Dictionary<string, Binding> ();
+    internal sealed class DeclarativeEnvironmentRecord : EnvironmentRecord
+    {
+        private readonly HybridDictionary<Binding> _dictionary = new HybridDictionary<Binding>();
 
-        public DeclarativeEnvironmentRecord (Engine engine) : base (engine) {
-            _engine = engine;
+        public DeclarativeEnvironmentRecord(Engine engine) : base(engine)
+        {
         }
 
-        public override bool HasBinding (string name) {
-            return _bindings.ContainsKey (name);
+        private bool ContainsKey(in Key key)
+        {
+            return _dictionary.ContainsKey(key);
         }
 
-        public override void CreateMutableBinding (string name, bool canBeDeleted = false) {
-            _bindings.Add (name, new Binding {
-                Value = Undefined.Instance,
-                    CanBeDeleted = canBeDeleted,
-                    Mutable = true
-            });
+        private bool TryGetValue(in Key key, out Binding value)
+        {
+            value = default;
+            return _dictionary.TryGetValue(key, out value);
         }
 
-        public override void SetMutableBinding (string name, JsValue value, bool strict) {
-            var binding = _bindings[name];
-            if (binding.Mutable) {
-                binding.Value = value;
-            } else {
-                if (strict) {
-                    throw new JavaScriptException (_engine.TypeError, "Can't update the value of an immutable binding.");
+        public override bool HasBinding(string name)
+        {
+            return ContainsKey(name);
+        }
+
+        internal override bool TryGetBinding(
+            in Key name,
+            bool strict,
+            out Binding binding,
+            out JsValue value)
+        {
+            binding = default;
+            var success = _dictionary.TryGetValue(name, out binding);
+            value = success ? UnwrapBindingValue(strict, binding) : default;
+            return success;
+        }
+
+        public override void CreateMutableBinding(string name, JsValue value, bool canBeDeleted = false)
+        {
+            _dictionary[name] = new Binding(value, canBeDeleted, mutable: true);
+        }
+
+        public override void SetMutableBinding(string name, JsValue value, bool strict)
+        {
+            var key = name;
+            _dictionary.TryGetValue(key, out var binding);
+            if (binding.Mutable)
+            {
+                _dictionary[key] = binding.ChangeValue(value);
+            }
+            else
+            {
+                if (strict)
+                {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Can't update the value of an immutable binding.");
                 }
             }
         }
 
-        public override JsValue GetBindingValue (string name, bool strict) {
-            var binding = _bindings[name];
+        public override JsValue GetBindingValue(string name, bool strict)
+        {
+            _dictionary.TryGetValue(name, out var binding);
+            return UnwrapBindingValue(strict, binding);
+        }
 
-            if (!binding.Mutable && binding.Value == Undefined.Instance) {
-                if (strict) {
-                    throw new JavaScriptException (_engine.ReferenceError, "Can't access anm uninitiazed immutable binding.");
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private JsValue UnwrapBindingValue(bool strict, in Binding binding)
+        {
+            if (!binding.Mutable && !binding.IsInitialized())
+            {
+                if (strict)
+                {
+                    ThrowUninitializedBindingException();
                 }
 
-                return Undefined.Instance;
+                return Undefined;
             }
 
             return binding.Value;
         }
 
-        public override bool DeleteBinding (string name) {
-            Binding binding;
-            if (!_bindings.TryGetValue (name, out binding)) {
+        private void ThrowUninitializedBindingException()
+        {
+            throw new JavaScriptException(_engine.ReferenceError, "Can't access an uninitialized immutable binding.");
+        }
+
+        public override bool DeleteBinding(string name)
+        {
+            if (!_dictionary.TryGetValue(name, out var binding))
+            {
                 return true;
             }
 
-            if (!binding.CanBeDeleted) {
+            if (!binding.CanBeDeleted)
+            {
                 return false;
             }
 
-            _bindings.Remove (name);
+            _dictionary.Remove(name);
 
             return true;
         }
 
-        public override JsValue ImplicitThisValue () {
-            return Undefined.Instance;
+        public override JsValue ImplicitThisValue()
+        {
+            return Undefined;
         }
 
-        /// <summary>
-        /// Creates a new but uninitialised immutable binding in an environment record.
-        /// </summary>
-        /// <param name="name">The identifier of the binding.</param>
-        public void CreateImmutableBinding (string name) {
-            _bindings.Add (name, new Binding {
-                Value = Undefined.Instance,
-                    Mutable = false,
-                    CanBeDeleted = false
-            });
+        /// <inheritdoc />
+        internal override string[] GetAllBindingNames()
+        {
+            if (_dictionary is null)
+            {
+                return System.Array.Empty<string>();
+            }
+
+            var keys = new string[_dictionary.Count];
+            var n = 0;
+            foreach (var entry in _dictionary)
+            {
+                keys[n++] = entry.Key;
+            }
+
+            return keys;
         }
 
-        /// <summary>
-        /// Sets the value of an already existing but uninitialised immutable binding in an environment record.
-        /// </summary>
-        /// <param name="name">The identifier of the binding.</param>
-        /// <param name="value">The value of the binding.</param>
-        public void InitializeImmutableBinding (string name, JsValue value) {
-            var binding = _bindings[name];
-            binding.Value = value;
+        internal void AddFunctionParameters(
+            JsValue[] arguments,
+            ArgumentsInstance argumentsInstance,
+            IFunction functionDeclaration)
+        {
+            bool empty = _dictionary.Count == 0;
+            if (!(argumentsInstance is null))
+            {
+                _dictionary[KnownKeys.Arguments] = new Binding(argumentsInstance, canBeDeleted: false, mutable: true);
+            }
+
+            ref readonly var parameters = ref functionDeclaration.Params;
+            var count = parameters.Count;
+            for (var i = 0; i < count; i++)
+            {
+                SetFunctionParameter(parameters[i], arguments, i, empty);
+            }
         }
 
-        /// <summary>
-        /// Returns an array of all the defined binding names
-        /// </summary>
-        /// <returns>The array of all defined bindings</returns>
-        public override string[] GetAllBindingNames () {
-            return _bindings.Keys.ToArray ();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SetFunctionParameter(
+            INode parameter,
+            JsValue[] arguments,
+            int index,
+            bool initiallyEmpty)
+        {
+            if (parameter is Identifier identifier)
+            {
+                var argument = (uint) index < (uint) arguments.Length ? arguments[index] : Undefined;
+                SetItemSafely(identifier.Name, argument, initiallyEmpty);
+            }
+            else
+            {
+                SetFunctionParameterUnlikely(parameter, arguments, index, initiallyEmpty);
+            }
+        }
+
+        private void SetFunctionParameterUnlikely(
+            INode parameter,
+            JsValue[] arguments,
+            int index,
+            bool initiallyEmpty)
+        {
+            var argument = arguments.Length > index ? arguments[index] : Undefined;
+
+            if (parameter is RestElement restElement)
+            {
+                HandleRestElementArray(restElement, arguments, index, initiallyEmpty);
+            }
+            else if (parameter is ArrayPattern arrayPattern)
+            {
+                if (argument.IsNull())
+                {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Destructed parameter is null");
+                }
+
+                ArrayInstance array = null;
+                var arrayContents = System.Array.Empty<JsValue>();
+                if (argument.IsArray())
+                {
+                    array = argument.AsArray();
+                }
+                else if (argument.IsObject() && argument.TryGetIterator(_engine, out var iterator))
+                {
+                    array = _engine.Array.ConstructFast(0);
+                    var protocol = new ArrayPatternProtocol(_engine, array, iterator, arrayPattern.Elements.Count);
+                    protocol.Execute();
+                }
+
+                if (!ReferenceEquals(array, null))
+                {
+                    arrayContents = new JsValue[array.GetLength()];
+
+                    for (uint i = 0; i < (uint) arrayContents.Length; i++)
+                    {
+                        arrayContents[i] = array.Get(i);
+                    }
+                }
+
+                for (uint arrayIndex = 0; arrayIndex < arrayPattern.Elements.Count; arrayIndex++)
+                {
+                    SetFunctionParameter(arrayPattern.Elements[(int) arrayIndex], arrayContents, (int) arrayIndex, initiallyEmpty);
+                }
+            }
+            else if (parameter is ObjectPattern objectPattern)
+            {
+                if (argument.IsNullOrUndefined())
+                {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Destructed parameter is null or undefined");
+                }
+
+                if (!argument.IsObject())
+                {
+                    return;
+                }
+
+                var argumentObject = argument.AsObject();
+
+                var processedProperties = objectPattern.Properties.Count > 0 && objectPattern.Properties[objectPattern.Properties.Count - 1] is RestElement
+                    ? new HashSet<JsValue>()
+                    : null;
+
+                var jsValues = _engine._jsValueArrayPool.RentArray(1);
+                foreach (var property in objectPattern.Properties)
+                {
+                    if (property is Property p)
+                    {
+                        JsString propertyName;
+                        if (p.Key is Identifier propertyIdentifier)
+                        {
+                            propertyName = JsString.Create(propertyIdentifier.Name);
+                        }
+                        else if (p.Key is Literal propertyLiteral)
+                        {
+                            propertyName = JsString.Create(propertyLiteral.Raw);
+                        }
+                        else if (p.Key is CallExpression callExpression)
+                        {
+                            var jintCallExpression = JintExpression.Build(_engine, callExpression);
+                            propertyName = (JsString) jintCallExpression.GetValue();
+                        }
+                        else
+                        {
+                            propertyName = Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException<JsString>("property", "unknown object pattern property type");
+                        }
+
+                        processedProperties?.Add(propertyName.AsStringWithoutTypeCheck());
+                        jsValues[0] = argumentObject.Get(propertyName);
+                        SetFunctionParameter(p.Value, jsValues, 0, initiallyEmpty);
+                    }
+                    else
+                    {
+                        if (((RestElement) property).Argument is Identifier restIdentifier)
+                        {
+                            var rest = _engine.Object.Construct(argumentObject.Properties.Count - processedProperties.Count);
+                            argumentObject.CopyDataProperties(rest, processedProperties);
+                            SetItemSafely(restIdentifier.Name, rest, initiallyEmpty);
+                        }
+                        else
+                        {
+                            Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, "Object rest parameter can only be objects");
+                        }
+                    }
+                }
+                _engine._jsValueArrayPool.ReturnArray(jsValues);
+            }
+            else if (parameter is AssignmentPattern assignmentPattern)
+            {
+                HandleAssignmentPatternOrExpression(assignmentPattern.Left, assignmentPattern.Right, argument, initiallyEmpty);
+            }
+            else if (parameter is AssignmentExpression assignmentExpression)
+            {
+                HandleAssignmentPatternOrExpression(assignmentExpression.Left, assignmentExpression.Right, argument, initiallyEmpty);
+            }
+        }
+
+        private void HandleRestElementArray(
+            RestElement restElement,
+            JsValue[] arguments,
+            int index,
+            bool initiallyEmpty)
+        {
+            // index + 1 == parameters.count because rest is last
+            int restCount = arguments.Length - (index + 1) + 1;
+            uint count = restCount > 0 ? (uint) restCount : 0;
+
+            var rest = _engine.Array.ConstructFast(count);
+
+            uint targetIndex = 0;
+            for (var argIndex = index; argIndex < arguments.Length; ++argIndex)
+            {
+                rest.SetIndexValue(targetIndex++, arguments[argIndex], updateLength: false);
+            }
+
+            if (restElement.Argument is Identifier restIdentifier)
+            {
+                SetItemSafely(restIdentifier.Name, rest, initiallyEmpty);
+            }
+            else if (restElement.Argument is BindingPattern bindingPattern)
+            {
+                SetFunctionParameter(bindingPattern, new JsValue[]
+                {
+                    rest
+                }, index, initiallyEmpty);
+            }
+            else
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, "Rest parameters can only be identifiers or arrays");
+            }
+        }
+
+        private void HandleAssignmentPatternOrExpression(
+            INode left,
+            INode right,
+            JsValue argument,
+            bool initiallyEmpty)
+        {
+            var idLeft = left as Identifier;
+            if (idLeft != null
+                && right is Identifier idRight
+                && idLeft.Name == idRight.Name)
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowReferenceError(_engine, idRight.Name);
+            }
+
+            if (argument.IsUndefined())
+            {
+                JsValue RunInNewParameterEnvironment(JintExpression exp)
+                {
+                    var oldEnv = _engine.ExecutionContext.LexicalEnvironment;
+                    var paramVarEnv = LexicalEnvironment.NewDeclarativeEnvironment(_engine, oldEnv);
+
+                    _engine.EnterExecutionContext(paramVarEnv, paramVarEnv, _engine.ExecutionContext.ThisBinding);
+                    var result = exp.GetValue();
+                    _engine.LeaveExecutionContext();
+
+                    return result;
+                }
+
+                var expression = right.As<Expression>();
+                var jintExpression = JintExpression.Build(_engine, expression);
+
+                argument = jintExpression is JintSequenceExpression
+                    ? RunInNewParameterEnvironment(jintExpression)
+                    : jintExpression.GetValue();
+
+                if (idLeft != null && right.IsFunctionWithName())
+                {
+                    ((FunctionInstance) argument).SetFunctionName(idLeft.Name);
+                }
+            }
+
+            SetFunctionParameter(left, new[]
+            {
+                argument
+            }, 0, initiallyEmpty);
+        }
+
+        private void SetItemSafely(in Key name, JsValue argument, bool initiallyEmpty)
+        {
+            if (initiallyEmpty || !TryGetValue(name, out var existing))
+            {
+                _dictionary[name] = new Binding(argument, false, true);
+            }
+            else
+            {
+                if (existing.Mutable)
+                {
+                    _dictionary[name] = existing.ChangeValue(argument);
+                }
+                else
+                {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Can't update the value of an immutable binding.");
+                }
+            }
+        }
+
+        internal void AddVariableDeclarations(ref NodeList<VariableDeclaration> variableDeclarations)
+        {
+            var variableDeclarationsCount = variableDeclarations.Count;
+            for (var i = 0; i < variableDeclarationsCount; i++)
+            {
+                var variableDeclaration = variableDeclarations[i];
+                var declarationsCount = variableDeclaration.Declarations.Count;
+                for (var j = 0; j < declarationsCount; j++)
+                {
+                    var d = variableDeclaration.Declarations[j];
+                    if (d.Id is Identifier id)
+                    {
+                        Key dn = id.Name;
+                        if (!ContainsKey(dn))
+                        {
+                            var binding = new Binding(Undefined, canBeDeleted: false, mutable: true);
+                            _dictionary[dn] = binding;
+                        }
+                    }
+                }
+            }
+        }
+
+        internal static JsValue HandleAssignmentPatternIfNeeded(IFunction functionDeclaration, JsValue jsValue, uint index)
+        {
+            // TODO remove this method, overwrite with above SetFunctionParameter logic
+            if (jsValue.IsUndefined()
+                && index < functionDeclaration?.Params.Count
+                && functionDeclaration.Params[(int) index] is AssignmentPattern ap
+                && ap.Right is Literal l)
+            {
+                return JintLiteralExpression.ConvertToJsValue(l);
+            }
+
+            return jsValue;
+        }
+
+        private sealed class ArrayPatternProtocol : IteratorProtocol
+        {
+            private readonly ArrayInstance _instance;
+            private readonly int _max;
+            private long _index = -1;
+
+            public ArrayPatternProtocol(
+                Engine engine,
+                ArrayInstance instance,
+                IIterator iterator,
+                int max) : base(engine, iterator, 0)
+            {
+                _instance = instance;
+                _max = max;
+            }
+
+            protected override void ProcessItem(JsValue[] args, JsValue currentValue)
+            {
+                _index++;
+                var jsValue = ExtractValueFromIteratorInstance(currentValue);
+                _instance.SetIndexValue((uint) _index, jsValue, updateLength: false);
+            }
+
+            protected override bool ShouldContinue => _index < _max;
+
+            protected override void IterationEnd()
+            {
+                if (_index >= 0)
+                {
+                    _instance.SetLength((uint) _index);
+                    IteratorClose(CompletionType.Normal);
+                }
+            }
         }
     }
 }

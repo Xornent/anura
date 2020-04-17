@@ -1,14 +1,42 @@
-using System;
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
+using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.Interop;
 
-namespace Anura.JavaScript.Runtime.Descriptors.Specialized {
-    public sealed class ClrAccessDescriptor : PropertyDescriptor {
-        public ClrAccessDescriptor (Engine engine, Func<JsValue, JsValue> get) : this (engine, get, null) { }
+namespace Anura.JavaScript.Runtime.Descriptors.Specialized
+{
+    internal sealed class ClrAccessDescriptor : PropertyDescriptor
+    {
+        private readonly EnvironmentRecord _env;
+        private readonly Engine _engine;
+        private readonly Key _name;
 
-        public ClrAccessDescriptor (Engine engine, Func<JsValue, JsValue> get, Action<JsValue, JsValue> set) : base (
-            get: new GetterFunctionInstance (engine, get),
-            set : set == null ? Native.Undefined.Instance : new SetterFunctionInstance (engine, set)
-        ) { }
+        private GetterFunctionInstance _get;
+        private SetterFunctionInstance _set;
+
+        public ClrAccessDescriptor(
+            EnvironmentRecord env,
+            Engine engine,
+            string name)
+            : base(value: null, PropertyFlag.Configurable)
+        {
+            _env = env;
+            _engine = engine;
+            _name = name;
+        }
+
+        public override JsValue Get => _get ??= new GetterFunctionInstance(_engine, DoGet);
+        public override JsValue Set => _set ??= new SetterFunctionInstance(_engine, DoSet);
+
+        private JsValue DoGet(JsValue n)
+        {
+            return _env.TryGetBinding(_name, false, out var binding, out _)
+                ? binding.Value
+                : JsValue.Undefined;
+        }
+
+        private void DoSet(JsValue n, JsValue o)
+        {
+            _env.SetMutableBinding(_name, o, true);
+        }
     }
 }

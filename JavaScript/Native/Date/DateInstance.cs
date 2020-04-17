@@ -1,31 +1,48 @@
-using System;
+﻿using System;
+using System.Globalization;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
 
-namespace Anura.JavaScript.Native.Date {
-    public class DateInstance : ObjectInstance {
+namespace Anura.JavaScript.Native.Date
+{
+    public class DateInstance : ObjectInstance
+    {
         // Maximum allowed value to prevent DateTime overflow
-        internal static readonly double Max = (DateTime.MaxValue - new DateTime (1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+        private static readonly double Max = (DateTime.MaxValue - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
 
         // Minimum allowed value to prevent DateTime overflow
-        internal static readonly double Min = -(new DateTime (1970, 1, 1, 0, 0, 0, DateTimeKind.Utc) - DateTime.MinValue).TotalMilliseconds;
+        private static readonly double Min = -(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc) - DateTime.MinValue).TotalMilliseconds;
 
-        public DateInstance (Engine engine) : base (engine) { }
-
-        public override string Class {
-            get {
-                return "Date";
-            }
+        public DateInstance(Engine engine)
+            : base(engine, ObjectClass.Date)
+        {
+            PrimitiveValue = double.NaN;
         }
 
-        public DateTime ToDateTime () {
-            if (double.IsNaN (PrimitiveValue) || PrimitiveValue > Max || PrimitiveValue < Min) {
-                throw new JavaScriptException (Engine.RangeError);
-            } else {
-                return DateConstructor.Epoch.AddMilliseconds (PrimitiveValue);
-            }
+        public DateTime ToDateTime()
+        {
+            return DateTimeRangeValid 
+                ? DateConstructor.Epoch.AddMilliseconds(PrimitiveValue)
+                : Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError<DateTime>(Engine);
         }
 
         public double PrimitiveValue { get; set; }
+
+        internal bool DateTimeRangeValid => !double.IsNaN(PrimitiveValue) && PrimitiveValue <= Max && PrimitiveValue >= Min;
+
+        public override string ToString()
+        {
+            if (double.IsNaN(PrimitiveValue))
+            {
+                return "NaN";
+            }
+
+            if (double.IsInfinity(PrimitiveValue))
+            {
+                return "Infinity";
+            }
+
+            return ToDateTime().ToString("ddd MMM dd yyyy HH:mm:ss 'GMT'K", CultureInfo.InvariantCulture);
+        }
     }
 }

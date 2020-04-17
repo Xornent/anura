@@ -1,46 +1,63 @@
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Runtime;
+using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
 
-namespace Anura.JavaScript.Native.Boolean {
+namespace Anura.JavaScript.Native.Boolean
+{
     /// <summary>
     ///     http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.4
     /// </summary>
-    public sealed class BooleanPrototype : BooleanInstance {
-        private BooleanPrototype (Engine engine) : base (engine) { }
+    public sealed class BooleanPrototype : BooleanInstance
+    {
+        private BooleanConstructor _booleanConstructor;
 
-        public static BooleanPrototype CreatePrototypeObject (Engine engine, BooleanConstructor booleanConstructor) {
-            var obj = new BooleanPrototype (engine);
-            obj.Prototype = engine.Object.PrototypeObject;
-            obj.PrimitiveValue = false;
-            obj.Extensible = true;
+        private BooleanPrototype(Engine engine) : base(engine)
+        {
+        }
 
-            obj.FastAddProperty ("constructor", booleanConstructor, true, false, true);
+        public static BooleanPrototype CreatePrototypeObject(Engine engine, BooleanConstructor booleanConstructor)
+        {
+            var obj = new BooleanPrototype(engine)
+            {
+                _prototype = engine.Object.PrototypeObject,
+                PrimitiveValue = false,
+                _booleanConstructor = booleanConstructor
+            };
 
             return obj;
         }
 
-        public void Configure () {
-            FastAddProperty ("toString", new ClrFunctionInstance (Engine, ToBooleanString), true, false, true);
-            FastAddProperty ("valueOf", new ClrFunctionInstance (Engine, ValueOf), true, false, true);
+        protected override void Initialize()
+        {
+            var properties = new PropertyDictionary(3, checkExistingKeys: false)
+            {
+                ["constructor"] = new PropertyDescriptor(_booleanConstructor, PropertyFlag.NonEnumerable),
+                ["toString"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "toString", ToBooleanString, 0, PropertyFlag.Configurable), true, false, true),
+                ["valueOf"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "valueOf", ValueOf, 0, PropertyFlag.Configurable), true, false, true)
+            };
+            SetProperties(properties);
         }
 
-        private JsValue ValueOf (JsValue thisObj, JsValue[] arguments) {
-            var B = thisObj;
-            if (B.IsBoolean ()) {
-                return B;
-            } else {
-                var o = B.TryCast<BooleanInstance> ();
-                if (o != null) {
-                    return o.PrimitiveValue;
-                } else {
-                    throw new JavaScriptException (Engine.TypeError);
-                }
+        private JsValue ValueOf(JsValue thisObj, JsValue[] arguments)
+        {
+            if (thisObj._type == InternalTypes.Boolean)
+            {
+                return thisObj;
             }
+
+            if (thisObj is BooleanInstance bi)
+            {
+                return bi.PrimitiveValue;
+            }
+
+            return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(Engine);
         }
 
-        private JsValue ToBooleanString (JsValue thisObj, JsValue[] arguments) {
-            var b = ValueOf (thisObj, Arguments.Empty);
-            return b.AsBoolean () ? "true" : "false";
+        private JsValue ToBooleanString(JsValue thisObj, JsValue[] arguments)
+        {
+            var b = ValueOf(thisObj, Arguments.Empty);
+            return ((JsBoolean) b)._value ? JsString.TrueString : JsString.FalseString;
         }
     }
 }

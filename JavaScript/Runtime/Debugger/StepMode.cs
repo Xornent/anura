@@ -1,5 +1,7 @@
-namespace Anura.JavaScript.Runtime.Debugger {
-    public enum StepMode {
+﻿namespace Anura.JavaScript.Runtime.Debugger
+{
+    public enum StepMode
+    {
         None,
         Over,
         Into,

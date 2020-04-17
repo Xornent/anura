@@ -1,8 +1,10 @@
-using Anura.JavaScript.Runtime;
+﻿using Anura.JavaScript.Runtime;
 
-namespace Anura.JavaScript.Native {
-    public interface IPrimitiveInstance {
-        Types Type { get; }
+namespace Anura.JavaScript.Native
+{
+    public interface IPrimitiveInstance
+    {
+        Types Type { get; } 
         JsValue PrimitiveValue { get; }
     }
 }

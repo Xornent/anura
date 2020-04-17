@@ -1,4 +1,4 @@
-// Copyright 2010 the V8 project authors. All rights reserved.
+﻿// Copyright 2010 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -30,10 +30,12 @@
 
 using System;
 using System.Diagnostics;
+using Anura.JavaScript.Runtime;
 
-namespace Anura.JavaScript.Native.Number.Dtoa {
-    public class FastDtoa {
-
+namespace Anura.JavaScript.Native.Number.Dtoa
+{
+    internal sealed class FastDtoa
+    {
         // FastDtoa will produce at most kFastDtoaMaximalLength digits.
         public const int KFastDtoaMaximalLength = 17;
 
@@ -60,14 +62,16 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
         // Output: returns true if the buffer is guaranteed to contain the closest
         //    representable number to the input.
         //  Modifies the generated digits in the buffer to approach (round towards) w.
-        private static bool RoundWeed (FastDtoaBuilder buffer,
-            long distanceTooHighW,
-            long unsafeInterval,
-            long rest,
-            long tenKappa,
-            long unit) {
-            long smallDistance = distanceTooHighW - unit;
-            long bigDistance = distanceTooHighW + unit;
+        private static bool RoundWeed(
+            DtoaBuilder buffer,
+            ulong distanceTooHighW,
+            ulong unsafeInterval,
+            ulong rest,
+            ulong tenKappa,
+            ulong unit)
+        {
+            ulong smallDistance = distanceTooHighW - unit;
+            ulong bigDistance = distanceTooHighW + unit;
             // Let w_low  = too_high - big_distance, and
             //     w_high = too_high - small_distance.
             // Note: w_low < w < w_high
@@ -138,10 +142,11 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
             // Instead of using the buffer directly we use its distance to too_high.
             // Conceptually rest ~= too_high - buffer
             while (rest < smallDistance && // Negated condition 1
-                unsafeInterval - rest >= tenKappa && // Negated condition 2
-                (rest + tenKappa < smallDistance || // buffer{-1} > w_high
-                    smallDistance - rest >= rest + tenKappa - smallDistance)) {
-                buffer.DecreaseLast ();
+                   unsafeInterval - rest >= tenKappa && // Negated condition 2
+                   (rest + tenKappa < smallDistance || // buffer{-1} > w_high
+                    smallDistance - rest >= rest + tenKappa - smallDistance))
+            {
+                buffer.DecreaseLast();
                 rest += tenKappa;
             }
 
@@ -151,7 +156,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
             if (rest < bigDistance &&
                 unsafeInterval - rest >= tenKappa &&
                 (rest + tenKappa < bigDistance ||
-                    bigDistance - rest > rest + tenKappa - bigDistance)) {
+                 bigDistance - rest > rest + tenKappa - bigDistance))
+            {
                 return false;
             }
 
@@ -160,7 +166,72 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
             //   Since too_low = too_high - unsafe_interval this is equivalent to
             //      [too_high - unsafe_interval + 4 ulp; too_high - 2 ulp]
             //   Conceptually we have: rest ~= too_high - buffer
-            return (2 * unit <= rest) && (rest <= unsafeInterval - 4 * unit);
+            return (2*unit <= rest) && (rest <= unsafeInterval - 4*unit);
+        }
+
+        // Rounds the buffer upwards if the result is closer to v by possibly adding
+        // 1 to the buffer. If the precision of the calculation is not sufficient to
+        // round correctly, return false.
+        // The rounding might shift the whole buffer in which case the kappa is
+        // adjusted. For example "99", kappa = 3 might become "10", kappa = 4.
+        //
+        // If 2*rest > ten_kappa then the buffer needs to be round up.
+        // rest can have an error of +/- 1 unit. This function accounts for the
+        // imprecision and returns false, if the rounding direction cannot be
+        // unambiguously determined.
+        //
+        // Precondition: rest < ten_kappa.
+        static bool RoundWeedCounted(
+            DtoaBuilder buffer,
+            ulong rest,
+            ulong ten_kappa,
+            ulong unit,
+            ref int kappa)
+        {
+            Debug.Assert(rest < ten_kappa);
+            // The following tests are done in a specific order to avoid overflows. They
+            // will work correctly with any uint64 values of rest < ten_kappa and unit.
+            //
+            // If the unit is too big, then we don't know which way to round. For example
+            // a unit of 50 means that the real number lies within rest +/- 50. If
+            // 10^kappa == 40 then there is no way to tell which way to round.
+            if (unit >= ten_kappa) return false;
+            // Even if unit is just half the size of 10^kappa we are already completely
+            // lost. (And after the previous test we know that the expression will not
+            // over/underflow.)
+            if (ten_kappa - unit <= unit) return false;
+            // If 2 * (rest + unit) <= 10^kappa we can safely round down.
+            if ((ten_kappa - rest > rest) && (ten_kappa - 2 * rest >= 2 * unit))
+            {
+                return true;
+            }
+
+            // If 2 * (rest - unit) >= 10^kappa, then we can safely round up.
+            if ((rest > unit) && (ten_kappa - (rest - unit) <= (rest - unit)))
+            {
+                // Increment the last digit recursively until we find a non '9' digit.
+                buffer._chars[buffer.Length - 1]++;
+                for (int i = buffer.Length - 1; i > 0; --i)
+                {
+                    if (buffer._chars[i] != '0' + 10) break;
+                    buffer._chars[i] = '0';
+                    buffer._chars[i - 1]++;
+                }
+
+                // If the first digit is now '0'+ 10 we had a buffer with all '9's. With the
+                // exception of the first digit all digits are now '0'. Simply switch the
+                // first digit to '1' and adjust the kappa. Example: "99" becomes "10" and
+                // the power (the kappa) is increased.
+                if (buffer._chars[0] == '0' + 10)
+                {
+                    buffer._chars[0] = '1';
+                    kappa += 1;
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         private const int KTen4 = 10000;
@@ -175,14 +246,15 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
         // If number_bits == 0 then 0^-1 is returned
         // The number of bits must be <= 32.
         // Precondition: (1 << number_bits) <= number < (1 << (number_bits + 1)).
-        private static long BiggestPowerTen (int number,
-            int numberBits) {
-            int power, exponent;
-            switch (numberBits) {
+        private static void BiggestPowerTen(uint number, int numberBits, out uint power, out int exponent)
+        {
+            switch (numberBits)
+            {
                 case 32:
                 case 31:
                 case 30:
-                    if (KTen9 <= number) {
+                    if (KTen9 <= number)
+                    {
                         power = KTen9;
                         exponent = 9;
                         break;
@@ -192,7 +264,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 29:
                 case 28:
                 case 27:
-                    if (KTen8 <= number) {
+                    if (KTen8 <= number)
+                    {
                         power = KTen8;
                         exponent = 8;
                         break;
@@ -201,7 +274,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 26:
                 case 25:
                 case 24:
-                    if (KTen7 <= number) {
+                    if (KTen7 <= number)
+                    {
                         power = KTen7;
                         exponent = 7;
                         break;
@@ -211,7 +285,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 22:
                 case 21:
                 case 20:
-                    if (KTen6 <= number) {
+                    if (KTen6 <= number)
+                    {
                         power = KTen6;
                         exponent = 6;
                         break;
@@ -220,7 +295,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 19:
                 case 18:
                 case 17:
-                    if (KTen5 <= number) {
+                    if (KTen5 <= number)
+                    {
                         power = KTen5;
                         exponent = 5;
                         break;
@@ -229,7 +305,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 16:
                 case 15:
                 case 14:
-                    if (KTen4 <= number) {
+                    if (KTen4 <= number)
+                    {
                         power = KTen4;
                         exponent = 4;
                         break;
@@ -239,7 +316,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 12:
                 case 11:
                 case 10:
-                    if (1000 <= number) {
+                    if (1000 <= number)
+                    {
                         power = 1000;
                         exponent = 3;
                         break;
@@ -248,7 +326,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 9:
                 case 8:
                 case 7:
-                    if (100 <= number) {
+                    if (100 <= number)
+                    {
                         power = 100;
                         exponent = 2;
                         break;
@@ -257,7 +336,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 6:
                 case 5:
                 case 4:
-                    if (10 <= number) {
+                    if (10 <= number)
+                    {
                         power = 10;
                         exponent = 1;
                         break;
@@ -266,7 +346,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                 case 3:
                 case 2:
                 case 1:
-                    if (1 <= number) {
+                    if (1 <= number)
+                    {
                         power = 1;
                         exponent = 0;
                         break;
@@ -283,7 +364,6 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
                     // UNREACHABLE();
                     break;
             }
-            return ((long) power << 32) | (0xffffffffL & exponent);
         }
 
         // Generates the digits of input number w.
@@ -328,11 +408,14 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
         // represent 'w' we can stop. Everything inside the interval low - high
         // represents w. However we have to pay attention to low, high and w's
         // imprecision.
-        private static bool DigitGen (DiyFp low,
-            DiyFp w,
-            DiyFp high,
-            FastDtoaBuilder buffer,
-            int mk) {
+        private static bool DigitGen(
+            in DiyFp low,
+            in DiyFp w,
+            in DiyFp high,
+            DtoaBuilder buffer,
+            int mk,
+            out int kappa)
+        {
             // low, w and high are imprecise, but by less than one ulp (unit in the last
             // place).
             // If we remove (resp. add) 1 ulp from low (resp. high) we are certain that
@@ -344,12 +427,12 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
             // We will now start by generating the digits within the uncertain
             // interval. Later we will weed out representations that lie outside the safe
             // interval and thus _might_ lie outside the correct interval.
-            long unit = 1;
-            var tooLow = new DiyFp (low.F - unit, low.E);
-            var tooHigh = new DiyFp (high.F + unit, high.E);
+            ulong unit = 1;
+            var tooLow = new DiyFp(low.F - unit, low.E);
+            var tooHigh = new DiyFp(high.F + unit, high.E);
             // too_low and too_high are guaranteed to lie outside the interval we want the
             // generated number in.
-            var unsafeInterval = DiyFp.Minus (tooHigh, tooLow);
+            var unsafeInterval = DiyFp.Minus(tooHigh, tooLow);
             // We now cut the input number into two parts: the integral digits and the
             // fractionals. We will not write any decimal separator though, but adapt
             // kappa instead.
@@ -357,37 +440,44 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
             // such that:   too_low < buffer * 10^kappa < too_high
             // We use too_high for the digit_generation and stop as soon as possible.
             // If we stop early we effectively round down.
-            var one = new DiyFp (1L << -w.E, w.E);
+            var one = new DiyFp(((ulong) 1) << -w.E, w.E);
             // Division by one is a shift.
-            var integrals = (int) (tooHigh.F.UnsignedShift (-one.E) & 0xffffffffL);
+            var integrals = (uint) (tooHigh.F.UnsignedShift(-one.E) & 0xffffffffL);
             // Modulo by one is an and.
-            long fractionals = tooHigh.F & (one.F - 1);
-            long result = BiggestPowerTen (integrals, DiyFp.KSignificandSize - (-one.E));
-            var divider = (int) (result.UnsignedShift (32) & 0xffffffffL);
-            var dividerExponent = (int) (result & 0xffffffffL);
-            var kappa = dividerExponent + 1;
+            ulong fractionals = tooHigh.F & (one.F - 1);
+            BiggestPowerTen(
+                integrals,
+                DiyFp.KSignificandSize - (-one.E),
+                out var divider,
+                out var dividerExponent);
+
+            kappa = dividerExponent + 1;
             // Loop invariant: buffer = too_high / 10^kappa  (integer division)
             // The invariant holds for the first iteration: kappa has been initialized
             // with the divider exponent + 1. And the divider is the biggest power of ten
             // that is smaller than integrals.
-            while (kappa > 0) {
-                int digit = integrals / divider;
-                buffer.Append ((char) ('0' + digit));
+            while (kappa > 0)
+            {
+                int digit = (int) (integrals/divider);
+                buffer.Append((char) ('0' + digit));
                 integrals %= divider;
                 kappa--;
                 // Note that kappa now equals the exponent of the divider and that the
                 // invariant thus holds again.
-                long rest =
-                    ((long) integrals << -one.E) + fractionals;
+                ulong rest = ((ulong) integrals << -one.E) + fractionals;
                 // Invariant: too_high = buffer * 10^kappa + DiyFp(rest, one.e())
                 // Reminder: unsafe_interval.e() == one.e()
-                if (rest < unsafeInterval.F) {
+                if (rest < unsafeInterval.F)
+                {
                     // Rounding down (by not emitting the remaining digits) yields a number
                     // that lies within the unsafe interval.
-                    buffer.Point = buffer.End - mk + kappa;
-                    return RoundWeed (buffer, DiyFp.Minus (tooHigh, w).F,
-                        unsafeInterval.F, rest,
-                        (long) divider << -one.E, unit);
+                    return RoundWeed(
+                        buffer,
+                        DiyFp.Minus(tooHigh, w).F,
+                        unsafeInterval.F,
+                        rest,
+                        (ulong) divider << -one.E,
+                        unit);
                 }
                 divider /= 10;
             }
@@ -406,24 +496,125 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
             //      and we have again fractionals.e == one.e which allows us to divide
             //           fractionals.f() by one.f()
             // We simply combine the *= 10 and the >>= 1.
-            while (true) {
+            while (true)
+            {
                 fractionals *= 5;
                 unit *= 5;
-                unsafeInterval.F = unsafeInterval.F * 5;
-                unsafeInterval.E = unsafeInterval.E + 1; // Will be optimized out.
-                one.F = one.F.UnsignedShift (1);
-                one.E = one.E + 1;
+                unsafeInterval = new DiyFp(unsafeInterval.F*5, unsafeInterval.E + 1); // Will be optimized out.
+                one = new DiyFp(one.F.UnsignedShift(1), one.E + 1);
                 // Integer division by one.
-                var digit = (int) ((fractionals.UnsignedShift (-one.E)) & 0xffffffffL);
-                buffer.Append ((char) ('0' + digit));
+                var digit = (int) ((fractionals.UnsignedShift(-one.E)) & 0xffffffffL);
+                buffer.Append((char) ('0' + digit));
                 fractionals &= one.F - 1; // Modulo by one.
                 kappa--;
-                if (fractionals < unsafeInterval.F) {
-                    buffer.Point = buffer.End - mk + kappa;
-                    return RoundWeed (buffer, DiyFp.Minus (tooHigh, w).F * unit,
-                        unsafeInterval.F, fractionals, one.F, unit);
+                if (fractionals < unsafeInterval.F)
+                {
+                    return RoundWeed(
+                        buffer,
+                        DiyFp.Minus(tooHigh, w).F*unit,
+                        unsafeInterval.F,
+                        fractionals,
+                        one.F,
+                        unit);
                 }
             }
+        }
+
+        // Generates (at most) requested_digits of input number w.
+        // w is a floating-point number (DiyFp), consisting of a significand and an
+        // exponent. Its exponent is bounded by kMinimalTargetExponent and
+        // kMaximalTargetExponent.
+        //       Hence -60 <= w.e() <= -32.
+        //
+        // Returns false if it fails, in which case the generated digits in the buffer
+        // should not be used.
+        // Preconditions:
+        //  * w is correct up to 1 ulp (unit in the last place). That
+        //    is, its error must be strictly less than a unit of its last digit.
+        //  * kMinimalTargetExponent <= w.e() <= kMaximalTargetExponent
+        //
+        // Postconditions: returns false if procedure fails.
+        //   otherwise:
+        //     * buffer is not null-terminated, but length contains the number of
+        //       digits.
+        //     * the representation in buffer is the most precise representation of
+        //       requested_digits digits.
+        //     * buffer contains at most requested_digits digits of w. If there are less
+        //       than requested_digits digits then some trailing '0's have been removed.
+        //     * kappa is such that
+        //            w = buffer * 10^kappa + eps with |eps| < 10^kappa / 2.
+        //
+        // Remark: This procedure takes into account the imprecision of its input
+        //   numbers. If the precision is not enough to guarantee all the postconditions
+        //   then false is returned. This usually happens rarely, but the failure-rate
+        //   increases with higher requested_digits.
+        static bool DigitGenCounted(
+            in DiyFp w,
+            int requested_digits,
+            DtoaBuilder buffer,
+            out int kappa)
+        {
+            Debug.Assert(MinimalTargetExponent <= w.E && w.E <= MaximalTargetExponent);
+
+            // w is assumed to have an error less than 1 unit. Whenever w is scaled we
+            // also scale its error.
+            ulong w_error = 1;
+            // We cut the input number into two parts: the integral digits and the
+            // fractional digits. We don't emit any decimal separator, but adapt kappa
+            // instead. Example: instead of writing "1.2" we put "12" into the buffer and
+            // increase kappa by 1.
+            DiyFp one = new DiyFp(((ulong) 1) << -w.E, w.E);
+            // Division by one is a shift.
+            uint integrals = (uint) (w.F >> -one.E);
+            // Modulo by one is an and.
+            ulong fractionals = w.F & (one.F - 1);
+            BiggestPowerTen(integrals, DiyFp.KSignificandSize - (-one.E), out var divisor, out var divisor_exponent);
+            kappa = divisor_exponent + 1;
+
+            // Loop invariant: buffer = w / 10^kappa  (integer division)
+            // The invariant holds for the first iteration: kappa has been initialized
+            // with the divisor exponent + 1. And the divisor is the biggest power of ten
+            // that is smaller than 'integrals'.
+            while (kappa > 0)
+            {
+                int digit = (int) (integrals / divisor);
+                buffer.Append((char) ('0' + digit));
+                requested_digits--;
+                integrals %= divisor;
+                kappa--;
+                // Note that kappa now equals the exponent of the divisor and that the
+                // invariant thus holds again.
+                if (requested_digits == 0) break;
+                divisor /= 10;
+            }
+
+            if (requested_digits == 0)
+            {
+                ulong rest = (((ulong) integrals) << -one.E) + fractionals;
+                return RoundWeedCounted(buffer, rest,(ulong) divisor << -one.E, w_error, ref kappa);
+            }
+
+          // The integrals have been generated. We are at the point of the decimal
+          // separator. In the following loop we simply multiply the remaining digits by
+          // 10 and divide by one. We just need to pay attention to multiply associated
+          // data (the 'unit'), too.
+          // Note that the multiplication by 10 does not overflow, because w.e >= -60
+          // and thus one.e >= -60.
+          Debug.Assert(one.E >= -60);
+          Debug.Assert(fractionals < one.F);
+
+          while (requested_digits > 0 && fractionals > w_error) {
+            fractionals *= 10;
+            w_error *= 10;
+            // Integer division by one.
+            int digit = (int) (fractionals >> -one.E);
+            buffer.Append((char) ('0' + digit));
+            requested_digits--;
+            fractionals &= one.F - 1;  // Modulo by one.
+            (kappa)--;
+          }
+          if (requested_digits != 0) return false;
+          return RoundWeedCounted(buffer, fractionals, one.F, w_error, ref kappa);
         }
 
         // Provides a decimal representation of v.
@@ -437,23 +628,31 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
         // The last digit will be closest to the actual v. That is, even if several
         // digits might correctly yield 'v' when read again, the closest will be
         // computed.
-        private static bool Grisu3 (double v, FastDtoaBuilder buffer) {
-            long bits = BitConverter.DoubleToInt64Bits (v);
-            DiyFp w = DoubleHelper.AsNormalizedDiyFp (bits);
+        private static bool Grisu3(double v, DtoaBuilder buffer, out int decimal_exponent)
+        {
+            ulong bits = (ulong) BitConverter.DoubleToInt64Bits(v);
+            DiyFp w = DoubleHelper.AsNormalizedDiyFp(bits);
             // boundary_minus and boundary_plus are the boundaries between v and its
             // closest floating-point neighbors. Any number strictly between
             // boundary_minus and boundary_plus will round to v when convert to a double.
             // Grisu3 will never output representations that lie exactly on a boundary.
-            DiyFp boundaryMinus = new DiyFp (), boundaryPlus = new DiyFp ();
-            DoubleHelper.NormalizedBoundaries (bits, boundaryMinus, boundaryPlus);
-            Debug.Assert (boundaryPlus.E == w.E);
-            var tenMk = new DiyFp (); // Cached power of ten: 10^-k
-            int mk = CachedPowers.GetCachedPower (w.E + DiyFp.KSignificandSize,
-                MinimalTargetExponent, MaximalTargetExponent, tenMk);
-            Debug.Assert (MinimalTargetExponent <= w.E + tenMk.E +
-                DiyFp.KSignificandSize &&
-                MaximalTargetExponent >= w.E + tenMk.E +
-                DiyFp.KSignificandSize);
+            var boundaries = DoubleHelper.NormalizedBoundaries(bits);
+            var boundaryMinus = boundaries.Minus;
+            var boundaryPlus = boundaries.Plus;
+
+            Debug.Assert(boundaryPlus.E == w.E);
+
+            var result = CachedPowers.GetCachedPowerForBinaryExponentRange(
+                MinimalTargetExponent - (w.E + DiyFp.KSignificandSize),
+                MaximalTargetExponent - (w.E + DiyFp.KSignificandSize));
+
+            var mk = result.decimalExponent;
+            var tenMk = result.cMk;
+
+            Debug.Assert(MinimalTargetExponent <= w.E + tenMk.E +
+                         DiyFp.KSignificandSize &&
+                         MaximalTargetExponent >= w.E + tenMk.E +
+                         DiyFp.KSignificandSize);
             // Note that ten_mk is only an approximation of 10^-k. A DiyFp only contains a
             // 64 bit significand and ten_mk is thus only precise up to 64 bits.
 
@@ -463,16 +662,16 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
             // In fact: scaled_w - w*10^k < 1ulp (unit in the last place) of scaled_w.
             // In other words: let f = scaled_w.f() and e = scaled_w.e(), then
             //           (f-1) * 2^e < w*10^k < (f+1) * 2^e
-            DiyFp scaledW = DiyFp.Times (w, tenMk);
-            Debug.Assert (scaledW.E ==
-                boundaryPlus.E + tenMk.E + DiyFp.KSignificandSize);
+            DiyFp scaledW = DiyFp.Times(w, tenMk);
+            Debug.Assert(scaledW.E ==
+                         boundaryPlus.E + tenMk.E + DiyFp.KSignificandSize);
             // In theory it would be possible to avoid some recomputations by computing
             // the difference between w and boundary_minus/plus (a power of 2) and to
             // compute scaled_boundary_minus/plus by subtracting/adding from
             // scaled_w. However the code becomes much less readable and the speed
             // enhancements are not terriffic.
-            DiyFp scaledBoundaryMinus = DiyFp.Times (boundaryMinus, tenMk);
-            DiyFp scaledBoundaryPlus = DiyFp.Times (boundaryPlus, tenMk);
+            DiyFp scaledBoundaryMinus = DiyFp.Times(boundaryMinus, tenMk);
+            DiyFp scaledBoundaryPlus = DiyFp.Times(boundaryPlus, tenMk);
 
             // DigitGen will generate the digits of scaled_w. Therefore we have
             // v == (double) (scaled_w * 10^-mk).
@@ -480,29 +679,90 @@ namespace Anura.JavaScript.Native.Number.Dtoa {
             // integer than it will be updated. For instance if scaled_w == 1.23 then
             // the buffer will be filled with "123" und the decimal_exponent will be
             // decreased by 2.
-            return DigitGen (scaledBoundaryMinus, scaledW, scaledBoundaryPlus, buffer, mk);
+            int kappa;
+            var digitGen = DigitGen(scaledBoundaryMinus, scaledW, scaledBoundaryPlus, buffer, mk, out kappa);
+            decimal_exponent = -mk + kappa;
+            return digitGen;
         }
 
-        public static bool Dtoa (double v, FastDtoaBuilder buffer) {
-            Debug.Assert (v > 0);
-            Debug.Assert (!Double.IsNaN (v));
-            Debug.Assert (!Double.IsInfinity (v));
 
-            return Grisu3 (v, buffer);
+        // The "counted" version of grisu3 (see above) only generates requested_digits
+        // number of digits. This version does not generate the shortest representation,
+        // and with enough requested digits 0.1 will at some point print as 0.9999999...
+        // Grisu3 is too imprecise for real halfway cases (1.5 will not work) and
+        // therefore the rounding strategy for halfway cases is irrelevant.
+        static bool Grisu3Counted(
+            double v,
+            int requested_digits,
+            DtoaBuilder buffer,
+            out int decimal_exponent)
+        {
+            ulong bits = (ulong) BitConverter.DoubleToInt64Bits(v);
+            DiyFp w = DoubleHelper.AsNormalizedDiyFp(bits);
+
+            var powerResult = CachedPowers.GetCachedPowerForBinaryExponentRange(
+                MinimalTargetExponent - (w.E + DiyFp.KSignificandSize),
+                MaximalTargetExponent - (w.E + DiyFp.KSignificandSize));
+
+            var mk = powerResult.decimalExponent;
+            var ten_mk = powerResult.cMk;
+            
+            Debug.Assert((MinimalTargetExponent <= w.E + ten_mk.E + DiyFp.KSignificandSize) && (MaximalTargetExponent >= w.E + ten_mk.E + DiyFp.KSignificandSize));
+            // Note that ten_mk is only an approximation of 10^-k. A DiyFp only contains a
+            // 64 bit significand and ten_mk is thus only precise up to 64 bits.
+
+            // The DiyFp::Times procedure rounds its result, and ten_mk is approximated
+            // too. The variable scaled_w (as well as scaled_boundary_minus/plus) are now
+            // off by a small amount.
+            // In fact: scaled_w - w*10^k < 1ulp (unit in the last place) of scaled_w.
+            // In other words: let f = scaled_w.f() and e = scaled_w.e(), then
+            //           (f-1) * 2^e < w*10^k < (f+1) * 2^e
+            DiyFp scaled_w = DiyFp.Times(w, ten_mk);
+
+            // We now have (double) (scaled_w * 10^-mk).
+            // DigitGen will generate the first requested_digits digits of scaled_w and
+            // return together with a kappa such that scaled_w ~= buffer * 10^kappa. (It
+            // will not always be exactly the same since DigitGenCounted only produces a
+            // limited number of digits.)
+            bool result = DigitGenCounted(scaled_w, requested_digits, buffer, out var kappa);
+            decimal_exponent = -mk + kappa;
+            return result;
         }
 
-        public static string NumberToString (double v) {
-            var buffer = new FastDtoaBuilder ();
-            return NumberToString (v, buffer) ? buffer.Format () : null;
-        }
+        public static bool NumberToString(
+            double v,
+            DtoaMode mode,
+            int requested_digits,
+            out int decimal_point,
+            DtoaBuilder buffer)
+        {
+            Debug.Assert(v > 0);
+            Debug.Assert(!double.IsNaN(v));
+            Debug.Assert(!double.IsInfinity(v));
 
-        public static bool NumberToString (double v, FastDtoaBuilder buffer) {
-            buffer.Reset ();
-            if (v < 0) {
-                buffer.Append ('-');
-                v = -v;
+            bool result;
+            int decimal_exponent = 0;
+            switch (mode)
+            {
+                case DtoaMode.Shortest:
+                    result = Grisu3(v, buffer, out decimal_exponent);
+                    break;
+                case DtoaMode.Precision:
+                    result = Grisu3Counted(v, requested_digits, buffer, out decimal_exponent);
+                    break;
+                default:
+                    result = Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException<bool>();
+                    break;
             }
-            return Dtoa (v, buffer);
+
+            if (result)
+            {
+                decimal_point = buffer.Length + decimal_exponent;
+                return true;
+            }
+
+            decimal_point = -1;
+            return false;
         }
     }
 }

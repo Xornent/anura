@@ -1,101 +1,90 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Anura.JavaScript;
-using Anura.JavaScript.Ast;
+﻿using Esprima;
+using Esprima.Ast;
 using Anura.JavaScript.Native.Object;
-using Anura.JavaScript.Native.String;
 using Anura.JavaScript.Runtime;
+using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Environments;
 
-namespace Anura.JavaScript.Native.Function {
-    public sealed class FunctionConstructor : FunctionInstance, IConstructor {
-        private FunctionConstructor (Engine engine) : base (engine, null, null, false) { }
+namespace Anura.JavaScript.Native.Function
+{
+    public sealed class FunctionConstructor : FunctionInstance, IConstructor
+    {
+        private static readonly ParserOptions ParserOptions = new ParserOptions { AdaptRegexp = true, Tolerant = false };
+        private static readonly JsString _functionName = new JsString("Function");
 
-        public static FunctionConstructor CreateFunctionConstructor (Engine engine) {
-            var obj = new FunctionConstructor (engine);
-            obj.Extensible = true;
+        private FunctionInstance _throwTypeError;
+        private static readonly char[] ArgumentNameSeparator = new[] { ',' };
+
+        private FunctionConstructor(Engine engine)
+            : base(engine, _functionName, strict: false)
+        {
+        }
+
+        public static FunctionConstructor CreateFunctionConstructor(Engine engine)
+        {
+            var obj = new FunctionConstructor(engine)
+            {
+                PrototypeObject = FunctionPrototype.CreatePrototypeObject(engine)
+            };
 
             // The initial value of Function.prototype is the standard built-in Function prototype object
-            obj.PrototypeObject = FunctionPrototype.CreatePrototypeObject (engine);
 
-            // The value of the [[Prototype]] internal property of the Function constructor is the standard built-in Function prototype object 
-            obj.Prototype = obj.PrototypeObject;
+            // The value of the [[Prototype]] internal property of the Function constructor is the standard built-in Function prototype object
+            obj._prototype = obj.PrototypeObject;
 
-            obj.FastAddProperty ("prototype", obj.PrototypeObject, false, false, false);
-
-            obj.FastAddProperty ("length", 1, false, false, false);
+            obj._prototypeDescriptor = new PropertyDescriptor(obj.PrototypeObject, PropertyFlag.AllForbidden);
+            obj._length = new PropertyDescriptor(JsNumber.One, PropertyFlag.Configurable);
 
             return obj;
         }
 
-        public void Configure () {
-
-        }
-
         public FunctionPrototype PrototypeObject { get; private set; }
 
-        public override JsValue Call (JsValue thisObject, JsValue[] arguments) {
-            return Construct (arguments);
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
+        {
+            return Construct(arguments, thisObject);
         }
 
-        private string[] ParseArgumentNames (string parameterDeclaration) {
-            string[] values = parameterDeclaration.Split (new [] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            var newValues = new string[values.Length];
-            for (var i = 0; i < values.Length; i++) {
-                newValues[i] = StringPrototype.TrimEx (values[i]);
-            }
-            return newValues;
-        }
-
-        public ObjectInstance Construct (JsValue[] arguments) {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
+        {
             var argCount = arguments.Length;
             string p = "";
             string body = "";
 
-            if (argCount == 1) {
-                body = TypeConverter.ToString (arguments[0]);
-            } else if (argCount > 1) {
+            if (argCount == 1)
+            {
+                body = TypeConverter.ToString(arguments[0]);
+            }
+            else if (argCount > 1)
+            {
                 var firstArg = arguments[0];
-                p = TypeConverter.ToString (firstArg);
-                for (var k = 1; k < argCount - 1; k++) {
+                p = TypeConverter.ToString(firstArg);
+                for (var k = 1; k < argCount - 1; k++)
+                {
                     var nextArg = arguments[k];
-                    p += "," + TypeConverter.ToString (nextArg);
+                    p += "," + TypeConverter.ToString(nextArg);
                 }
 
-                body = TypeConverter.ToString (arguments[argCount - 1]);
+                body = TypeConverter.ToString(arguments[argCount-1]);
             }
 
-            var parameters = this.ParseArgumentNames (p);
-            var parser = new JavaScriptParser ();
-            FunctionExpression function;
-            try {
-                var functionExpression = "function(" + p + ") { " + body + "}";
-                function = parser.ParseFunctionExpression (functionExpression);
-            } catch (ParserException) {
-                throw new JavaScriptException (Engine.SyntaxError);
+            IFunction function;
+            try
+            {
+                var functionExpression = "function f(" + p + ") { " + body + "}";
+                var parser = new JavaScriptParser(functionExpression, ParserOptions);
+                function = (IFunction) parser.ParseScript().Body[0];
+            }
+            catch (ParserException)
+            {
+                return Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError<ObjectInstance>(_engine);
             }
 
-            // todo: check if there is not a way to use the FunctionExpression directly instead of creating a FunctionDeclaration
-            var functionObject = new ScriptFunctionInstance (
+            var functionObject = new ScriptFunctionInstance(
                 Engine,
-                new FunctionDeclaration {
-                    Type = SyntaxNodes.FunctionDeclaration,
-                        Body = new BlockStatement {
-                            Type = SyntaxNodes.BlockStatement,
-                                Body = new [] { function.Body }
-                        },
-                        Parameters = parameters.Select (x => new Identifier {
-                            Type = SyntaxNodes.Identifier,
-                                Name = x
-                        }).ToArray (),
-                        FunctionDeclarations = function.FunctionDeclarations,
-                        VariableDeclarations = function.VariableDeclarations
-                },
-                LexicalEnvironment.NewDeclarativeEnvironment (Engine, Engine.ExecutionContext.LexicalEnvironment),
-                function.Strict
-            ) { Extensible = true };
+                function,
+                LexicalEnvironment.NewDeclarativeEnvironment(Engine, Engine.ExecutionContext.LexicalEnvironment),
+                function.Strict);
 
             return functionObject;
 
@@ -106,61 +95,68 @@ namespace Anura.JavaScript.Native.Function {
         /// </summary>
         /// <param name="functionDeclaration"></param>
         /// <returns></returns>
-        public FunctionInstance CreateFunctionObject (FunctionDeclaration functionDeclaration) {
-            var functionObject = new ScriptFunctionInstance (
+        public FunctionInstance CreateFunctionObject(IFunctionDeclaration functionDeclaration)
+        {
+            var functionObject = new ScriptFunctionInstance(
                 Engine,
                 functionDeclaration,
-                LexicalEnvironment.NewDeclarativeEnvironment (Engine, Engine.ExecutionContext.LexicalEnvironment),
-                functionDeclaration.Strict
-            ) { Extensible = true };
+                LexicalEnvironment.NewDeclarativeEnvironment(Engine, Engine.ExecutionContext.LexicalEnvironment),
+                functionDeclaration.Strict);
 
             return functionObject;
         }
 
-        private FunctionInstance _throwTypeError;
-
-        public FunctionInstance ThrowTypeError {
-            get {
-                if (_throwTypeError != null) {
+        public FunctionInstance ThrowTypeError
+        {
+            get
+            {
+                if (!ReferenceEquals(_throwTypeError, null))
+                {
                     return _throwTypeError;
                 }
 
-                _throwTypeError = new ThrowTypeError (Engine);
+                _throwTypeError = new ThrowTypeError(Engine);
                 return _throwTypeError;
             }
         }
 
-        public object Apply (JsValue thisObject, JsValue[] arguments) {
-            if (arguments.Length != 2) {
-                throw new ArgumentException ("Apply has to be called with two arguments.");
+        public object Apply(JsValue thisObject, JsValue[] arguments)
+        {
+            if (arguments.Length != 2)
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("Apply has to be called with two arguments.");
             }
 
-            var func = thisObject.TryCast<ICallable> ();
+            var func = thisObject.TryCast<ICallable>();
             var thisArg = arguments[0];
             var argArray = arguments[1];
 
-            if (func == null) {
-                throw new JavaScriptException (Engine.TypeError);
+            if (func is null)
+            {
+                return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<object>(Engine);
             }
 
-            if (argArray == Null.Instance || argArray == Undefined.Instance) {
-                return func.Call (thisArg, Arguments.Empty);
+            if (argArray.IsNullOrUndefined())
+            {
+                return func.Call(thisArg, Arguments.Empty);
             }
 
-            var argArrayObj = argArray.TryCast<ObjectInstance> ();
-            if (argArrayObj == null) {
-                throw new JavaScriptException (Engine.TypeError);
+            var argArrayObj = argArray.TryCast<ObjectInstance>();
+            if (ReferenceEquals(argArrayObj, null))
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
-            var len = argArrayObj.Get ("length");
-            var n = TypeConverter.ToUint32 (len);
-            var argList = new List<JsValue> ();
-            for (var index = 0; index < n; index++) {
-                var indexName = index.ToString ();
-                var nextArg = argArrayObj.Get (indexName);
-                argList.Add (nextArg);
+            var len = argArrayObj.Get(CommonProperties.Length, argArrayObj);
+            var n = TypeConverter.ToUint32(len);
+            var argList = new JsValue[n];
+            for (var index = 0; index < n; index++)
+            {
+                var indexName = TypeConverter.ToString(index);
+                var nextArg = argArrayObj.Get(JsString.Create(indexName), argArrayObj);
+                argList[index] = nextArg;
             }
-            return func.Call (thisArg, argList.ToArray ());
+            return func.Call(thisArg, argList);
         }
     }
 }

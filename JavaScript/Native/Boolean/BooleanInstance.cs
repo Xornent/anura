@@ -1,23 +1,18 @@
-using Anura.JavaScript.Native.Object;
+﻿using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
 
-namespace Anura.JavaScript.Native.Boolean {
-    public class BooleanInstance : ObjectInstance, IPrimitiveInstance {
-        public BooleanInstance (Engine engine) : base (engine) { }
-
-        public override string Class {
-            get {
-                return "Boolean";
-            }
+namespace Anura.JavaScript.Native.Boolean
+{
+    public class BooleanInstance : ObjectInstance, IPrimitiveInstance
+    {
+        public BooleanInstance(Engine engine)
+            : base(engine, ObjectClass.Boolean)
+        {
         }
 
-        Types IPrimitiveInstance.Type {
-            get { return Types.Boolean; }
-        }
+        Types IPrimitiveInstance.Type => Types.Boolean;
 
-        JsValue IPrimitiveInstance.PrimitiveValue {
-            get { return PrimitiveValue; }
-        }
+        JsValue IPrimitiveInstance.PrimitiveValue => PrimitiveValue;
 
         public JsValue PrimitiveValue { get; set; }
     }

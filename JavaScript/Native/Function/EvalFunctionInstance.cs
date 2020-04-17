@@ -1,68 +1,107 @@
-using Anura.JavaScript;
+﻿using Esprima;
 using Anura.JavaScript.Runtime;
+using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Environments;
+using Anura.JavaScript.Runtime.Interpreter.Statements;
 
-namespace Anura.JavaScript.Native.Function {
-    public class EvalFunctionInstance : FunctionInstance {
-        private readonly Engine _engine;
+namespace Anura.JavaScript.Native.Function
+{
+    public sealed class EvalFunctionInstance : FunctionInstance
+    {
+        private static readonly ParserOptions ParserOptions = new ParserOptions { AdaptRegexp = true, Tolerant = false };
+        private static readonly JsString _functionName = new JsString("eval");
 
-        public EvalFunctionInstance (Engine engine, string[] parameters, LexicalEnvironment scope, bool strict) : base (engine, parameters, scope, strict) {
-            _engine = engine;
-            Prototype = Engine.Function.PrototypeObject;
-            FastAddProperty ("length", 1, false, false, false);
+        public EvalFunctionInstance(Engine engine, string[] parameters, LexicalEnvironment scope, bool strict) 
+            : base(engine, _functionName, parameters, scope, strict)
+        {
+            _prototype = Engine.Function.PrototypeObject;
+            _length = PropertyDescriptor.AllForbiddenDescriptor.NumberOne;
         }
 
-        public override JsValue Call (JsValue thisObject, JsValue[] arguments) {
-            return Call (thisObject, arguments, false);
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
+        {
+            return Call(thisObject, arguments, false);
         }
 
-        public JsValue Call (JsValue thisObject, JsValue[] arguments, bool directCall) {
-            if (arguments.At (0).Type != Types.String) {
-                return arguments.At (0);
+        public JsValue Call(JsValue thisObject, JsValue[] arguments, bool directCall)
+        {
+            var arg = arguments.At(0);
+            if (arg.Type != Types.String)
+            {
+                return arg;
             }
 
-            var code = TypeConverter.ToString (arguments.At (0));
+            var code = TypeConverter.ToString(arg);
 
-            try {
-                var parser = new JavaScriptParser (StrictModeScope.IsStrictModeCode);
-                var program = parser.Parse (code);
-                using (new StrictModeScope (program.Strict)) {
-                    using (new EvalCodeScope ()) {
+            try
+            {
+                var parser = new JavaScriptParser(code, ParserOptions);
+                var program = parser.ParseScript(StrictModeScope.IsStrictModeCode);
+                using (new StrictModeScope(program.Strict))
+                {
+                    using (new EvalCodeScope())
+                    {
                         LexicalEnvironment strictVarEnv = null;
 
-                        try {
-                            if (!directCall) {
-                                Engine.EnterExecutionContext (Engine.GlobalEnvironment, Engine.GlobalEnvironment, Engine.Global);
+                        try
+                        {
+                            if (!directCall)
+                            {
+                                Engine.EnterExecutionContext(Engine.GlobalEnvironment, Engine.GlobalEnvironment, Engine.Global);
                             }
 
-                            if (StrictModeScope.IsStrictModeCode) {
-                                strictVarEnv = LexicalEnvironment.NewDeclarativeEnvironment (Engine, Engine.ExecutionContext.LexicalEnvironment);
-                                Engine.EnterExecutionContext (strictVarEnv, strictVarEnv, Engine.ExecutionContext.ThisBinding);
+                            var lexicalEnvironment = _engine.ExecutionContext.LexicalEnvironment;
+                            if (StrictModeScope.IsStrictModeCode)
+                            {
+                                strictVarEnv = LexicalEnvironment.NewDeclarativeEnvironment(Engine, lexicalEnvironment);
+                                Engine.EnterExecutionContext(strictVarEnv, strictVarEnv, Engine.ExecutionContext.ThisBinding);
                             }
 
-                            Engine.DeclarationBindingInstantiation (DeclarationBindingType.EvalCode, program.FunctionDeclarations, program.VariableDeclarations, this, arguments);
+                            var argumentsInstance = Engine.DeclarationBindingInstantiation(
+                                DeclarationBindingType.EvalCode,
+                                program.HoistingScope,
+                                functionInstance: this,
+                                arguments);
 
-                            var result = _engine.ExecuteStatement (program);
+                            var statement = JintStatement.Build(_engine, program);
+                            var result = statement.Execute();
+                            var value = result.GetValueOrDefault();
 
-                            if (result.Type == Completion.Throw) {
-                                throw new JavaScriptException (result.GetValueOrDefault ())
-                                    .SetCallstack (_engine, result.Location);
-                            } else {
-                                return result.GetValueOrDefault ();
+                            argumentsInstance?.FunctionWasCalled();
+
+                            if (result.Type == CompletionType.Throw)
+                            {
+                                var ex = new JavaScriptException(value).SetCallstack(_engine, result.Location);
+                                throw ex;
                             }
-                        } finally {
-                            if (strictVarEnv != null) {
-                                Engine.LeaveExecutionContext ();
+                            else
+                            {
+                                return value;
+                            }
+                        }
+                        finally
+                        {
+                            if (strictVarEnv != null)
+                            {
+                                Engine.LeaveExecutionContext();
                             }
 
-                            if (!directCall) {
-                                Engine.LeaveExecutionContext ();
+                            if (!directCall)
+                            {
+                                Engine.LeaveExecutionContext();
                             }
                         }
                     }
                 }
-            } catch (ParserException) {
-                throw new JavaScriptException (Engine.SyntaxError);
+            }
+            catch (ParserException e)
+            {
+                if (e.Description == Messages.InvalidLHSInAssignment)
+                {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowReferenceError(_engine, (string) null);
+                }
+
+                return Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError<JsValue>(_engine);
             }
         }
     }

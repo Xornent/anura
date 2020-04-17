@@ -1,117 +1,127 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using Anura.JavaScript.Native;
-using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Function;
 
-namespace Anura.JavaScript.Runtime.Interop {
-    public sealed class MethodInfoFunctionInstance : FunctionInstance {
+namespace Anura.JavaScript.Runtime.Interop
+{
+    public sealed class MethodInfoFunctionInstance : FunctionInstance
+    {
         private readonly MethodInfo[] _methods;
 
-        public MethodInfoFunctionInstance (Engine engine, MethodInfo[] methods) : base (engine, null, null, false) {
+        public MethodInfoFunctionInstance(Engine engine, MethodInfo[] methods)
+            : base(engine, "Function", null, null, false)
+        {
             _methods = methods;
-            Prototype = engine.Function.PrototypeObject;
+            _prototype = engine.Function.PrototypeObject;
         }
 
-        public override JsValue Call (JsValue thisObject, JsValue[] arguments) {
-            return Invoke (_methods, thisObject, arguments);
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
+        {
+            return Invoke(_methods, thisObject, arguments);
         }
 
-        public JsValue Invoke (MethodInfo[] methodInfos, JsValue thisObject, JsValue[] jsArguments) {
-            var arguments = ProcessParamsArrays (jsArguments, methodInfos);
-            var methods = TypeConverter.FindBestMatch (Engine, methodInfos, arguments).ToList ();
+        public JsValue Invoke(MethodInfo[] methodInfos, JsValue thisObject, JsValue[] jsArguments)
+        {
+            JsValue[] ArgumentProvider(MethodInfo method, bool hasParams) =>
+                hasParams
+                    ? ProcessParamsArrays(jsArguments, method)
+                    : jsArguments;
+
             var converter = Engine.ClrTypeConverter;
 
-            foreach (var method in methods) {
+            foreach (var tuple in TypeConverter.FindBestMatch(_engine, methodInfos, ArgumentProvider))
+            {
+                var method = tuple.Item1;
+                var arguments = tuple.Item2;
+
                 var parameters = new object[arguments.Length];
+                var methodParameters = method.GetParameters();
                 var argumentsMatch = true;
 
-                for (var i = 0; i < arguments.Length; i++) {
-                    var parameterType = method.GetParameters () [i].ParameterType;
+                for (var i = 0; i < arguments.Length; i++)
+                {
+                    var parameterType = methodParameters[i].ParameterType;
 
-                    if (parameterType == typeof (JsValue)) {
+                    if (typeof(JsValue).IsAssignableFrom(parameterType))
+                    {
                         parameters[i] = arguments[i];
-                    } else if (parameterType == typeof (JsValue[]) && arguments[i].IsArray ()) {
+                    }
+                    else if (parameterType == typeof(JsValue[]) && arguments[i].IsArray())
+                    {
                         // Handle specific case of F(params JsValue[])
 
-                        var arrayInstance = arguments[i].AsArray ();
-                        var len = TypeConverter.ToInt32 (arrayInstance.Get ("length"));
+                        var arrayInstance = arguments[i].AsArray();
+                        var len = TypeConverter.ToInt32(arrayInstance.Get(CommonProperties.Length, this));
                         var result = new JsValue[len];
-                        for (var k = 0; k < len; k++) {
-                            var pk = k.ToString ();
-                            result[k] = arrayInstance.HasProperty (pk) ?
-                                arrayInstance.Get (pk) :
-                                JsValue.Undefined;
+                        for (uint k = 0; k < len; k++)
+                        {
+                            result[k] = arrayInstance.TryGetValue(k, out var value) ? value : Undefined;
                         }
-
                         parameters[i] = result;
-                    } else {
-                        if (!converter.TryConvert (arguments[i].ToObject (), parameterType, CultureInfo.InvariantCulture, out parameters[i])) {
+                    }
+                    else
+                    {
+                        if (!converter.TryConvert(arguments[i].ToObject(), parameterType, CultureInfo.InvariantCulture, out parameters[i]))
+                        {
                             argumentsMatch = false;
                             break;
                         }
 
-                        var lambdaExpression = parameters[i] as LambdaExpression;
-                        if (lambdaExpression != null) {
-                            parameters[i] = lambdaExpression.Compile ();
+                        if (parameters[i] is LambdaExpression lambdaExpression)
+                        {
+                            parameters[i] = lambdaExpression.Compile();
                         }
                     }
                 }
 
-                if (!argumentsMatch) {
+                if (!argumentsMatch)
+                {
                     continue;
                 }
 
                 // todo: cache method info
-                try {
-                    return JsValue.FromObject (Engine, method.Invoke (thisObject.ToObject (), parameters.ToArray ()));
-                } catch (TargetInvocationException exception) {
-                    var meaningfulException = exception.InnerException ?? exception;
-                    var handler = Engine.Options._ClrExceptionsHandler;
-
-                    if (handler != null && handler (meaningfulException)) {
-                        throw new JavaScriptException (Engine.Error, meaningfulException.Message);
-                    }
-
-                    throw meaningfulException;
+                try
+                {
+                    return FromObject(Engine, method.Invoke(thisObject.ToObject(), parameters));
+                }
+                catch (TargetInvocationException exception)
+                {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowMeaningfulException(_engine, exception);
                 }
             }
 
-            throw new JavaScriptException (Engine.TypeError, "No public methods with the specified arguments were found.");
+            return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "No public methods with the specified arguments were found.");
         }
 
         /// <summary>
-        /// Reduces a flat list of parameters to a params array
+        /// Reduces a flat list of parameters to a params array, if needed
         /// </summary>
-        private JsValue[] ProcessParamsArrays (JsValue[] jsArguments, IEnumerable<MethodInfo> methodInfos) {
-            foreach (var methodInfo in methodInfos) {
-                var parameters = methodInfo.GetParameters ();
-                if (!parameters.Any (p => p.HasAttribute<ParamArrayAttribute> ()))
-                    continue;
+        private JsValue[] ProcessParamsArrays(JsValue[] jsArguments, MethodInfo methodInfo)
+        {
+            var parameters = methodInfo.GetParameters();
 
-                var nonParamsArgumentsCount = parameters.Length - 1;
-                if (jsArguments.Length < nonParamsArgumentsCount)
-                    continue;
+            var nonParamsArgumentsCount = parameters.Length - 1;
+            if (jsArguments.Length < nonParamsArgumentsCount)
+                return jsArguments;
 
-                var newArgumentsCollection = jsArguments.Take (nonParamsArgumentsCount).ToList ();
-                var argsToTransform = jsArguments.Skip (nonParamsArgumentsCount).ToList ();
+            var argsToTransform = jsArguments.Skip(nonParamsArgumentsCount);
 
-                if (argsToTransform.Count == 1 && argsToTransform.FirstOrDefault ().IsArray ())
-                    continue;
+            if (argsToTransform.Length == 1 && argsToTransform[0].IsArray())
+                return jsArguments;
 
-                var jsArray = Engine.Array.Construct (Arguments.Empty);
-                Engine.Array.PrototypeObject.Push (jsArray, argsToTransform.ToArray ());
+            var jsArray = Engine.Array.Construct(Arguments.Empty);
+            Engine.Array.PrototypeObject.Push(jsArray, argsToTransform);
 
-                newArgumentsCollection.Add (new JsValue (jsArray));
-                return newArgumentsCollection.ToArray ();
+            var newArgumentsCollection = new JsValue[nonParamsArgumentsCount + 1];
+            for (var j = 0; j < nonParamsArgumentsCount; ++j)
+            {
+                newArgumentsCollection[j] = jsArguments[j];
             }
 
-            return jsArguments;
+            newArgumentsCollection[nonParamsArgumentsCount] = jsArray;
+            return newArgumentsCollection;
         }
-
     }
 }

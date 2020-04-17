@@ -1,16 +1,21 @@
-namespace Anura.JavaScript.Runtime.Debugger {
-    public class BreakPoint {
-        public int Line { get; set; }
-        public int Char { get; set; }
-        public string Condition { get; set; }
-
-        public BreakPoint (int line, int character) {
+﻿namespace Anura.JavaScript.Runtime.Debugger
+{
+    public sealed class BreakPoint
+    {
+        public BreakPoint(int line, int character)
+        {
             Line = line;
             Char = character;
         }
 
-        public BreakPoint (int line, int character, string condition) : this (line, character) {
+        public BreakPoint(int line, int character, string condition)
+            : this(line, character)
+        {
             Condition = condition;
         }
+
+        public int Line { get; }
+        public int Char { get; }
+        public string Condition { get; }
     }
 }

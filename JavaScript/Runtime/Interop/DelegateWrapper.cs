@@ -1,91 +1,127 @@
 using System;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Function;
 
-namespace Anura.JavaScript.Runtime.Interop {
+namespace Anura.JavaScript.Runtime.Interop
+{
     /// <summary>
     /// Represents a FunctionInstance wrapper around a CLR method. This is used by user to pass
     /// custom methods to the engine.
     /// </summary>
-    public sealed class DelegateWrapper : FunctionInstance {
+    public sealed class DelegateWrapper : FunctionInstance
+    {
         private readonly Delegate _d;
+        private readonly bool _delegateContainsParamsArgument;
 
-        public DelegateWrapper (Engine engine, Delegate d) : base (engine, null, null, false) {
+        public DelegateWrapper(Engine engine, Delegate d)
+            : base(engine, "delegate", null, null, false)
+        {
             _d = d;
-            Prototype = engine.Function.PrototypeObject;
+            _prototype = engine.Function.PrototypeObject;
+
+            var parameterInfos = _d.Method.GetParameters();
+
+            _delegateContainsParamsArgument = false;
+            foreach (var p in parameterInfos)
+            {
+                if (Attribute.IsDefined(p, typeof(ParamArrayAttribute)))
+                {
+                    _delegateContainsParamsArgument = true;
+                    break;
+                }
+            }
         }
 
-        public override JsValue Call (JsValue thisObject, JsValue[] jsArguments) {
-            var parameterInfos = _d.GetMethodInfo ().GetParameters ();
+        public override JsValue Call(JsValue thisObject, JsValue[] jsArguments)
+        {
+            var parameterInfos = _d.Method.GetParameters();
 
-            bool delegateContainsParamsArgument = parameterInfos.Any (p => p.HasAttribute<ParamArrayAttribute> ());
+#if NETFRAMEWORK
+            if (parameterInfos.Length > 0 && parameterInfos[0].ParameterType == typeof(System.Runtime.CompilerServices.Closure))
+            {
+                var reducedLength = parameterInfos.Length - 1;
+                var reducedParameterInfos = new ParameterInfo[reducedLength];
+                Array.Copy(parameterInfos, 1, reducedParameterInfos, 0, reducedLength);
+                parameterInfos = reducedParameterInfos;
+            }
+#endif
+
             int delegateArgumentsCount = parameterInfos.Length;
-            int delegateNonParamsArgumentsCount = delegateContainsParamsArgument ? delegateArgumentsCount - 1 : delegateArgumentsCount;
+            int delegateNonParamsArgumentsCount = _delegateContainsParamsArgument ? delegateArgumentsCount - 1 : delegateArgumentsCount;
 
             int jsArgumentsCount = jsArguments.Length;
-            int jsArgumentsWithoutParamsCount = Math.Min (jsArgumentsCount, delegateNonParamsArgumentsCount);
+            int jsArgumentsWithoutParamsCount = Math.Min(jsArgumentsCount, delegateNonParamsArgumentsCount);
 
             var parameters = new object[delegateArgumentsCount];
 
             // convert non params parameter to expected types
-            for (var i = 0; i < jsArgumentsWithoutParamsCount; i++) {
+            for (var i = 0; i < jsArgumentsWithoutParamsCount; i++)
+            {
                 var parameterType = parameterInfos[i].ParameterType;
 
-                if (parameterType == typeof (JsValue)) {
+                if (parameterType == typeof(JsValue))
+                {
                     parameters[i] = jsArguments[i];
-                } else {
-                    parameters[i] = Engine.ClrTypeConverter.Convert (
-                        jsArguments[i].ToObject (),
+                }
+                else
+                {
+                    parameters[i] = Engine.ClrTypeConverter.Convert(
+                        jsArguments[i].ToObject(),
                         parameterType,
                         CultureInfo.InvariantCulture);
                 }
             }
 
             // assign null to parameters not provided
-            for (var i = jsArgumentsWithoutParamsCount; i < delegateNonParamsArgumentsCount; i++) {
-                if (parameterInfos[i].ParameterType.IsValueType ()) {
-                    parameters[i] = Activator.CreateInstance (parameterInfos[i].ParameterType);
-                } else {
+            for (var i = jsArgumentsWithoutParamsCount; i < delegateNonParamsArgumentsCount; i++)
+            {
+                if (parameterInfos[i].ParameterType.IsValueType)
+                {
+                    parameters[i] = Activator.CreateInstance(parameterInfos[i].ParameterType);
+                }
+                else
+                {
                     parameters[i] = null;
                 }
             }
 
             // assign params to array and converts each objet to expected type
-            if (delegateContainsParamsArgument) {
+            if (_delegateContainsParamsArgument)
+            {
                 int paramsArgumentIndex = delegateArgumentsCount - 1;
-                int paramsCount = Math.Max (0, jsArgumentsCount - delegateNonParamsArgumentsCount);
+                int paramsCount = Math.Max(0, jsArgumentsCount - delegateNonParamsArgumentsCount);
 
                 object[] paramsParameter = new object[paramsCount];
-                var paramsParameterType = parameterInfos[paramsArgumentIndex].ParameterType.GetElementType ();
+                var paramsParameterType = parameterInfos[paramsArgumentIndex].ParameterType.GetElementType();
 
-                for (var i = paramsArgumentIndex; i < jsArgumentsCount; i++) {
+                for (var i = paramsArgumentIndex; i < jsArgumentsCount; i++)
+                {
                     var paramsIndex = i - paramsArgumentIndex;
 
-                    if (paramsParameterType == typeof (JsValue)) {
+                    if (paramsParameterType == typeof(JsValue))
+                    {
                         paramsParameter[paramsIndex] = jsArguments[i];
-                    } else {
-                        paramsParameter[paramsIndex] = Engine.ClrTypeConverter.Convert (
-                            jsArguments[i].ToObject (),
+                    }
+                    else
+                    {
+                        paramsParameter[paramsIndex] = Engine.ClrTypeConverter.Convert(
+                            jsArguments[i].ToObject(),
                             paramsParameterType,
                             CultureInfo.InvariantCulture);
                     }
                 }
                 parameters[paramsArgumentIndex] = paramsParameter;
             }
-            try {
-                return JsValue.FromObject (Engine, _d.DynamicInvoke (parameters));
-            } catch (TargetInvocationException exception) {
-                var meaningfulException = exception.InnerException ?? exception;
-                var handler = Engine.Options._ClrExceptionsHandler;
-
-                if (handler != null && handler (meaningfulException)) {
-                    throw new JavaScriptException (Engine.Error, meaningfulException.Message);
-                }
-
-                throw meaningfulException;
+            try
+            {
+                return FromObject(Engine, _d.DynamicInvoke(parameters));
+            }
+            catch (TargetInvocationException exception)
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowMeaningfulException(_engine, exception);
+                throw;
             }
         }
     }

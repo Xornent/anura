@@ -1,52 +1,79 @@
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
+using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
 
-namespace Anura.JavaScript.Native.Error {
+namespace Anura.JavaScript.Native.Error
+{
     /// <summary>
     /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.11.4
     /// </summary>
-    public sealed class ErrorPrototype : ErrorInstance {
-        private ErrorPrototype (Engine engine, string name) : base (engine, name) { }
+    public sealed class ErrorPrototype : ErrorInstance
+    {
+        private ErrorConstructor _errorConstructor;
 
-        public static ErrorPrototype CreatePrototypeObject (Engine engine, ErrorConstructor errorConstructor, string name) {
-            var obj = new ErrorPrototype (engine, name) { Extensible = true };
-            obj.FastAddProperty ("constructor", errorConstructor, true, false, true);
-            obj.FastAddProperty ("message", "", true, false, true);
+        private ErrorPrototype(Engine engine, JsString name)
+            : base(engine, name)
+        {
+        }
 
-            if (name != "Error") {
-                obj.Prototype = engine.Error.PrototypeObject;
-            } else {
-                obj.Prototype = engine.Object.PrototypeObject;
+        public static ErrorPrototype CreatePrototypeObject(Engine engine, ErrorConstructor errorConstructor, JsString name)
+        {
+            var obj = new ErrorPrototype(engine, name)
+            {
+                _errorConstructor = errorConstructor,
+            };
+
+            if (name._value != "Error")
+            {
+                obj._prototype = engine.Error.PrototypeObject;
+            }
+            else
+            {
+                obj._prototype = engine.Object.PrototypeObject;
             }
 
             return obj;
         }
 
-        public void Configure () {
-            // Error prototype functions
-            FastAddProperty ("toString", new ClrFunctionInstance (Engine, ToString), true, false, true);
+        protected override void Initialize()
+        {
+            var properties = new PropertyDictionary(3, checkExistingKeys: false)
+            {
+                ["constructor"] = new PropertyDescriptor(_errorConstructor, PropertyFlag.NonEnumerable),
+                ["message"] = new PropertyDescriptor("", PropertyFlag.Configurable | PropertyFlag.Writable),
+                ["toString"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "toString", ToString), PropertyFlag.Configurable | PropertyFlag.Writable)
+            };
+            SetProperties(properties);
         }
 
-        public JsValue ToString (JsValue thisObject, JsValue[] arguments) {
-            var o = thisObject.TryCast<ObjectInstance> ();
-            if (o == null) {
-                throw new JavaScriptException (Engine.TypeError);
+        public JsValue ToString(JsValue thisObject, JsValue[] arguments)
+        {
+            var o = thisObject.TryCast<ObjectInstance>();
+            if (ReferenceEquals(o, null))
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
-            var name = TypeConverter.ToString (o.Get ("name"));
+            var name = TypeConverter.ToString(o.Get("name", this));
 
-            var msgProp = o.Get ("message");
+            var msgProp = o.Get("message", this);
             string msg;
-            if (msgProp == Undefined.Instance) {
+            if (msgProp.IsUndefined())
+            {
                 msg = "";
-            } else {
-                msg = TypeConverter.ToString (msgProp);
             }
-            if (name == "") {
+            else
+            {
+                msg = TypeConverter.ToString(msgProp);
+            }
+            if (name == "")
+            {
                 return msg;
             }
-            if (msg == "") {
+            if (msg == "")
+            {
                 return name;
             }
             return name + ": " + msg;

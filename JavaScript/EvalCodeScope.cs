@@ -1,48 +1,60 @@
-using System;
+﻿using System;
 
-namespace Anura.JavaScript {
-    public class EvalCodeScope : IDisposable {
+namespace Anura.JavaScript
+{
+    public class EvalCodeScope : IDisposable
+    {
         private readonly bool _eval;
         private readonly bool _force;
         private readonly int _forcedRefCount;
 
-        [ThreadStatic]
+        [ThreadStatic] 
         private static int _refCount;
 
-        public EvalCodeScope (bool eval = true, bool force = false) {
+        public EvalCodeScope(bool eval = true, bool force = false)
+        {
             _eval = eval;
             _force = force;
 
-            if (_force) {
+            if (_force)
+            {
                 _forcedRefCount = _refCount;
                 _refCount = 0;
             }
 
-            if (_eval) {
+            if (_eval)
+            {
                 _refCount++;
             }
 
         }
 
-        public void Dispose () {
-            if (_eval) {
+        public void Dispose()
+        {
+            if (_eval)
+            {
                 _refCount--;
             }
 
-            if (_force) {
+            if (_force)
+            {
                 _refCount = _forcedRefCount;
-            }
+            } 
         }
 
-        public static bool IsEvalCode {
+        public static bool IsEvalCode
+        {
             get { return _refCount > 0; }
         }
 
-        public static int RefCount {
-            get {
+        public static int RefCount
+        {
+            get
+            {
                 return _refCount;
             }
-            set {
+            set
+            {
                 _refCount = value;
             }
         }

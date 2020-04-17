@@ -1,73 +1,98 @@
+﻿using Anura.JavaScript.Collections;
+using Anura.JavaScript.Native.Symbol;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
 
-namespace Anura.JavaScript.Native.Object {
-    public sealed class ObjectPrototype : ObjectInstance {
-        private ObjectPrototype (Engine engine) : base (engine) { }
+namespace Anura.JavaScript.Native.Object
+{
+    public sealed class ObjectPrototype : ObjectInstance
+    {
+        private ObjectConstructor _objectConstructor;
 
-        public static ObjectPrototype CreatePrototypeObject (Engine engine, ObjectConstructor objectConstructor) {
-            var obj = new ObjectPrototype (engine) { Extensible = true };
+        private ObjectPrototype(Engine engine) : base(engine)
+        {
+        }
 
-            obj.FastAddProperty ("constructor", objectConstructor, true, false, true);
+        public static ObjectPrototype CreatePrototypeObject(Engine engine, ObjectConstructor objectConstructor)
+        {
+            var obj = new ObjectPrototype(engine)
+            {
+                _objectConstructor = objectConstructor
+            };
 
             return obj;
         }
 
-        public void Configure () {
-            FastAddProperty ("toString", new ClrFunctionInstance (Engine, ToObjectString), true, false, true);
-            FastAddProperty ("toLocaleString", new ClrFunctionInstance (Engine, ToLocaleString), true, false, true);
-            FastAddProperty ("valueOf", new ClrFunctionInstance (Engine, ValueOf), true, false, true);
-            FastAddProperty ("hasOwnProperty", new ClrFunctionInstance (Engine, HasOwnProperty, 1), true, false, true);
-            FastAddProperty ("isPrototypeOf", new ClrFunctionInstance (Engine, IsPrototypeOf, 1), true, false, true);
-            FastAddProperty ("propertyIsEnumerable", new ClrFunctionInstance (Engine, PropertyIsEnumerable, 1), true, false, true);
+        protected override void Initialize()
+        {
+            const PropertyFlag propertyFlags = PropertyFlag.Configurable | PropertyFlag.Writable;
+            const PropertyFlag lengthFlags = PropertyFlag.Configurable;
+            var properties = new PropertyDictionary(8, checkExistingKeys: false)
+            {
+                ["constructor"] = new PropertyDescriptor(_objectConstructor, propertyFlags),
+                ["toString"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "toString", ToObjectString, 0, lengthFlags), propertyFlags),
+                ["toLocaleString"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "toLocaleString", ToLocaleString, 0, lengthFlags), propertyFlags),
+                ["valueOf"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "valueOf", ValueOf, 0, lengthFlags), propertyFlags),
+                ["hasOwnProperty"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "hasOwnProperty", HasOwnProperty, 1, lengthFlags), propertyFlags),
+                ["isPrototypeOf"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "isPrototypeOf", IsPrototypeOf, 1, lengthFlags), propertyFlags),
+                ["propertyIsEnumerable"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "propertyIsEnumerable", PropertyIsEnumerable, 1, lengthFlags), propertyFlags)
+            };
+            SetProperties(properties);
         }
 
-        private JsValue PropertyIsEnumerable (JsValue thisObject, JsValue[] arguments) {
-            var p = TypeConverter.ToString (arguments[0]);
-            var o = TypeConverter.ToObject (Engine, thisObject);
-            var desc = o.GetOwnProperty (p);
-            if (desc == PropertyDescriptor.Undefined) {
+        private JsValue PropertyIsEnumerable(JsValue thisObject, JsValue[] arguments)
+        {
+            var p = TypeConverter.ToPropertyKey(arguments[0]);
+            var o = TypeConverter.ToObject(Engine, thisObject);
+            var desc = o.GetOwnProperty(p);
+            if (desc == PropertyDescriptor.Undefined)
+            {
                 return false;
             }
-            return desc.Enumerable.HasValue && desc.Enumerable.Value;
+            return desc.Enumerable;
         }
 
-        private JsValue ValueOf (JsValue thisObject, JsValue[] arguments) {
-            var o = TypeConverter.ToObject (Engine, thisObject);
+        private JsValue ValueOf(JsValue thisObject, JsValue[] arguments)
+        {
+            var o = TypeConverter.ToObject(Engine, thisObject);
             return o;
         }
 
-        private JsValue IsPrototypeOf (JsValue thisObject, JsValue[] arguments) {
+        private JsValue IsPrototypeOf(JsValue thisObject, JsValue[] arguments)
+        {
             var arg = arguments[0];
-            if (!arg.IsObject ()) {
+            if (!arg.IsObject())
+            {
                 return false;
             }
 
-            var v = arg.AsObject ();
+            var v = arg.AsObject();
 
-            var o = TypeConverter.ToObject (Engine, thisObject);
-            while (true) {
+            var o = TypeConverter.ToObject(Engine, thisObject);
+            while (true)
+            {
                 v = v.Prototype;
 
-                if (v == null) {
+                if (ReferenceEquals(v, null))
+                {
                     return false;
                 }
 
-                if (o == v) {
+                if (ReferenceEquals(o, v))
+                {
                     return true;
                 }
 
             }
         }
 
-        private JsValue ToLocaleString (JsValue thisObject, JsValue[] arguments) {
-            var o = TypeConverter.ToObject (Engine, thisObject);
-            var toString = o.Get ("toString").TryCast<ICallable> (x => {
-                throw new JavaScriptException (Engine.TypeError);
-            });
-
-            return toString.Call (o, Arguments.Empty);
+        private JsValue ToLocaleString(JsValue thisObject, JsValue[] arguments)
+        {
+            var o = TypeConverter.ToObject(Engine, thisObject);
+            var func = o.Get("toString");
+            var callable = func as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeErrorNoEngine<ICallable>("Can only invoke functions");
+            return TypeConverter.ToString(callable.Call(thisObject, arguments));
         }
 
         /// <summary>
@@ -76,29 +101,37 @@ namespace Anura.JavaScript.Native.Object {
         /// <param name="thisObject"></param>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        public JsValue ToObjectString (JsValue thisObject, JsValue[] arguments) {
-            if (thisObject == Undefined.Instance) {
+        public JsValue ToObjectString(JsValue thisObject, JsValue[] arguments)
+        {
+            if (thisObject.IsUndefined())
+            {
                 return "[object Undefined]";
             }
 
-            if (thisObject == Null.Instance) {
+            if (thisObject.IsNull())
+            {
                 return "[object Null]";
             }
 
-            var o = TypeConverter.ToObject (Engine, thisObject);
-            return "[object " + o.Class + "]";
+            var o = TypeConverter.ToObject(Engine, thisObject);
+
+            var tag = o.Get(GlobalSymbolRegistry.ToStringTag);
+            if (!tag.IsString())
+            {
+                tag = o.Class.ToString();
+            }
+
+            return "[object " + tag + "]";
         }
 
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.5
         /// </summary>
-        /// <param name="thisObject"></param>
-        /// <param name="arguments"></param>
-        /// <returns></returns>
-        public JsValue HasOwnProperty (JsValue thisObject, JsValue[] arguments) {
-            var p = TypeConverter.ToString (arguments[0]);
-            var o = TypeConverter.ToObject (Engine, thisObject);
-            var desc = o.GetOwnProperty (p);
+        public JsValue HasOwnProperty(JsValue thisObject, JsValue[] arguments)
+        {
+            var p = TypeConverter.ToPropertyKey(arguments[0]);
+            var o = TypeConverter.ToObject(Engine, thisObject);
+            var desc = o.GetOwnProperty(p);
             return desc != PropertyDescriptor.Undefined;
         }
     }

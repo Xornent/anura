@@ -67,7 +67,7 @@ using Anura.Developer;
 
 namespace Anura {
     public static class Versioning {
-        public static Version CoreVersion = new Version (0, 0, 4, 979);
+        public static Version CoreVersion = new Version (0, 0, 4, 991);
         public static VersionMode Mode = VersionMode.Insider;
 
         public enum VersionMode {
@@ -81,12 +81,12 @@ namespace Anura {
     class Program {
         static void Main (string[] args) {
             Console.WriteLine ("Anura Core: Version [" + Versioning.Mode.ToString () + "] " + Versioning.CoreVersion.ToString ());
-
+            
             Anura.Developer.Logger.OnLog += Logger;
             JavaScript.Engine engine = new JavaScript.Engine (cfg =>
                 cfg.AllowClr ().DebugMode ());
             engine.SetValue ("alert", new Action<object> (Alert));
-            engine.Execute ("var __anura__ = new __Anura__();");
+            engine.Execute ("var __anura__ = new __Anura__(); ");
 
             while (true) {
                 Anura.Developer.Logger.Log ("Anura Core JS Debugger", "等待用户输入（多行的）JavaScript 代码，空行启动运行", "", Anura.Developer.Logger.LogStatus.Message);

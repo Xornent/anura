@@ -1,8 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using Anura.JavaScript;
-using Anura.JavaScript.Ast;
+using System.Runtime.CompilerServices;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Argument;
 using Anura.JavaScript.Native.Array;
@@ -11,51 +9,147 @@ using Anura.JavaScript.Native.Date;
 using Anura.JavaScript.Native.Error;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Global;
+using Anura.JavaScript.Native.Iterator;
 using Anura.JavaScript.Native.Json;
+using Anura.JavaScript.Native.Map;
 using Anura.JavaScript.Native.Math;
 using Anura.JavaScript.Native.Number;
 using Anura.JavaScript.Native.Object;
+using Anura.JavaScript.Native.Proxy;
+using Anura.JavaScript.Native.Reflect;
 using Anura.JavaScript.Native.RegExp;
+using Anura.JavaScript.Native.Set;
 using Anura.JavaScript.Native.String;
+using Anura.JavaScript.Native.Symbol;
+using Anura.JavaScript.Pooling;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.CallStack;
 using Anura.JavaScript.Runtime.Debugger;
 using Anura.JavaScript.Runtime.Descriptors;
+using Anura.JavaScript.Runtime.Descriptors.Specialized;
 using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.Interop;
+using Anura.JavaScript.Runtime.Interpreter;
 using Anura.JavaScript.Runtime.References;
+using Esprima;
+using Esprima.Ast;
+using ExecutionContext = Anura.JavaScript.Runtime.Environments.ExecutionContext;
 
 namespace Anura.JavaScript {
     public class Engine {
-        private readonly ExpressionInterpreter _expressions;
-        private readonly StatementInterpreter _statements;
-        private readonly Stack<ExecutionContext> _executionContexts;
-        private JsValue _completionValue = JsValue.Undefined;
-        private int _statementsCount;
-        private long _timeoutTicks;
-        private SyntaxNode _lastSyntaxNode = null;
+        private static readonly ParserOptions DefaultParserOptions = new ParserOptions {
+            AdaptRegexp = true,
+            Tolerant = true,
+            Loc = true
+        };
 
-        public ITypeConverter ClrTypeConverter;
+        private static readonly JsString _errorFunctionName = new JsString ("Error");
+        private static readonly JsString _evalErrorFunctionName = new JsString ("EvalError");
+        private static readonly JsString _rangeErrorFunctionName = new JsString ("RangeError");
+        private static readonly JsString _referenceErrorFunctionName = new JsString ("ReferenceError");
+        private static readonly JsString _syntaxErrorFunctionName = new JsString ("SyntaxError");
+        private static readonly JsString _typeErrorFunctionName = new JsString ("TypeError");
+        private static readonly JsString _uriErrorFunctionName = new JsString ("URIError");
+
+        private readonly ExecutionContextStack _executionContexts;
+        private JsValue _completionValue = JsValue.Undefined;
+        internal INode _lastSyntaxNode;
+
+        // lazy properties
+        private ErrorConstructor _error;
+        private ErrorConstructor _evalError;
+        private ErrorConstructor _rangeError;
+        private ErrorConstructor _referenceError;
+        private ErrorConstructor _syntaxError;
+        private ErrorConstructor _typeError;
+        private ErrorConstructor _uriError;
+        private DebugHandler _debugHandler;
+        private List<BreakPoint> _breakPoints;
+
+        // cached access
+        private readonly List<IConstraint> _constraints;
+        private readonly bool _isDebugMode;
+        internal readonly bool _isStrict;
+        internal readonly IReferenceResolver _referenceResolver;
+        internal readonly ReferencePool _referencePool;
+        internal readonly ArgumentsInstancePool _argumentsInstancePool;
+        internal readonly JsValueArrayPool _jsValueArrayPool;
+
+        public ITypeConverter ClrTypeConverter { get; set; }
 
         // cache of types used when resolving CLR type names
-        internal Dictionary<string, Type> TypeCache = new Dictionary<string, Type> ();
+        internal readonly Dictionary<string, Type> TypeCache = new Dictionary<string, Type> ();
 
-        internal static Dictionary<Type, Func<Engine, object, JsValue>> TypeMappers =
-            new Dictionary<Type, Func<Engine, object, JsValue>> () { { typeof (bool), (Engine engine, object v) => new JsValue ((bool) v) }, { typeof (byte), (Engine engine, object v) => new JsValue ((byte) v) }, { typeof (char), (Engine engine, object v) => new JsValue ((char) v) }, { typeof (DateTime), (Engine engine, object v) => engine.Date.Construct ((DateTime) v) }, { typeof (DateTimeOffset), (Engine engine, object v) => engine.Date.Construct ((DateTimeOffset) v) }, { typeof (decimal), (Engine engine, object v) => new JsValue ((double) (decimal) v) }, { typeof (double), (Engine engine, object v) => new JsValue ((double) v) }, { typeof (Int16), (Engine engine, object v) => new JsValue ((Int16) v) }, { typeof (Int32), (Engine engine, object v) => new JsValue ((Int32) v) }, { typeof (Int64), (Engine engine, object v) => new JsValue ((Int64) v) }, { typeof (SByte), (Engine engine, object v) => new JsValue ((SByte) v) }, { typeof (Single), (Engine engine, object v) => new JsValue ((Single) v) }, { typeof (string), (Engine engine, object v) => new JsValue ((string) v) }, { typeof (UInt16), (Engine engine, object v) => new JsValue ((UInt16) v) }, { typeof (UInt32), (Engine engine, object v) => new JsValue ((UInt32) v) }, { typeof (UInt64), (Engine engine, object v) => new JsValue ((UInt64) v) }, { typeof (JsValue), (Engine engine, object v) => (JsValue) v }, { typeof (System.Text.RegularExpressions.Regex), (Engine engine, object v) => engine.RegExp.Construct (((System.Text.RegularExpressions.Regex) v).ToString ().Trim ('/')) } };
+        internal static Dictionary<Type, Func<Engine, object, JsValue>> TypeMappers = new Dictionary<Type, Func<Engine, object, JsValue>> { { typeof (bool), (engine, v) => (bool) v ? JsBoolean.True : JsBoolean.False },
+            { typeof (byte), (engine, v) => JsNumber.Create ((byte) v) },
+            { typeof (char), (engine, v) => JsString.Create ((char) v) },
+            { typeof (DateTime), (engine, v) => engine.Date.Construct ((DateTime) v) },
+            { typeof (DateTimeOffset), (engine, v) => engine.Date.Construct ((DateTimeOffset) v) },
+            { typeof (decimal), (engine, v) => (JsValue) (double) (decimal) v },
+            { typeof (double), (engine, v) => (JsValue) (double) v },
+            { typeof (Int16), (engine, v) => JsNumber.Create ((Int16) v) },
+            { typeof (Int32), (engine, v) => JsNumber.Create ((Int32) v) },
+            { typeof (Int64), (engine, v) => (JsValue) (Int64) v },
+            { typeof (SByte), (engine, v) => JsNumber.Create ((SByte) v) },
+            { typeof (Single), (engine, v) => (JsValue) (Single) v },
+            { typeof (string), (engine, v) => JsString.Create ((string) v) },
+            { typeof (UInt16), (engine, v) => JsNumber.Create ((UInt16) v) },
+            { typeof (UInt32), (engine, v) => JsNumber.Create ((UInt32) v) },
+            { typeof (UInt64), (engine, v) => JsNumber.Create ((UInt64) v) },
+            { typeof (System.Text.RegularExpressions.Regex), (engine, v) => engine.RegExp.Construct ((System.Text.RegularExpressions.Regex) v, "", engine) }
+        };
 
-        internal JintCallStack CallStack = new JintCallStack ();
+        // shared frozen version
+        internal readonly PropertyDescriptor _getSetThrower;
+
+        internal readonly struct ClrPropertyDescriptorFactoriesKey : IEquatable<ClrPropertyDescriptorFactoriesKey> {
+            public ClrPropertyDescriptorFactoriesKey (Type type, in Key propertyName) {
+                Type = type;
+                PropertyName = propertyName;
+            }
+
+            private readonly Type Type;
+            private readonly Key PropertyName;
+
+            public bool Equals (ClrPropertyDescriptorFactoriesKey other) {
+                return Type == other.Type && PropertyName == other.PropertyName;
+            }
+
+            public override bool Equals (object obj) {
+                if (ReferenceEquals (null, obj)) {
+                    return false;
+                }
+                return obj is ClrPropertyDescriptorFactoriesKey other && Equals (other);
+            }
+
+            public override int GetHashCode () {
+                unchecked {
+                    return (Type.GetHashCode () * 397) ^ PropertyName.GetHashCode ();
+                }
+            }
+        }
+
+        internal readonly Dictionary<ClrPropertyDescriptorFactoriesKey, Func<Engine, object, PropertyDescriptor>> ClrPropertyDescriptorFactories =
+            new Dictionary<ClrPropertyDescriptorFactoriesKey, Func<Engine, object, PropertyDescriptor>> ();
+
+        internal readonly JintCallStack CallStack = new JintCallStack ();
 
         public Engine () : this (null) { }
 
         public Engine (Action<Options> options) {
-            _executionContexts = new Stack<ExecutionContext> ();
+            _executionContexts = new ExecutionContextStack (2);
 
             Global = GlobalObject.CreateGlobalObject (this);
 
             Object = ObjectConstructor.CreateObjectConstructor (this);
             Function = FunctionConstructor.CreateFunctionConstructor (this);
+            _getSetThrower = new GetSetPropertyDescriptor.ThrowerPropertyDescriptor (Function.ThrowTypeError);
 
+            Symbol = SymbolConstructor.CreateSymbolConstructor (this);
             Array = ArrayConstructor.CreateArrayConstructor (this);
+            Map = MapConstructor.CreateMapConstructor (this);
+            Set = SetConstructor.CreateSetConstructor (this);
+            Iterator = IteratorConstructor.CreateIteratorConstructor (this);
             String = StringConstructor.CreateStringConstructor (this);
             RegExp = RegExpConstructor.CreateRegExpConstructor (this);
             Number = NumberConstructor.CreateNumberConstructor (this);
@@ -63,168 +157,157 @@ namespace Anura.JavaScript {
             Date = DateConstructor.CreateDateConstructor (this);
             Math = MathInstance.CreateMathObject (this);
             Json = JsonInstance.CreateJsonObject (this);
-
-            Error = ErrorConstructor.CreateErrorConstructor (this, "Error");
-            EvalError = ErrorConstructor.CreateErrorConstructor (this, "EvalError");
-            RangeError = ErrorConstructor.CreateErrorConstructor (this, "RangeError");
-            ReferenceError = ErrorConstructor.CreateErrorConstructor (this, "ReferenceError");
-            SyntaxError = ErrorConstructor.CreateErrorConstructor (this, "SyntaxError");
-            TypeError = ErrorConstructor.CreateErrorConstructor (this, "TypeError");
-            UriError = ErrorConstructor.CreateErrorConstructor (this, "URIError");
+            Proxy = ProxyConstructor.CreateProxyConstructor (this);
+            Reflect = ReflectInstance.CreateReflectObject (this);
+            GlobalSymbolRegistry = new GlobalSymbolRegistry ();
 
             Objects.Initialization.CreateConstructors (this);
 
             // Because the properties might need some of the built-in object
             // their configuration is delayed to a later step
 
-            Global.Configure ();
+            // trigger initialization
+            Global.GetProperty (JsString.Empty);
 
-            Object.Configure ();
-            Object.PrototypeObject.Configure ();
-
-            Function.Configure ();
-            Function.PrototypeObject.Configure ();
-
-            Array.Configure ();
-            Array.PrototypeObject.Configure ();
-
-            String.Configure ();
-            String.PrototypeObject.Configure ();
-
-            RegExp.Configure ();
-            RegExp.PrototypeObject.Configure ();
-
-            Number.Configure ();
-            Number.PrototypeObject.Configure ();
-
-            Boolean.Configure ();
-            Boolean.PrototypeObject.Configure ();
-
-            Date.Configure ();
-            Date.PrototypeObject.Configure ();
-
-            Math.Configure ();
-            Json.Configure ();
-
-            Error.Configure ();
-            Error.PrototypeObject.Configure ();
-
-            Objects.Initialization.Configure (this);
+            // this is implementation dependent, and only to pass some unit tests
+            Global._prototype = Object.PrototypeObject;
+            Object._prototype = Function.PrototypeObject;
 
             // create the global environment http://www.ecma-international.org/ecma-262/5.1/#sec-10.2.3
-            GlobalEnvironment = LexicalEnvironment.NewObjectEnvironment (this, Global, null, false);
+            GlobalEnvironment = LexicalEnvironment.NewGlobalEnvironment (this, Global);
 
             // create the global execution context http://www.ecma-international.org/ecma-262/5.1/#sec-10.4.1.1
             EnterExecutionContext (GlobalEnvironment, GlobalEnvironment, Global);
 
+            Objects.Initialization.Configure(this);
+
             Options = new Options ();
 
-            if (options != null) {
-                options (Options);
-            }
+            options?.Invoke (Options);
 
-            Eval = new EvalFunctionInstance (this, new string[0], LexicalEnvironment.NewDeclarativeEnvironment (this, ExecutionContext.LexicalEnvironment), StrictModeScope.IsStrictModeCode);
-            Global.FastAddProperty ("eval", Eval, true, false, true);
+            // gather some options as fields for faster checks
+            _isDebugMode = Options.IsDebugMode;
+            _isStrict = Options.IsStrict;
+            _constraints = Options._Constraints;
+            _referenceResolver = Options.ReferenceResolver;
 
-            _statements = new StatementInterpreter (this);
-            _expressions = new ExpressionInterpreter (this);
+            _referencePool = new ReferencePool ();
+            _argumentsInstancePool = new ArgumentsInstancePool (this);
+            _jsValueArrayPool = new JsValueArrayPool ();
+
+            Eval = new EvalFunctionInstance (this, System.Array.Empty<string> (), LexicalEnvironment.NewDeclarativeEnvironment (this, ExecutionContext.LexicalEnvironment), StrictModeScope.IsStrictModeCode);
+            Global.SetProperty (CommonProperties.Eval, new PropertyDescriptor (Eval, PropertyFlag.Configurable | PropertyFlag.Writable));
 
             if (Options._IsClrAllowed) {
-                Global.FastAddProperty ("System", new NamespaceReference (this, "System"), false, false, false);
-                Global.FastAddProperty ("importNamespace", new ClrFunctionInstance (this, (thisObj, arguments) => {
-                    return new NamespaceReference (this, TypeConverter.ToString (arguments.At (0)));
-                }), false, false, false);
+                Global.SetProperty ("System", new PropertyDescriptor (new NamespaceReference (this, "System"), PropertyFlag.AllForbidden));
+                Global.SetProperty ("importNamespace", new PropertyDescriptor (new ClrFunctionInstance (
+                    this,
+                    "importNamespace",
+                    (thisObj, arguments) => new NamespaceReference (this, TypeConverter.ToString (arguments.At (0)))), PropertyFlag.AllForbidden));
             }
 
             ClrTypeConverter = new DefaultTypeConverter (this);
-            BreakPoints = new List<BreakPoint> ();
-            DebugHandler = new DebugHandler (this);
         }
 
-        public LexicalEnvironment GlobalEnvironment;
+        internal LexicalEnvironment GlobalEnvironment { get; }
+        public GlobalObject Global { get; }
+        public ObjectConstructor Object { get; }
+        public FunctionConstructor Function { get; }
+        public ArrayConstructor Array { get; }
+        public MapConstructor Map { get; }
+        public SetConstructor Set { get; }
+        public IteratorConstructor Iterator { get; }
+        public StringConstructor String { get; }
+        public RegExpConstructor RegExp { get; }
+        public BooleanConstructor Boolean { get; }
+        public NumberConstructor Number { get; }
+        public DateConstructor Date { get; }
+        public MathInstance Math { get; }
+        public JsonInstance Json { get; }
+        public ProxyConstructor Proxy { get; }
+        public ReflectInstance Reflect { get; }
+        public SymbolConstructor Symbol { get; }
+        public EvalFunctionInstance Eval { get; }
 
-        public GlobalObject Global { get; private set; }
-        public ObjectConstructor Object { get; private set; }
-        public FunctionConstructor Function { get; private set; }
-        public ArrayConstructor Array { get; private set; }
-        public StringConstructor String { get; private set; }
-        public RegExpConstructor RegExp { get; private set; }
-        public BooleanConstructor Boolean { get; private set; }
-        public NumberConstructor Number { get; private set; }
-        public DateConstructor Date { get; private set; }
-        public MathInstance Math { get; private set; }
-        public JsonInstance Json { get; private set; }
-        public EvalFunctionInstance Eval { get; private set; }
+        public ErrorConstructor Error => _error ??= ErrorConstructor.CreateErrorConstructor (this, _errorFunctionName);
+        public ErrorConstructor EvalError => _evalError ??= ErrorConstructor.CreateErrorConstructor (this, _evalErrorFunctionName);
+        public ErrorConstructor SyntaxError => _syntaxError ??= ErrorConstructor.CreateErrorConstructor (this, _syntaxErrorFunctionName);
+        public ErrorConstructor TypeError => _typeError ??= ErrorConstructor.CreateErrorConstructor (this, _typeErrorFunctionName);
+        public ErrorConstructor RangeError => _rangeError ??= ErrorConstructor.CreateErrorConstructor (this, _rangeErrorFunctionName);
+        public ErrorConstructor ReferenceError => _referenceError ??= ErrorConstructor.CreateErrorConstructor (this, _referenceErrorFunctionName);
+        public ErrorConstructor UriError => _uriError ??= ErrorConstructor.CreateErrorConstructor (this, _uriErrorFunctionName);
 
-        public ErrorConstructor Error { get; private set; }
-        public ErrorConstructor EvalError { get; private set; }
-        public ErrorConstructor SyntaxError { get; private set; }
-        public ErrorConstructor TypeError { get; private set; }
-        public ErrorConstructor RangeError { get; private set; }
-        public ErrorConstructor ReferenceError { get; private set; }
-        public ErrorConstructor UriError { get; private set; }
+        public ref readonly ExecutionContext ExecutionContext {
+            [MethodImpl (MethodImplOptions.AggressiveInlining)]
+            get => ref _executionContexts.Peek ();
+        }
 
-        public ExecutionContext ExecutionContext { get { return _executionContexts.Peek (); } }
+        public GlobalSymbolRegistry GlobalSymbolRegistry { get; }
 
-        internal Options Options { get; private set; }
+        internal long CurrentMemoryUsage { get; private set; }
+
+        internal Options Options {
+            [MethodImpl (MethodImplOptions.AggressiveInlining)] get;
+        }
 
         #region Debugger
         public delegate StepMode DebugStepDelegate (object sender, DebugInformation e);
         public delegate StepMode BreakDelegate (object sender, DebugInformation e);
         public event DebugStepDelegate Step;
         public event BreakDelegate Break;
-        internal DebugHandler DebugHandler { get; private set; }
-        public List<BreakPoint> BreakPoints { get; private set; }
+
+        internal DebugHandler DebugHandler => _debugHandler ?? (_debugHandler = new DebugHandler (this));
+
+        public List<BreakPoint> BreakPoints => _breakPoints ?? (_breakPoints = new List<BreakPoint> ());
 
         internal StepMode? InvokeStepEvent (DebugInformation info) {
-            if (Step != null) {
-                return Step (this, info);
-            }
-            return null;
+            return Step?.Invoke (this, info);
         }
 
         internal StepMode? InvokeBreakEvent (DebugInformation info) {
-            if (Break != null) {
-                return Break (this, info);
-            }
-            return null;
+            return Break?.Invoke (this, info);
         }
         #endregion
 
-        public ExecutionContext EnterExecutionContext (LexicalEnvironment lexicalEnvironment, LexicalEnvironment variableEnvironment, JsValue thisBinding) {
-            var executionContext = new ExecutionContext {
-                LexicalEnvironment = lexicalEnvironment,
-                VariableEnvironment = variableEnvironment,
-                ThisBinding = thisBinding
-            };
-            _executionContexts.Push (executionContext);
+        public void EnterExecutionContext (
+            LexicalEnvironment lexicalEnvironment,
+            LexicalEnvironment variableEnvironment,
+            JsValue thisBinding) {
+            var context = new ExecutionContext (
+                lexicalEnvironment,
+                variableEnvironment,
+                thisBinding);
 
-            return executionContext;
+            _executionContexts.Push (context);
         }
 
-        public Engine SetValue (string name, Delegate value) {
+        public Engine SetValue (JsValue name, Delegate value) {
             Global.FastAddProperty (name, new DelegateWrapper (this, value), true, false, true);
             return this;
         }
 
-        public Engine SetValue (string name, string value) {
-            return SetValue (name, new JsValue (value));
+        public Engine SetValue (JsValue name, string value) {
+            return SetValue (name, new JsString (value));
         }
 
-        public Engine SetValue (string name, double value) {
-            return SetValue (name, new JsValue (value));
+        public Engine SetValue (JsValue name, double value) {
+            return SetValue (name, JsNumber.Create (value));
         }
 
-        public Engine SetValue (string name, bool value) {
-            return SetValue (name, new JsValue (value));
+        public Engine SetValue (JsValue name, int value) {
+            return SetValue (name, JsNumber.Create (value));
         }
 
-        public Engine SetValue (string name, JsValue value) {
-            Global.Put (name, value, false);
+        public Engine SetValue (JsValue name, bool value) {
+            return SetValue (name, value ? JsBoolean.True : JsBoolean.False);
+        }
+
+        public Engine SetValue (JsValue name, JsValue value) {
+            Global.Set (name, value, Global);
             return this;
         }
 
-        public Engine SetValue (string name, Object obj) {
+        public Engine SetValue (JsValue name, object obj) {
             return SetValue (name, JsValue.FromObject (this, obj));
         }
 
@@ -235,13 +318,10 @@ namespace Anura.JavaScript {
         /// <summary>
         /// Initializes the statements count
         /// </summary>
-        public void ResetStatementsCount () {
-            _statementsCount = 0;
-        }
-
-        public void ResetTimeoutTicks () {
-            var timeoutIntervalTicks = Options._TimeoutInterval.Ticks;
-            _timeoutTicks = timeoutIntervalTicks > 0 ? DateTime.UtcNow.Ticks + timeoutIntervalTicks : 0;
+        public void ResetConstraints () {
+            for (var i = 0; i < _constraints.Count; i++) {
+                _constraints[i].Reset ();
+            }
         }
 
         /// <summary>
@@ -252,28 +332,31 @@ namespace Anura.JavaScript {
         }
 
         public Engine Execute (string source) {
-            var parser = new JavaScriptParser ();
-            return Execute (parser.Parse (source));
+            return Execute (source, DefaultParserOptions);
         }
 
         public Engine Execute (string source, ParserOptions parserOptions) {
-            var parser = new JavaScriptParser ();
-            return Execute (parser.Parse (source, parserOptions));
+            var parser = new JavaScriptParser (source, parserOptions);
+            return Execute (parser.ParseScript ());
         }
 
-        public Engine Execute (Anura.JavaScript.Ast.Program program) {
-            ResetStatementsCount ();
-            ResetTimeoutTicks ();
+        public Engine Execute (Script program) {
+            ResetConstraints ();
             ResetLastStatement ();
             ResetCallStack ();
 
-            using (new StrictModeScope (Options._IsStrict || program.Strict)) {
-                DeclarationBindingInstantiation (DeclarationBindingType.GlobalCode, program.FunctionDeclarations, program.VariableDeclarations, null, null);
+            using (new StrictModeScope (_isStrict || program.Strict)) {
+                DeclarationBindingInstantiation (
+                    DeclarationBindingType.GlobalCode,
+                    program.HoistingScope,
+                    functionInstance : null,
+                    arguments : null);
 
-                var result = _statements.ExecuteProgram (program);
-                if (result.Type == Completion.Throw) {
-                    throw new JavaScriptException (result.GetValueOrDefault ())
-                        .SetCallstack (this, result.Location);
+                var list = new JintStatementList (this, null, program.Body);
+                var result = list.Execute ();
+                if (result.Type == CompletionType.Throw) {
+                    var ex = new JavaScriptException (result.GetValueOrDefault ()).SetCallstack (this, result.Location);
+                    throw ex;
                 }
 
                 _completionValue = result.GetValueOrDefault ();
@@ -293,188 +376,79 @@ namespace Anura.JavaScript {
             return _completionValue;
         }
 
-        public Completion ExecuteStatement (Statement statement) {
-            var maxStatements = Options._MaxStatements;
-            if (maxStatements > 0 && _statementsCount++ > maxStatements) {
-                throw new StatementsCountOverflowException ();
+        internal void RunBeforeExecuteStatementChecks (Statement statement) {
+            // Avoid allocating the enumerator because we run this loop very often.
+            for (var i = 0; i < _constraints.Count; i++) {
+                _constraints[i].Check ();
             }
 
-            if (_timeoutTicks > 0 && _timeoutTicks < DateTime.UtcNow.Ticks) {
-                throw new TimeoutException ();
-            }
-
-            _lastSyntaxNode = statement;
-
-            if (Options._IsDebugMode) {
+            if (_isDebugMode) {
                 DebugHandler.OnStep (statement);
-            }
-
-            switch (statement.Type) {
-                case SyntaxNodes.BlockStatement:
-                    return _statements.ExecuteBlockStatement (statement.As<BlockStatement> ());
-
-                case SyntaxNodes.BreakStatement:
-                    return _statements.ExecuteBreakStatement (statement.As<BreakStatement> ());
-
-                case SyntaxNodes.ContinueStatement:
-                    return _statements.ExecuteContinueStatement (statement.As<ContinueStatement> ());
-
-                case SyntaxNodes.DoWhileStatement:
-                    return _statements.ExecuteDoWhileStatement (statement.As<DoWhileStatement> ());
-
-                case SyntaxNodes.DebuggerStatement:
-                    return _statements.ExecuteDebuggerStatement (statement.As<DebuggerStatement> ());
-
-                case SyntaxNodes.EmptyStatement:
-                    return _statements.ExecuteEmptyStatement (statement.As<EmptyStatement> ());
-
-                case SyntaxNodes.ExpressionStatement:
-                    return _statements.ExecuteExpressionStatement (statement.As<ExpressionStatement> ());
-
-                case SyntaxNodes.ForStatement:
-                    return _statements.ExecuteForStatement (statement.As<ForStatement> ());
-
-                case SyntaxNodes.ForInStatement:
-                    return _statements.ExecuteForInStatement (statement.As<ForInStatement> ());
-
-                case SyntaxNodes.FunctionDeclaration:
-                    return new Completion (Completion.Normal, null, null);
-
-                case SyntaxNodes.IfStatement:
-                    return _statements.ExecuteIfStatement (statement.As<IfStatement> ());
-
-                case SyntaxNodes.LabeledStatement:
-                    return _statements.ExecuteLabelledStatement (statement.As<LabelledStatement> ());
-
-                case SyntaxNodes.ReturnStatement:
-                    return _statements.ExecuteReturnStatement (statement.As<ReturnStatement> ());
-
-                case SyntaxNodes.SwitchStatement:
-                    return _statements.ExecuteSwitchStatement (statement.As<SwitchStatement> ());
-
-                case SyntaxNodes.ThrowStatement:
-                    return _statements.ExecuteThrowStatement (statement.As<ThrowStatement> ());
-
-                case SyntaxNodes.TryStatement:
-                    return _statements.ExecuteTryStatement (statement.As<TryStatement> ());
-
-                case SyntaxNodes.VariableDeclaration:
-                    return _statements.ExecuteVariableDeclaration (statement.As<VariableDeclaration> ());
-
-                case SyntaxNodes.WhileStatement:
-                    return _statements.ExecuteWhileStatement (statement.As<WhileStatement> ());
-
-                case SyntaxNodes.WithStatement:
-                    return _statements.ExecuteWithStatement (statement.As<WithStatement> ());
-
-                case SyntaxNodes.Program:
-                    return _statements.ExecuteProgram (statement.As<Anura.JavaScript.Ast.Program> ());
-
-                default:
-                    throw new ArgumentOutOfRangeException ();
-            }
-        }
-
-        public object EvaluateExpression (Expression expression) {
-            _lastSyntaxNode = expression;
-
-            switch (expression.Type) {
-                case SyntaxNodes.AssignmentExpression:
-                    return _expressions.EvaluateAssignmentExpression (expression.As<AssignmentExpression> ());
-
-                case SyntaxNodes.ArrayExpression:
-                    return _expressions.EvaluateArrayExpression (expression.As<ArrayExpression> ());
-
-                case SyntaxNodes.BinaryExpression:
-                    return _expressions.EvaluateBinaryExpression (expression.As<BinaryExpression> ());
-
-                case SyntaxNodes.CallExpression:
-                    return _expressions.EvaluateCallExpression (expression.As<CallExpression> ());
-
-                case SyntaxNodes.ConditionalExpression:
-                    return _expressions.EvaluateConditionalExpression (expression.As<ConditionalExpression> ());
-
-                case SyntaxNodes.FunctionExpression:
-                    return _expressions.EvaluateFunctionExpression (expression.As<FunctionExpression> ());
-
-                case SyntaxNodes.Identifier:
-                    return _expressions.EvaluateIdentifier (expression.As<Identifier> ());
-
-                case SyntaxNodes.Literal:
-                    return _expressions.EvaluateLiteral (expression.As<Literal> ());
-
-                case SyntaxNodes.RegularExpressionLiteral:
-                    return _expressions.EvaluateLiteral (expression.As<Literal> ());
-
-                case SyntaxNodes.LogicalExpression:
-                    return _expressions.EvaluateLogicalExpression (expression.As<LogicalExpression> ());
-
-                case SyntaxNodes.MemberExpression:
-                    return _expressions.EvaluateMemberExpression (expression.As<MemberExpression> ());
-
-                case SyntaxNodes.NewExpression:
-                    return _expressions.EvaluateNewExpression (expression.As<NewExpression> ());
-
-                case SyntaxNodes.ObjectExpression:
-                    return _expressions.EvaluateObjectExpression (expression.As<ObjectExpression> ());
-
-                case SyntaxNodes.SequenceExpression:
-                    return _expressions.EvaluateSequenceExpression (expression.As<SequenceExpression> ());
-
-                case SyntaxNodes.ThisExpression:
-                    return _expressions.EvaluateThisExpression (expression.As<ThisExpression> ());
-
-                case SyntaxNodes.UpdateExpression:
-                    return _expressions.EvaluateUpdateExpression (expression.As<UpdateExpression> ());
-
-                case SyntaxNodes.UnaryExpression:
-                    return _expressions.EvaluateUnaryExpression (expression.As<UnaryExpression> ());
-
-                default:
-                    throw new ArgumentOutOfRangeException ();
             }
         }
 
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-8.7.1
         /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
         public JsValue GetValue (object value) {
-            var reference = value as Reference;
+            return GetValue (value, false);
+        }
 
-            if (reference == null) {
-                var completion = value as Completion;
-
-                if (completion != null) {
-                    return GetValue (completion.Value);
-                }
-
-                return (JsValue) value;
+        internal JsValue GetValue (object value, bool returnReferenceToPool) {
+            if (value is JsValue jsValue) {
+                return jsValue;
             }
 
-            if (reference.IsUnresolvableReference ()) {
-                if (Options._ReferenceResolver != null &&
-                    Options._ReferenceResolver.TryUnresolvableReference (this, reference, out JsValue val)) {
-                    return val;
-                }
-                throw new JavaScriptException (ReferenceError, reference.GetReferencedName () + " is not defined");
+            if (!(value is Reference reference)) {
+                return ((Completion) value).Value;
             }
 
+            return GetValue (reference, returnReferenceToPool);
+        }
+
+        internal JsValue GetValue (Reference reference, bool returnReferenceToPool) {
             var baseValue = reference.GetBase ();
 
-            if (reference.IsPropertyReference ()) {
-                if (Options._ReferenceResolver != null &&
-                    Options._ReferenceResolver.TryPropertyReference (this, reference, ref baseValue)) {
-                    return baseValue;
+            if (baseValue._type == InternalTypes.Undefined) {
+                if (_referenceResolver != null &&
+                    _referenceResolver.TryUnresolvableReference (this, reference, out JsValue val)) {
+                    return val;
                 }
 
-                if (reference.HasPrimitiveBase () == false) {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowReferenceError (this, reference);
+            }
+
+            if (_referenceResolver != null &&
+                (baseValue._type & InternalTypes.ObjectEnvironmentRecord) == 0 &&
+                _referenceResolver.TryPropertyReference (this, reference, ref baseValue)) {
+                return baseValue;
+            }
+
+            if (reference.IsPropertyReference ()) {
+                var property = reference.GetReferencedName ();
+                if (returnReferenceToPool) {
+                    _referencePool.Return (reference);
+                }
+
+                if (baseValue.IsObject ()) {
                     var o = TypeConverter.ToObject (this, baseValue);
-                    return o.Get (reference.GetReferencedName ());
+                    var v = o.Get (property);
+                    return v;
                 } else {
-                    var o = TypeConverter.ToObject (this, baseValue);
-                    var desc = o.GetProperty (reference.GetReferencedName ());
+                    // check if we are accessing a string, boxing operation can be costly to do index access
+                    // we have good chance to have fast path with integer or string indexer
+                    ObjectInstance o = null;
+                    if ((property._type & (InternalTypes.String | InternalTypes.Integer)) != 0 &&
+                        baseValue is JsString s &&
+                        TryHandleStringValue (property, s, ref o, out var jsValue)) {
+                        return jsValue;
+                    }
+
+                    if (o is null) {
+                        o = TypeConverter.ToObject (this, baseValue);
+                    }
+
+                    var desc = o.GetProperty (property);
                     if (desc == PropertyDescriptor.Undefined) {
                         return JsValue.Undefined;
                     }
@@ -484,98 +458,97 @@ namespace Anura.JavaScript {
                     }
 
                     var getter = desc.Get;
-                    if (getter == Undefined.Instance) {
+                    if (getter.IsUndefined ()) {
                         return Undefined.Instance;
                     }
 
                     var callable = (ICallable) getter.AsObject ();
                     return callable.Call (baseValue, Arguments.Empty);
                 }
-            } else {
-                var record = baseValue.As<EnvironmentRecord> ();
+            }
 
-                if (record == null) {
-                    throw new ArgumentException ();
+            if (!(baseValue is EnvironmentRecord record)) {
+                return Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException<JsValue> ();
+            }
+
+            var bindingValue = record.GetBindingValue (reference.GetReferencedName ().ToString (), reference.IsStrictReference ());
+
+            if (returnReferenceToPool) {
+                _referencePool.Return (reference);
+            }
+
+            return bindingValue;
+        }
+
+        private bool TryHandleStringValue (JsValue property, JsString s, ref ObjectInstance o, out JsValue jsValue) {
+            if (property == CommonProperties.Length) {
+                jsValue = JsNumber.Create ((uint) s.Length);
+                return true;
+            }
+
+            if (property is JsNumber number && number.IsInteger ()) {
+                var index = number.AsInteger ();
+                var str = s._value;
+                if (index < 0 || index >= str.Length) {
+                    jsValue = JsValue.Undefined;
+                    return true;
                 }
 
-                return record.GetBindingValue (reference.GetReferencedName (), reference.IsStrict ());
+                jsValue = JsString.Create (str[index]);
+                return true;
             }
+
+            if (property is JsString propertyString &&
+                propertyString._value.Length > 0 &&
+                char.IsLower (propertyString._value[0])) {
+                // trying to find property that's always in prototype
+                o = String.PrototypeObject;
+            }
+
+            jsValue = JsValue.Undefined;
+            return false;
         }
 
         /// <summary>
-        /// http://www.ecma-international.org/ecma-262/5.1/#sec-8.7.2
+        /// http://www.ecma-international.org/ecma-262/#sec-putvalue
         /// </summary>
-        /// <param name="reference"></param>
-        /// <param name="value"></param>
-        public void PutValue (Reference reference, JsValue value) {
+        internal void PutValue (Reference reference, JsValue value) {
+            var property = reference.GetReferencedName ();
+            var baseValue = reference.GetBase ();
             if (reference.IsUnresolvableReference ()) {
-                if (reference.IsStrict ()) {
-                    throw new JavaScriptException (ReferenceError);
+                if (reference.IsStrictReference ()) {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowReferenceError (this, reference);
                 }
 
-                Global.Put (reference.GetReferencedName (), value, false);
+                Global.Set (property, value);
             } else if (reference.IsPropertyReference ()) {
-                var baseValue = reference.GetBase ();
-                if (!reference.HasPrimitiveBase ()) {
-                    baseValue.AsObject ().Put (reference.GetReferencedName (), value, reference.IsStrict ());
-                } else {
-                    PutPrimitiveBase (baseValue, reference.GetReferencedName (), value, reference.IsStrict ());
+                if (reference.HasPrimitiveBase ()) {
+                    baseValue = TypeConverter.ToObject (this, baseValue);
+                }
+
+                var thisValue = GetThisValue (reference);
+                var succeeded = baseValue.Set (property, value, thisValue);
+                if (!succeeded && reference.IsStrictReference ()) {
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError (this);
                 }
             } else {
-                var baseValue = reference.GetBase ();
-                var record = baseValue.As<EnvironmentRecord> ();
-
-                if (record == null) {
-                    throw new ArgumentNullException ();
-                }
-
-                record.SetMutableBinding (reference.GetReferencedName (), value, reference.IsStrict ());
+                ((EnvironmentRecord) baseValue).SetMutableBinding (property.ToString (), value, reference.IsStrictReference ());
             }
         }
 
-        /// <summary>
-        /// Used by PutValue when the reference has a primitive base value
-        /// </summary>
-        /// <param name="b"></param>
-        /// <param name="name"></param>
-        /// <param name="value"></param>
-        /// <param name="throwOnError"></param>
-        public void PutPrimitiveBase (JsValue b, string name, JsValue value, bool throwOnError) {
-            var o = TypeConverter.ToObject (this, b);
-            if (!o.CanPut (name)) {
-                if (throwOnError) {
-                    throw new JavaScriptException (TypeError);
-                }
-
-                return;
+        private static JsValue GetThisValue (Reference reference) {
+            if (reference.IsSuperReference ()) {
+                return Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotImplementedException<JsValue> ();
             }
 
-            var ownDesc = o.GetOwnProperty (name);
-
-            if (ownDesc.IsDataDescriptor ()) {
-                if (throwOnError) {
-                    throw new JavaScriptException (TypeError);
-                }
-
-                return;
-            }
-
-            var desc = o.GetProperty (name);
-
-            if (desc.IsAccessorDescriptor ()) {
-                var setter = (ICallable) desc.Set.AsObject ();
-                setter.Call (b, new [] { value });
-            } else {
-                if (throwOnError) {
-                    throw new JavaScriptException (TypeError);
-                }
-            }
+            return reference.GetBase ();
         }
 
         /// <summary>
         /// Invoke the current value as function.
         /// </summary>
-        /// <param name="propertyName">The arguments of the function call.</param>
+        /// <param name="propertyName">The name of the function to call.</param>
+        /// <param name="arguments">The arguments of the function call.</param>
         /// <returns>The value returned by the function call.</returns>
         public JsValue Invoke (string propertyName, params object[] arguments) {
             return Invoke (propertyName, null, arguments);
@@ -612,13 +585,17 @@ namespace Anura.JavaScript {
         /// <param name="arguments">The arguments of the function call.</param>
         /// <returns>The value returned by the function call.</returns>
         public JsValue Invoke (JsValue value, object thisObj, object[] arguments) {
-            var callable = value.TryCast<ICallable> ();
+            var callable = value as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException<ICallable> ("Can only invoke functions");
 
-            if (callable == null) {
-                throw new ArgumentException ("Can only invoke functions");
+            var items = _jsValueArrayPool.RentArray (arguments.Length);
+            for (int i = 0; i < arguments.Length; ++i) {
+                items[i] = JsValue.FromObject (this, arguments[i]);
             }
 
-            return callable.Call (JsValue.FromObject (this, thisObj), arguments.Select (x => JsValue.FromObject (this, x)).ToArray ());
+            var result = callable.Call (JsValue.FromObject (this, thisObj), items);
+            _jsValueArrayPool.ReturnArray (items);
+
+            return result;
         }
 
         /// <summary>
@@ -626,13 +603,13 @@ namespace Anura.JavaScript {
         /// </summary>
         /// <param name="propertyName">The name of the property to return.</param>
         public JsValue GetValue (string propertyName) {
-            return GetValue (Global, propertyName);
+            return GetValue (Global, new JsString (propertyName));
         }
 
         /// <summary>
-        /// Gets the last evaluated <see cref="SyntaxNode"/>.
+        /// Gets the last evaluated <see cref="INode"/>.
         /// </summary>
-        public SyntaxNode GetLastSyntaxNode () {
+        public INode GetLastSyntaxNode () {
             return _lastSyntaxNode;
         }
 
@@ -640,59 +617,122 @@ namespace Anura.JavaScript {
         /// Gets a named value from the specified scope.
         /// </summary>
         /// <param name="scope">The scope to get the property from.</param>
-        /// <param name="propertyName">The name of the property to return.</param>
-        public JsValue GetValue (JsValue scope, string propertyName) {
-            if (System.String.IsNullOrEmpty (propertyName)) {
-                throw new ArgumentException ("propertyName");
-            }
-
-            var reference = new Reference (scope, propertyName, Options._IsStrict);
-
-            return GetValue (reference);
+        /// <param name="property">The name of the property to return.</param>
+        public JsValue GetValue (JsValue scope, JsValue property) {
+            var reference = _referencePool.Rent (scope, property, _isStrict);
+            var jsValue = GetValue (reference, false);
+            _referencePool.Return (reference);
+            return jsValue;
         }
 
         //  http://www.ecma-international.org/ecma-262/5.1/#sec-10.5
-        public void DeclarationBindingInstantiation (DeclarationBindingType declarationBindingType, IList<FunctionDeclaration> functionDeclarations, IList<VariableDeclaration> variableDeclarations, FunctionInstance functionInstance, JsValue[] arguments) {
-            var env = ExecutionContext.VariableEnvironment.Record;
+        internal ArgumentsInstance DeclarationBindingInstantiation (
+            DeclarationBindingType declarationBindingType,
+            HoistingScope hoistingScope,
+            FunctionInstance functionInstance,
+            JsValue[] arguments) {
+            var env = ExecutionContext.VariableEnvironment._record;
             bool configurableBindings = declarationBindingType == DeclarationBindingType.EvalCode;
             var strict = StrictModeScope.IsStrictModeCode;
+            ArgumentsInstance argsObj = null;
 
+            var der = env as DeclarativeEnvironmentRecord;
             if (declarationBindingType == DeclarationBindingType.FunctionCode) {
-                var argCount = arguments.Length;
-                var n = 0;
-                foreach (var argName in functionInstance.FormalParameters) {
-                    n++;
-                    var v = n > argCount ? Undefined.Instance : arguments[n - 1];
-                    var argAlreadyDeclared = env.HasBinding (argName);
-                    if (!argAlreadyDeclared) {
-                        env.CreateMutableBinding (argName);
-                    }
+                // arrow functions don't needs arguments
+                var arrowFunctionInstance = functionInstance as ArrowFunctionInstance;
+                argsObj = arrowFunctionInstance is null ?
+                    _argumentsInstancePool.Rent (functionInstance, functionInstance._formalParameters, arguments, env, strict) :
+                    null;
 
-                    env.SetMutableBinding (argName, v, strict);
+                var functionDeclaration = (functionInstance as ScriptFunctionInstance)?.FunctionDeclaration ??
+                    arrowFunctionInstance?.FunctionDeclaration;
+
+                if (!ReferenceEquals (der, null)) {
+                    der.AddFunctionParameters (arguments, argsObj, functionDeclaration);
+                } else {
+                    // TODO: match functionality with DeclarationEnvironmentRecord.AddFunctionParameters here
+                    // slow path
+                    var parameters = functionInstance._formalParameters;
+                    for (uint i = 0; i < (uint) parameters.Length; i++) {
+                        var argName = parameters[i];
+                        var v = i + 1 > arguments.Length ? Undefined.Instance : arguments[i];
+                        v = DeclarativeEnvironmentRecord.HandleAssignmentPatternIfNeeded (functionDeclaration, v, i);
+
+                        var argAlreadyDeclared = env.HasBinding (argName);
+                        if (!argAlreadyDeclared) {
+                            env.CreateMutableBinding (argName, v);
+                        }
+
+                        env.SetMutableBinding (argName, v, strict);
+                    }
+                    env.CreateMutableBinding ("arguments", argsObj);
                 }
             }
 
-            foreach (var f in functionDeclarations) {
+            var functionDeclarations = hoistingScope.FunctionDeclarations;
+            if (functionDeclarations.Count > 0) {
+                AddFunctionDeclarations (ref functionDeclarations, env, configurableBindings, strict);
+            }
+
+            var variableDeclarations = hoistingScope.VariableDeclarations;
+            if (variableDeclarations.Count == 0) {
+                return argsObj;
+            }
+
+            // process all variable declarations in the current parser scope
+            if (!ReferenceEquals (der, null)) {
+                der.AddVariableDeclarations (ref variableDeclarations);
+            } else {
+                // slow path
+                var variableDeclarationsCount = variableDeclarations.Count;
+                for (var i = 0; i < variableDeclarationsCount; i++) {
+                    var variableDeclaration = variableDeclarations[i];
+                    var declarations = variableDeclaration.Declarations;
+                    var declarationsCount = declarations.Count;
+                    for (var j = 0; j < declarationsCount; j++) {
+                        var d = declarations[j];
+                        if (d.Id is Identifier id1) {
+                            var name = id1.Name;
+                            var varAlreadyDeclared = env.HasBinding (name);
+                            if (!varAlreadyDeclared) {
+                                env.CreateMutableBinding (name, Undefined.Instance);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return argsObj;
+        }
+
+        private void AddFunctionDeclarations (
+            ref NodeList<IFunctionDeclaration> functionDeclarations,
+            EnvironmentRecord env,
+            bool configurableBindings,
+            bool strict) {
+            var functionDeclarationsCount = functionDeclarations.Count;
+            for (var i = 0; i < functionDeclarationsCount; i++) {
+                var f = functionDeclarations[i];
                 var fn = f.Id.Name;
                 var fo = Function.CreateFunctionObject (f);
-                var funcAlreadyDeclared = env.HasBinding (fn);
+                var funcAlreadyDeclared = env.HasBinding (f.Id.Name);
                 if (!funcAlreadyDeclared) {
                     env.CreateMutableBinding (fn, configurableBindings);
                 } else {
-                    if (env == GlobalEnvironment.Record) {
+                    if (ReferenceEquals (env, GlobalEnvironment._record)) {
                         var go = Global;
                         var existingProp = go.GetProperty (fn);
-                        if (existingProp.Configurable.Value) {
-                            go.DefineOwnProperty (fn,
-                                new PropertyDescriptor (
-                                    value: Undefined.Instance,
-                                    writable: true,
-                                    enumerable: true,
-                                    configurable: configurableBindings
-                                ), true);
+                        if (existingProp.Configurable) {
+                            var flags = PropertyFlag.Writable | PropertyFlag.Enumerable;
+                            if (configurableBindings) {
+                                flags |= PropertyFlag.Configurable;
+                            }
+
+                            var descriptor = new PropertyDescriptor (Undefined.Instance, flags);
+                            go.DefinePropertyOrThrow (fn, descriptor);
                         } else {
-                            if (existingProp.IsAccessorDescriptor () || (!existingProp.Enumerable.Value)) {
-                                throw new JavaScriptException (TypeError);
+                            if (existingProp.IsAccessorDescriptor () || !existingProp.Enumerable) {
+                                Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError (this);
                             }
                         }
                     }
@@ -700,35 +740,16 @@ namespace Anura.JavaScript {
 
                 env.SetMutableBinding (fn, fo, strict);
             }
+        }
 
-            var argumentsAlreadyDeclared = env.HasBinding ("arguments");
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        internal void UpdateLexicalEnvironment (LexicalEnvironment newEnv) {
+            _executionContexts.ReplaceTopLexicalEnvironment (newEnv);
+        }
 
-            if (declarationBindingType == DeclarationBindingType.FunctionCode && !argumentsAlreadyDeclared) {
-                var argsObj = ArgumentsInstance.CreateArgumentsObject (this, functionInstance, functionInstance.FormalParameters, arguments, env, strict);
-
-                if (strict) {
-                    var declEnv = env as DeclarativeEnvironmentRecord;
-
-                    if (declEnv == null) {
-                        throw new ArgumentException ();
-                    }
-
-                    declEnv.CreateImmutableBinding ("arguments");
-                    declEnv.InitializeImmutableBinding ("arguments", argsObj);
-                } else {
-                    env.CreateMutableBinding ("arguments");
-                    env.SetMutableBinding ("arguments", argsObj, false);
-                }
-            }
-
-            // process all variable declarations in the current parser scope
-            foreach (var d in variableDeclarations.SelectMany (x => x.Declarations)) {
-                var dn = d.Id.Name;
-                var varAlreadyDeclared = env.HasBinding (dn);
-                if (!varAlreadyDeclared) {
-                    env.CreateMutableBinding (dn, configurableBindings);
-                    env.SetMutableBinding (dn, Undefined.Instance, strict);
-                }
+        private static void AssertNotNullOrEmpty (string propertyName, string propertyValue) {
+            if (string.IsNullOrEmpty (propertyValue)) {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException (propertyName);
             }
         }
     }

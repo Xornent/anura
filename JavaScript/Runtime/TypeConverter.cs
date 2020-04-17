@@ -1,174 +1,339 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
-using Anura.JavaScript.Ast;
+using System.Runtime.CompilerServices;
+using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Number;
+using Anura.JavaScript.Native.Number.Dtoa;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Native.String;
-using Anura.JavaScript.Runtime.References;
+using Anura.JavaScript.Native.Symbol;
+using Anura.JavaScript.Pooling;
 
-namespace Anura.JavaScript.Runtime {
-    public enum Types {
-        None,
-        Undefined,
-        Null,
-        Boolean,
-        String,
-        Number,
-        Object
+namespace Anura.JavaScript.Runtime
+{
+    [Flags]
+    public enum Types
+    {
+        None = 0,
+        Undefined = 1,
+        Null = 2,
+        Boolean = 4,
+        String = 8,
+        Number = 16,
+        Symbol = 64,
+        Object = 128
     }
 
-    public class TypeConverter {
+    [Flags]
+    internal enum InternalTypes
+    {
+        // should not be used, used for empty match
+        None = 0,
+
+        Undefined = 1,
+        Null = 2,
+
+        // primitive  types range start
+        Boolean = 4,
+        String = 8,
+        Number = 16,
+        Integer = 32,
+        Symbol = 64,
+
+        // primitive  types range end
+        Object = 128,
+
+        // internal usage
+        ObjectEnvironmentRecord = 512,
+        RequiresCloning = 1024,
+
+        Primitive = Boolean | String | Number | Integer | Symbol,
+        InternalFlags = ObjectEnvironmentRecord | RequiresCloning
+    }
+
+    public static class TypeConverter
+    {
+        // how many decimals to check when determining if double is actually an int
+        private const double DoubleIsIntegerTolerance = double.Epsilon * 100;
+
+        internal static readonly string[] intToString = new string[1024];
+        private static readonly string[] charToString = new string[256];
+
+        static TypeConverter()
+        {
+            for (var i = 0; i < intToString.Length; ++i)
+            {
+                intToString[i] = i.ToString();
+            }
+
+            for (var i = 0; i < charToString.Length; ++i)
+            {
+                var c = (char) i;
+                charToString[i] = c.ToString();
+            }
+        }
+
         /// <summary>
-        /// http://www.ecma-international.org/ecma-262/5.1/#sec-9.1
+        /// http://www.ecma-international.org/ecma-262/#sec-toprimitive
         /// </summary>
-        /// <param name="input"></param>
-        /// <param name="preferredType"></param>
-        /// <returns></returns>
-        public static JsValue ToPrimitive (JsValue input, Types preferredType = Types.None) {
-            if (input == Null.Instance || input == Undefined.Instance) {
+        public static JsValue ToPrimitive(JsValue input, Types preferredType = Types.None)
+        {
+            if (!(input is ObjectInstance oi))
+            {
                 return input;
             }
 
-            if (input.IsPrimitive ()) {
-                return input;
+            var hint = preferredType switch
+            {
+                Types.String => JsString.StringString,
+                Types.Number => JsString.NumberString,
+                _ => JsString.DefaultString
+            };
+
+            var exoticToPrim = oi.GetMethod(GlobalSymbolRegistry.ToPrimitive);
+            if (exoticToPrim is object)
+            {
+                var str = exoticToPrim.Call(oi, new JsValue[] { hint });
+                if (str.IsPrimitive())
+                {
+                    return str;
+                }
+
+                if (str.IsObject())
+                {
+                    return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(oi.Engine, "Cannot convert object to primitive value");
+                }
             }
 
-            return input.AsObject ().DefaultValue (preferredType);
+            return OrdinaryToPrimitive(oi, preferredType == Types.None ? Types.Number :  preferredType);
+        }
+
+        private static readonly JsString[] StringHintCallOrder = { (JsString) "toString", (JsString) "valueOf"};
+        private static readonly JsString[] NumberHintCallOrder = { (JsString) "valueOf", (JsString) "toString"};
+        
+        /// <summary>
+        /// http://www.ecma-international.org/ecma-262/#sec-ordinarytoprimitive
+        /// </summary>
+        internal static JsValue OrdinaryToPrimitive(ObjectInstance input, Types hint = Types.None)
+        {
+            var callOrder = Array.Empty<JsString>();
+            if (hint == Types.String)
+            {
+                callOrder = StringHintCallOrder;
+            }
+
+            if (hint == Types.Number)
+            {
+                callOrder = NumberHintCallOrder;
+            }
+
+            foreach (var property in callOrder)
+            {
+                var method = input.Get(property) as ICallable;
+                if (method is object)
+                {
+                    var val = method.Call(input, Arguments.Empty);
+                    if (val.IsPrimitive())
+                    {
+                        return val;
+                    }
+                }
+ 
+            }
+
+            return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(input.Engine);
         }
 
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-9.2
         /// </summary>
-        /// <param name="o"></param>
-        /// <returns></returns>
-        public static bool ToBoolean (JsValue o) {
-            if (o.IsObject ()) {
-                return true;
-            }
-
-            if (o == Undefined.Instance || o == Null.Instance) {
-                return false;
-            }
-
-            if (o.IsBoolean ()) {
-                return o.AsBoolean ();
-            }
-
-            if (o.IsNumber ()) {
-                var n = o.AsNumber ();
-                if (n.Equals (0) || double.IsNaN (n)) {
+        public static bool ToBoolean(JsValue o)
+        {
+            var type = o._type & ~InternalTypes.InternalFlags;
+            switch (type)
+            {
+                case InternalTypes.Boolean:
+                    return ((JsBoolean) o)._value;
+                case InternalTypes.Undefined:
+                case InternalTypes.Null:
                     return false;
-                } else {
+                case InternalTypes.Integer:
+                    return (int) ((JsNumber) o)._value != 0;
+                case InternalTypes.Number:
+                    var n = ((JsNumber) o)._value;
+                    return n != 0 && !double.IsNaN(n);
+                case InternalTypes.String:
+                    return !((JsString) o).IsNullOrEmpty();
+                default:
                     return true;
-                }
             }
-
-            if (o.IsString ()) {
-                var s = o.AsString ();
-                if (String.IsNullOrEmpty (s)) {
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-
-            return true;
         }
 
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-9.3
         /// </summary>
-        /// <param name="o"></param>
-        /// <returns></returns>
-        public static double ToNumber (JsValue o) {
-            // check number first as this is what is usually expected
-            if (o.IsNumber ()) {
-                return o.AsNumber ();
-            }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double ToNumber(JsValue o)
+        {
+            return o.IsNumber()
+                ? ((JsNumber) o)._value
+                : ToNumberUnlikely(o);
+        }
 
-            if (o.IsObject ()) {
-                var p = o.AsObject () as IPrimitiveInstance;
-                if (p != null) {
-                    o = p.PrimitiveValue;
-                }
-            }
+        private static double ToNumberUnlikely(JsValue o)
+        {
+            var type = o._type & ~InternalTypes.InternalFlags;
+            return type switch
+            {
+                InternalTypes.Undefined => double.NaN,
+                InternalTypes.Null => 0,
+                InternalTypes.Object when o is IPrimitiveInstance p => ToNumber(ToPrimitive(p.PrimitiveValue, Types.Number)),
+                InternalTypes.Boolean => (((JsBoolean) o)._value ? 1 : 0),
+                InternalTypes.String => ToNumber(o.AsStringWithoutTypeCheck()),
+                InternalTypes.Symbol =>
+                // TODO proper TypeError would require Engine instance and a lot of API changes
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeErrorNoEngine<double>("Cannot convert a Symbol value to a number"),
+                _ => ToNumber(ToPrimitive(o, Types.Number))
+            };
+        }
 
-            if (o == Undefined.Instance) {
-                return double.NaN;
-            }
-
-            if (o == Null.Instance) {
+        private static double ToNumber(string input)
+        {
+            // eager checks to save time and trimming
+            if (string.IsNullOrEmpty(input))
+            {
                 return 0;
             }
 
-            if (o.IsBoolean ()) {
-                return o.AsBoolean () ? 1 : 0;
+            char first = input[0];
+            if (input.Length == 1 && first >= '0' && first <= '9')
+            {
+                // simple constant number
+                return first - '0';
             }
 
-            if (o.IsString ()) {
-                var s = StringPrototype.TrimEx (o.AsString ());
+            var s = StringPrototype.TrimEx(input);
 
-                if (String.IsNullOrEmpty (s)) {
-                    return 0;
-                }
+            if (s.Length == 0)
+            {
+                return 0;
+            }
 
-                if ("+Infinity".Equals (s) ||"Infinity".Equals (s)) {
+            if (s.Length == 8 || s.Length == 9)
+            {
+                if ("+Infinity" == s || "Infinity" == s)
+                {
                     return double.PositiveInfinity;
                 }
 
-                if ("-Infinity".Equals (s)) {
+                if ("-Infinity" == s)
+                {
                     return double.NegativeInfinity;
-                }
-
-                // todo: use a common implementation with JavascriptParser
-                try {
-                    if (!s.StartsWith ("0x", StringComparison.OrdinalIgnoreCase)) {
-                        var start = s[0];
-                        if (start != '+' && start != '-' && start != '.' && !char.IsDigit (start)) {
-                            return double.NaN;
-                        }
-
-                        double n = Double.Parse (s,
-                            NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign |
-                            NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite |
-                            NumberStyles.AllowExponent, CultureInfo.InvariantCulture);
-                        if (s.StartsWith ("-") && n.Equals (0)) {
-                            return -0.0;
-                        }
-
-                        return n;
-                    }
-
-                    int i = int.Parse (s.Substring (2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-
-                    return i;
-                } catch (OverflowException) {
-                    return s.StartsWith ("-") ? double.NegativeInfinity : double.PositiveInfinity;
-                } catch {
-                    return double.NaN;
                 }
             }
 
-            return ToNumber (ToPrimitive (o, Types.Number));
+            // todo: use a common implementation with JavascriptParser
+            try
+            {
+                if (s.Length > 2 && s[0] == '0' && char.IsLetter(s[1]))
+                {
+                    int fromBase = 0;
+                    if (s[1] == 'x' || s[1] == 'X')
+                    {
+                        fromBase = 16;
+                    }
+
+                    if (s[1] == 'o' || s[1] == 'O')
+                    {
+                        fromBase = 8;
+                    }
+
+                    if (s[1] == 'b' || s[1] == 'B')
+                    {
+                        fromBase = 2;
+                    }
+
+                    if (fromBase > 0)
+                    {
+                        return Convert.ToInt32(s.Substring(2), fromBase);
+                    }
+                }
+
+                var start = s[0];
+                if (start != '+' && start != '-' && start != '.' && !char.IsDigit(start))
+                {
+                    return double.NaN;
+                }
+
+                double n = double.Parse(s,
+                    NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign |
+                    NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite |
+                    NumberStyles.AllowExponent, CultureInfo.InvariantCulture);
+                if (s.StartsWith("-") && n == 0)
+                {
+                    return -0.0;
+                }
+
+                return n;
+            }
+            catch (OverflowException)
+            {
+                return s.StartsWith("-") ? double.NegativeInfinity : double.PositiveInfinity;
+            }
+            catch
+            {
+                return double.NaN;
+            }
         }
 
         /// <summary>
-        /// http://www.ecma-international.org/ecma-262/5.1/#sec-9.4
+        /// http://www.ecma-international.org/ecma-262/#sec-tolength
         /// </summary>
-        /// <param name="o"></param>
-        /// <returns></returns>
-        public static double ToInteger (JsValue o) {
-            var number = ToNumber (o);
-
-            if (double.IsNaN (number)) {
+        public static ulong ToLength(JsValue o)
+        {
+            var len = ToInteger(o);
+            if (len <= 0)
+            {
                 return 0;
             }
 
-            if (number.Equals (0) || double.IsInfinity (number)) {
+            return (ulong) Math.Min(len, NumberConstructor.MaxSafeInteger);
+        }
+
+        /// <summary>
+        /// http://www.ecma-international.org/ecma-262/#sec-tointeger
+        /// </summary>
+        public static double ToInteger(JsValue o)
+        {
+            var number = ToNumber(o);
+
+            if (double.IsNaN(number))
+            {
+                return 0;
+            }
+
+            if (number == 0 || double.IsInfinity(number))
+            {
+                return number;
+            }
+
+            return (long) number;
+        }
+
+        internal static double ToInteger(string o)
+        {
+            var number = ToNumber(o);
+
+            if (double.IsNaN(number))
+            {
+                return 0;
+            }
+
+            if (number == 0 || double.IsInfinity(number))
+            {
                 return number;
             }
 
@@ -178,173 +343,315 @@ namespace Anura.JavaScript.Runtime {
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-9.5
         /// </summary>
-        /// <param name="o"></param>
-        /// <returns></returns>
-        public static int ToInt32 (JsValue o) {
-            return (int) (uint) ToNumber (o);
+        public static int ToInt32(JsValue o)
+        {
+            return o._type == InternalTypes.Integer
+                ? o.AsInteger()
+                : (int) (uint) ToNumber(o);
         }
 
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-9.6
         /// </summary>
-        /// <param name="o"></param>
-        /// <returns></returns>
-        public static uint ToUint32 (JsValue o) {
-            return (uint) ToNumber (o);
+        public static uint ToUint32(JsValue o)
+        {
+            return o._type == InternalTypes.Integer
+                ? (uint) o.AsInteger()
+                : (uint) ToNumber(o);
         }
 
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-9.7
         /// </summary>
-        /// <param name="o"></param>
-        /// <returns></returns>
-        public static ushort ToUint16 (JsValue o) {
-            return (ushort) (uint) ToNumber (o);
+        public static ushort ToUint16(JsValue o)
+        {
+            return  o._type == InternalTypes.Integer
+                ? (ushort) (uint) o.AsInteger()
+                : (ushort) (uint) ToNumber(o);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string ToString(long i)
+        {
+            return i >= 0 && i < intToString.Length
+                ? intToString[i]
+                : i.ToString();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string ToString(int i)
+        {
+            return i >= 0 && i < intToString.Length
+                ? intToString[i]
+                : i.ToString();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string ToString(uint i)
+        {
+            return i < (uint) intToString.Length
+                ? intToString[i]
+                : i.ToString();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string ToString(char c)
+        {
+            return c >= 0 && c < charToString.Length
+                ? charToString[c]
+                : c.ToString();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string ToString(ulong i)
+        {
+            return i >= 0 && i < (ulong) intToString.Length
+                ? intToString[i]
+                : i.ToString();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string  ToString(double d)
+        {
+            if (d > long.MinValue && d < long.MaxValue  && Math.Abs(d % 1) <= DoubleIsIntegerTolerance)
+            {
+                // we are dealing with integer that can be cached
+                return ToString((long) d);
+            }
+
+            using (var stringBuilder = StringBuilderPool.Rent())
+            {
+                // we can create smaller array as we know the format to be short
+                return NumberPrototype.NumberToString(d, new DtoaBuilder(17), stringBuilder.Builder);
+            }
         }
 
         /// <summary>
-        /// http://www.ecma-international.org/ecma-262/5.1/#sec-9.8
+        /// http://www.ecma-international.org/ecma-262/6.0/#sec-topropertykey
         /// </summary>
-        /// <param name="o"></param>
-        /// <returns></returns>
-        public static string ToString (JsValue o) {
-            if (o.IsObject ()) {
-                var p = o.AsObject () as IPrimitiveInstance;
-                if (p != null) {
-                    o = p.PrimitiveValue;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static JsValue ToPropertyKey(JsValue o)
+        {
+            const InternalTypes stringOrSymbol = InternalTypes.String | InternalTypes.Symbol;
+            return (o._type & stringOrSymbol) != 0
+                ? o
+                : ToPropertyKeyNonString(o);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static JsValue ToPropertyKeyNonString(JsValue o)
+        {
+            const InternalTypes stringOrSymbol = InternalTypes.String | InternalTypes.Symbol;
+            var primitive = ToPrimitive(o, Types.String);
+            return (primitive._type & stringOrSymbol) != 0
+                ? primitive
+                : ToStringNonString(primitive);
+        }
+
+        /// <summary>
+        /// http://www.ecma-international.org/ecma-262/6.0/#sec-tostring
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string ToString(JsValue o)
+        {
+            if (o.IsString())
+            {
+                return o.AsStringWithoutTypeCheck();
+            }
+            return ToStringNonString(o);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static JsString ToJsString(JsValue o)
+        {
+            if (o is JsString s)
+            {
+                return s;
+            }
+            return JsString.Create(ToStringNonString(o));
+        }
+
+        private static string ToStringNonString(JsValue o)
+        {
+            var type = o._type & ~InternalTypes.InternalFlags;
+            switch (type)
+            {
+                case InternalTypes.Boolean:
+                    return ((JsBoolean) o)._value ? "true" : "false";
+                case InternalTypes.Integer:
+                    return ToString((int) ((JsNumber) o)._value);
+                case InternalTypes.Number:
+                    return ToString(((JsNumber) o)._value);
+                case InternalTypes.Symbol:
+                    return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeErrorNoEngine<string>("Cannot convert a Symbol value to a string");
+                case InternalTypes.Undefined:
+                    return Undefined.Text;
+                case InternalTypes.Null:
+                    return Null.Text;
+                case InternalTypes.Object when o is IPrimitiveInstance p:
+                    return ToString(ToPrimitive(p.PrimitiveValue, Types.String));
+                case InternalTypes.Object when o is Interop.IObjectWrapper p:
+                    return p.Target?.ToString();
+                default:
+                    return ToString(ToPrimitive(o, Types.String));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ObjectInstance ToObject(Engine engine, JsValue value)
+        {
+            var type = value._type & ~InternalTypes.InternalFlags;
+            switch (type)
+            {
+                case InternalTypes.Object:
+                    return (ObjectInstance) value;
+                case InternalTypes.Boolean:
+                    return engine.Boolean.Construct(((JsBoolean) value)._value);
+                case InternalTypes.Number:
+                case InternalTypes.Integer:
+                    return engine.Number.Construct(((JsNumber) value)._value);
+                case InternalTypes.String:
+                    return engine.String.Construct(value.AsStringWithoutTypeCheck());
+                case InternalTypes.Symbol:
+                    return engine.Symbol.Construct(((JsSymbol) value));
+                default:
+                    Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine);
+                    return null;
+            }
+        }
+        
+        internal static void CheckObjectCoercible(
+            Engine engine,
+            JsValue o,
+            MemberExpression expression,
+            string referenceName)
+        {
+            if (o._type < InternalTypes.Boolean && (engine.Options.ReferenceResolver?.CheckCoercible(o)).GetValueOrDefault() != true)
+            {
+                ThrowTypeError(engine, o, expression, referenceName);
+            }
+        }
+
+        private static void ThrowTypeError(
+            Engine engine,
+            JsValue o,
+            MemberExpression expression,
+            string referencedName)
+        {
+            referencedName ??= "The value";
+            var message = $"{referencedName} is {o}";
+            throw new JavaScriptException(engine.TypeError, message).SetCallstack(engine, expression.Location);
+        }
+
+        public static void CheckObjectCoercible(Engine engine, JsValue o)
+        {
+            if (o._type < InternalTypes.Boolean)
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine);
+            }
+        }
+
+        public static IEnumerable<Tuple<MethodBase, JsValue[]>> FindBestMatch<T>(Engine engine, T[] methods, Func<T, bool, JsValue[]> argumentProvider) where T : MethodBase
+        {
+            List<Tuple<T, JsValue[]>> matchingByParameterCount = null;
+            foreach (var m in methods)
+            {
+                bool hasParams = false;
+                var parameterInfos = m.GetParameters();
+                foreach (var parameter in parameterInfos)
+                {
+                    if (Attribute.IsDefined(parameter, typeof(ParamArrayAttribute)))
+                    {
+                        hasParams = true;
+                        break;
+                    }
+                }
+
+                var arguments = argumentProvider(m, hasParams);
+                if (parameterInfos.Length == arguments.Length)
+                {
+                    if (methods.Length == 0 && arguments.Length == 0)
+                    {
+                        yield return new Tuple<MethodBase, JsValue[]>(m, arguments);
+                        yield break;
+                    }
+
+                    matchingByParameterCount ??= new List<Tuple<T, JsValue[]>>();
+                    matchingByParameterCount.Add(new Tuple<T, JsValue[]>(m, arguments));
+                }
+                else if (parameterInfos.Length > arguments.Length)
+                {
+                    // check if we got enough default values to provide all parameters (or more in case some default values are provided/overwritten)
+                    var defaultValuesCount = 0;
+                    foreach (var param in parameterInfos)
+                    {
+                        if (param.HasDefaultValue) defaultValuesCount++;
+                    }
+
+                    if (parameterInfos.Length <= arguments.Length + defaultValuesCount)
+                    {
+                        // create missing arguments from default values
+
+                        var argsWithDefaults = new List<JsValue>(arguments);
+                        for (var i = arguments.Length; i < parameterInfos.Length; i++)
+                        {
+                            var param = parameterInfos[i];
+                            var value = JsValue.FromObject(engine, param.DefaultValue);
+                            argsWithDefaults.Add(value);
+                        }
+
+                        matchingByParameterCount = matchingByParameterCount ?? new List<Tuple<T, JsValue[]>>();
+                        matchingByParameterCount.Add(new Tuple<T, JsValue[]>(m, argsWithDefaults.ToArray()));
+                    }
                 }
             }
 
-            if (o.IsString ()) {
-                return o.AsString ();
-            }
-
-            if (o == Undefined.Instance) {
-                return Undefined.Text;
-            }
-
-            if (o == Null.Instance) {
-                return Null.Text;
-            }
-
-            if (o.IsBoolean ()) {
-                return o.AsBoolean () ? "true" : "false";
-            }
-
-            if (o.IsNumber ()) {
-                return NumberPrototype.ToNumberString (o.AsNumber ());
-            }
-
-            return ToString (ToPrimitive (o, Types.String));
-        }
-
-        public static ObjectInstance ToObject (Engine engine, JsValue value) {
-            if (value.IsObject ()) {
-                return value.AsObject ();
-            }
-
-            if (value == Undefined.Instance) {
-                throw new JavaScriptException (engine.TypeError);
-            }
-
-            if (value == Null.Instance) {
-                throw new JavaScriptException (engine.TypeError);
-            }
-
-            if (value.IsBoolean ()) {
-                return engine.Boolean.Construct (value.AsBoolean ());
-            }
-
-            if (value.IsNumber ()) {
-                return engine.Number.Construct (value.AsNumber ());
-            }
-
-            if (value.IsString ()) {
-                return engine.String.Construct (value.AsString ());
-            }
-
-            throw new JavaScriptException (engine.TypeError);
-        }
-
-        public static Types GetPrimitiveType (JsValue value) {
-            if (value.IsObject ()) {
-                var primitive = value.TryCast<IPrimitiveInstance> ();
-                if (primitive != null) {
-                    return primitive.Type;
-                }
-
-                return Types.Object;
-            }
-
-            return value.Type;
-        }
-
-        public static void CheckObjectCoercible (Engine engine, JsValue o, MemberExpression expression,
-            object baseReference) {
-            if (o != Undefined.Instance && o != Null.Instance)
-                return;
-
-            if (engine.Options._ReferenceResolver != null &&
-                engine.Options._ReferenceResolver.CheckCoercible (o))
-                return;
-
-            var message = string.Empty;
-            var reference = baseReference as Reference;
-            if (reference != null)
-                message = $"{reference.GetReferencedName()} is {o}";
-
-            throw new JavaScriptException (engine.TypeError, message)
-                .SetCallstack (engine, expression.Location);
-        }
-
-        public static void CheckObjectCoercible (Engine engine, JsValue o) {
-            if (o == Undefined.Instance || o == Null.Instance) {
-                throw new JavaScriptException (engine.TypeError);
-            }
-        }
-
-        public static IEnumerable<MethodBase> FindBestMatch (Engine engine, MethodBase[] methods, JsValue[] arguments) {
-            methods = methods
-                .Where (m => m.GetParameters ().Count () == arguments.Length)
-                .ToArray ();
-
-            if (methods.Length == 1 && !methods[0].GetParameters ().Any ()) {
-                yield return methods[0];
+            if (matchingByParameterCount == null)
+            {
                 yield break;
             }
 
-            var objectArguments = arguments.Select (x => x.ToObject ()).ToArray ();
-            foreach (var method in methods) {
+            foreach (var tuple in matchingByParameterCount)
+            {
                 var perfectMatch = true;
-                var parameters = method.GetParameters ();
-                for (var i = 0; i < arguments.Length; i++) {
-                    var arg = objectArguments[i];
+                var parameters = tuple.Item1.GetParameters();
+                var arguments = tuple.Item2;
+                for (var i = 0; i < arguments.Length; i++)
+                {
+                    var arg = arguments[i].ToObject();
                     var paramType = parameters[i].ParameterType;
-
-                    if (arg == null) {
-                        if (!TypeIsNullable (paramType)) {
+                    if (arg == null)
+                    {
+                        if (!TypeIsNullable(paramType))
+                        {
                             perfectMatch = false;
                             break;
                         }
-                    } else if (arg.GetType () != paramType) {
+                    }
+                    else if (arg.GetType() != paramType)
+                    {
                         perfectMatch = false;
                         break;
                     }
                 }
 
-                if (perfectMatch) {
-                    yield return method;
+                if (perfectMatch)
+                {
+                    yield return new Tuple<MethodBase, JsValue[]>(tuple.Item1, arguments);
                     yield break;
                 }
             }
 
-            foreach (var method in methods) {
-                yield return method;
+            for (var i = 0; i < matchingByParameterCount.Count; i++)
+            {
+                var tuple = matchingByParameterCount[i];
+                yield return new Tuple<MethodBase, JsValue[]>(tuple.Item1, tuple.Item2);
             }
         }
 
-        public static bool TypeIsNullable (Type type) {
-            return !type.IsValueType () || Nullable.GetUnderlyingType (type) != null;
+        public static bool TypeIsNullable(Type type)
+        {
+            return !type.IsValueType || Nullable.GetUnderlyingType(type) != null;
         }
     }
 }

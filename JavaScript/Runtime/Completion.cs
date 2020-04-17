@@ -1,30 +1,46 @@
+﻿using System.Runtime.CompilerServices;
+using Esprima;
 using Anura.JavaScript.Native;
 
-namespace Anura.JavaScript.Runtime {
+namespace Anura.JavaScript.Runtime
+{
+    public enum CompletionType
+    {
+        Normal,
+        Break,
+        Continue,
+        Return,
+        Throw
+    }
+
     /// <summary>
     /// http://www.ecma-international.org/ecma-262/5.1/#sec-8.9
     /// </summary>
-    public class Completion {
-        public static string Normal = "normal";
-        public static string Break = "break";
-        public static string Continue = "continue";
-        public static string Return = "return";
-        public static string Throw = "throw";
-
-        public Completion (string type, JsValue value, string identifier) {
+    public readonly struct Completion
+    {
+        public Completion(CompletionType type, JsValue value, string identifier, Location location)
+        {
             Type = type;
             Value = value;
             Identifier = identifier;
+            Location = location;
         }
 
-        public string Type { get; private set; }
-        public JsValue Value { get; private set; }
-        public string Identifier { get; private set; }
+        public readonly CompletionType Type;
+        public readonly JsValue Value;
+        public readonly string Identifier;
+        public readonly Location Location;
 
-        public JsValue GetValueOrDefault () {
-            return Value != null ? Value : Undefined.Instance;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public JsValue GetValueOrDefault()
+        {
+            return Value ?? Undefined.Instance;
         }
 
-        public Anura.JavaScript.Location Location { get; set; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsAbrupt()
+        {
+            return Type != CompletionType.Normal;
+        }
     }
 }

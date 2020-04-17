@@ -142,6 +142,8 @@ namespace Anura.Objects {
     }
 
     public class Initialization {
+        public static int GlobalCapacity = 40;
+
         public static void CreateConstructors (JavaScript.Engine engine) {
             // Namespace Extensions:
             Extensions.__Anura__Constructor Anura = Extensions.__Anura__Constructor.Create__Anura__Constructor (engine);
@@ -162,8 +164,10 @@ namespace Anura.Objects {
             }
         }
 
-        public static void RegisterGlobalObjects (JavaScript.Native.Object.ObjectInstance inst) {
-            inst.FastAddProperty ("__Anura__", ExtensionWebAPIs[0].obj as JavaScript.Native.Function.FunctionInstance, true, false, true);
+        public static void RegisterGlobalObjects (JavaScript.Collections.PropertyDictionary inst,
+                                                  JavaScript.Runtime.Descriptors.PropertyFlag defaultFlag) {
+            JavaScript.Key key = "__Anura__";
+            inst.Add (in key, new JavaScript.Runtime.Descriptors.PropertyDescriptor(ExtensionWebAPIs[0].obj as JavaScript.Native.Function.FunctionInstance, defaultFlag));
         }
 
         public static List < (int config, IPrototypeObjectModel obj) > ExtensionWebAPIs = new List < (int config, IPrototypeObjectModel obj) > ();

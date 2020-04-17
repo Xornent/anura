@@ -1,50 +1,69 @@
-using Anura.JavaScript.Native.Function;
+﻿using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
+using Anura.JavaScript.Runtime.Descriptors;
 
-namespace Anura.JavaScript.Native.Error {
-    public class ErrorConstructor : FunctionInstance, IConstructor {
-        private string _name;
+namespace Anura.JavaScript.Native.Error
+{
+    public sealed class ErrorConstructor : FunctionInstance, IConstructor
+    {
+        private JsString _name;
+        private static readonly JsString _functionName = new JsString("Error");
 
-        public ErrorConstructor (Engine engine) : base (engine, null, null, false) { }
+        public ErrorConstructor(Engine engine) : base(engine, _functionName, strict: false)
+        {
+        }
 
-        public static ErrorConstructor CreateErrorConstructor (Engine engine, string name) {
-            var obj = new ErrorConstructor (engine);
-            obj.Extensible = true;
-            obj._name = name;
+        public static ErrorConstructor CreateErrorConstructor(Engine engine, JsString name)
+        {
+            var obj = new ErrorConstructor(engine)
+            {
+                _name = name,
+                _prototype = engine.Function.PrototypeObject
+            };
 
             // The value of the [[Prototype]] internal property of the Error constructor is the Function prototype object (15.11.3)
-            obj.Prototype = engine.Function.PrototypeObject;
-            obj.PrototypeObject = ErrorPrototype.CreatePrototypeObject (engine, obj, name);
+            obj.PrototypeObject = ErrorPrototype.CreatePrototypeObject(engine, obj, name);
 
-            obj.FastAddProperty ("length", 1, false, false, false);
+            obj._length = PropertyDescriptor.AllForbiddenDescriptor.NumberOne;
 
             // The initial value of Error.prototype is the Error prototype object
-            obj.FastAddProperty ("prototype", obj.PrototypeObject, false, false, false);
+            obj._prototypeDescriptor = new PropertyDescriptor(obj.PrototypeObject, PropertyFlag.AllForbidden);
 
             return obj;
         }
 
-        public void Configure () {
-
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
+        {
+            return Construct(arguments, thisObject);
         }
 
-        public override JsValue Call (JsValue thisObject, JsValue[] arguments) {
-            return Construct (arguments);
+        public ObjectInstance Construct(JsValue[] arguments)
+        {
+            return Construct(arguments, this);
         }
 
-        public ObjectInstance Construct (JsValue[] arguments) {
-            var instance = new ErrorInstance (Engine, _name);
-            instance.Prototype = PrototypeObject;
-            instance.Extensible = true;
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
+        {
+            var instance = new ErrorInstance(Engine, _name);
+            instance._prototype = PrototypeObject;
 
-            if (arguments.At (0) != Undefined.Instance) {
-                instance.Put ("message", TypeConverter.ToString (arguments.At (0)), false);
+            var jsValue = arguments.At(0);
+            if (!jsValue.IsUndefined())
+            {
+                var msg = TypeConverter.ToString(jsValue);
+                var msgDesc = new PropertyDescriptor(msg, true, false, true);
+                instance.DefinePropertyOrThrow("message", msgDesc);
             }
 
             return instance;
         }
 
         public ErrorPrototype PrototypeObject { get; private set; }
+
+        protected override ObjectInstance GetPrototypeOf()
+        {
+            return _name._value != "Error" ? _engine.Error : _prototype;
+        }
     }
 }

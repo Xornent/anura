@@ -1,53 +1,72 @@
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
+using Anura.JavaScript.Native.Global;
 using Anura.JavaScript.Native.Object;
-using Anura.JavaScript.Runtime.References;
 
-namespace Anura.JavaScript.Runtime.Environments {
+namespace Anura.JavaScript.Runtime.Environments
+{
     /// <summary>
-    /// Represents a Liexical Environment (a.k.a Scope)
+    /// Represents a Lexical Environment (a.k.a Scope)
     /// http://www.ecma-international.org/ecma-262/5.1/#sec-10.2
     /// http://www.ecma-international.org/ecma-262/5.1/#sec-10.2.2
     /// </summary>
-    public sealed class LexicalEnvironment {
-        private readonly EnvironmentRecord _record;
-        private readonly LexicalEnvironment _outer;
+    public sealed class LexicalEnvironment
+    {
+        private readonly Engine _engine;
+        internal EnvironmentRecord _record;
+        internal LexicalEnvironment _outer;
 
-        public LexicalEnvironment (EnvironmentRecord record, LexicalEnvironment outer) {
+        public LexicalEnvironment(Engine engine, EnvironmentRecord record, LexicalEnvironment outer)
+        {
+            _engine = engine;
             _record = record;
             _outer = outer;
         }
 
-        public EnvironmentRecord Record {
-            get { return _record; }
-        }
+        internal static bool TryGetIdentifierEnvironmentWithBindingValue(
+            LexicalEnvironment lex,
+            in Key name,
+            bool strict,
+            out EnvironmentRecord record,
+            out JsValue value)
+        {
+            record = default;
+            value = default;
 
-        public LexicalEnvironment Outer {
-            get { return _outer; }
-        }
+            while (lex != null)
+            {
+                if (lex._record.TryGetBinding(
+                    name,
+                    strict,
+                    out _,
+                    out value))
+                {
+                    record = lex._record;
+                    return true;
+                }
 
-        public static Reference GetIdentifierReference (LexicalEnvironment lex, string name, bool strict) {
-            if (lex == null) {
-                return new Reference (Undefined.Instance, name, strict);
+                lex = lex._outer;
             }
 
-            if (lex.Record.HasBinding (name)) {
-                return new Reference (lex.Record, name, strict);
-            }
-
-            if (lex.Outer == null) {
-                return new Reference (Undefined.Instance, name, strict);
-            }
-
-            return GetIdentifierReference (lex.Outer, name, strict);
+            return false;
         }
 
-        public static LexicalEnvironment NewDeclarativeEnvironment (Engine engine, LexicalEnvironment outer = null) {
-            return new LexicalEnvironment (new DeclarativeEnvironmentRecord (engine), outer);
+        public static LexicalEnvironment NewDeclarativeEnvironment(Engine engine, LexicalEnvironment outer = null)
+        {
+            var environment = new LexicalEnvironment(engine, null, null);
+            environment._record = new DeclarativeEnvironmentRecord(engine);
+            environment._outer = outer;
+
+            return environment;
         }
 
-        public static LexicalEnvironment NewObjectEnvironment (Engine engine, ObjectInstance objectInstance, LexicalEnvironment outer, bool provideThis) {
-            return new LexicalEnvironment (new ObjectEnvironmentRecord (engine, objectInstance, provideThis), outer);
+        internal static LexicalEnvironment NewGlobalEnvironment(Engine engine, GlobalObject objectInstance)
+        {
+            return new LexicalEnvironment(engine, new GlobalEnvironmentRecord(engine, objectInstance), null);
         }
+
+        internal static LexicalEnvironment NewObjectEnvironment(Engine engine, ObjectInstance objectInstance, LexicalEnvironment outer, bool provideThis)
+        {
+            return new LexicalEnvironment(engine, new ObjectEnvironmentRecord(engine, objectInstance, provideThis), outer);
+        } 
     }
-
 }

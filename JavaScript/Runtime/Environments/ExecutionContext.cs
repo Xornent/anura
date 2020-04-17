@@ -1,10 +1,23 @@
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
 
-namespace Anura.JavaScript.Runtime.Environments {
-    public sealed class ExecutionContext {
-        public LexicalEnvironment LexicalEnvironment { get; set; }
-        public LexicalEnvironment VariableEnvironment { get; set; }
-        public JsValue ThisBinding { get; set; }
+namespace Anura.JavaScript.Runtime.Environments
+{
+    public readonly struct ExecutionContext
+    {
+        public ExecutionContext(LexicalEnvironment lexicalEnvironment, LexicalEnvironment variableEnvironment, JsValue thisBinding)
+        {
+            LexicalEnvironment = lexicalEnvironment;
+            VariableEnvironment = variableEnvironment;
+            ThisBinding = thisBinding;
+        }
 
+        public readonly LexicalEnvironment LexicalEnvironment;
+        public readonly LexicalEnvironment VariableEnvironment;
+        public readonly JsValue ThisBinding;
+
+        public ExecutionContext UpdateLexicalEnvironment(LexicalEnvironment newEnv)
+        {
+            return new ExecutionContext(newEnv, VariableEnvironment, ThisBinding);
+        }
     }
 }

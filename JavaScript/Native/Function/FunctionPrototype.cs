@@ -1,114 +1,138 @@
-using System.Collections.Generic;
-using System.Linq;
+﻿using Anura.JavaScript.Collections;
+using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
 
-namespace Anura.JavaScript.Native.Function {
+namespace Anura.JavaScript.Native.Function
+{
     /// <summary>
     ///     http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4
     /// </summary>
-    public sealed class FunctionPrototype : FunctionInstance {
-        private FunctionPrototype (Engine engine) : base (engine, null, null, false) { }
+    public sealed class FunctionPrototype : FunctionInstance
+    {
+        private static readonly JsString _functionName = new JsString("Function");
 
-        public static FunctionPrototype CreatePrototypeObject (Engine engine) {
-            var obj = new FunctionPrototype (engine);
-            obj.Extensible = true;
+        private FunctionPrototype(Engine engine)
+            : base(engine, _functionName, strict: false)
+        {
+        }
 
-            // The value of the [[Prototype]] internal property of the Function prototype object is the standard built-in Object prototype object
-            obj.Prototype = engine.Object.PrototypeObject;
-
-            obj.FastAddProperty ("length", 0, false, false, false);
+        public static FunctionPrototype CreatePrototypeObject(Engine engine)
+        {
+            var obj = new FunctionPrototype(engine)
+            {
+                // The value of the [[Prototype]] internal property of the Function prototype object is the standard built-in Object prototype object
+                _prototype = engine.Object.PrototypeObject,
+                _length = PropertyDescriptor.AllForbiddenDescriptor.NumberZero
+            };
 
             return obj;
         }
 
-        public void Configure () {
-            FastAddProperty ("constructor", Engine.Function, true, false, true);
-            FastAddProperty ("toString", new ClrFunctionInstance (Engine, ToString), true, false, true);
-            FastAddProperty ("apply", new ClrFunctionInstance (Engine, Apply, 2), true, false, true);
-            FastAddProperty ("call", new ClrFunctionInstance (Engine, CallImpl, 1), true, false, true);
-            FastAddProperty ("bind", new ClrFunctionInstance (Engine, Bind, 1), true, false, true);
+        protected override void Initialize()
+        {
+            var properties = new PropertyDictionary(5, checkExistingKeys: false)
+            {
+                ["constructor"] = new PropertyDescriptor(Engine.Function, PropertyFlag.NonEnumerable),
+                ["toString"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "toString", ToString), true, false, true),
+                ["apply"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "apply", Apply, 2), true, false, true),
+                ["call"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "call", CallImpl, 1), true, false, true),
+                ["bind"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "bind", Bind, 1), true, false, true)
+            };
+            SetProperties(properties);
         }
 
-        private JsValue Bind (JsValue thisObj, JsValue[] arguments) {
-            var target = thisObj.TryCast<ICallable> (x => {
-                throw new JavaScriptException (Engine.TypeError);
+        private JsValue Bind(JsValue thisObj, JsValue[] arguments)
+        {
+            var target = thisObj.TryCast<ICallable>(x =>
+            {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             });
 
-            var thisArg = arguments.At (0);
-            var f = new BindFunctionInstance (Engine) { Extensible = true };
-            f.TargetFunction = thisObj;
-            f.BoundThis = thisArg;
-            f.BoundArgs = arguments.Skip (1).ToArray ();
-            f.Prototype = Engine.Function.PrototypeObject;
+            var thisArg = arguments.At(0);
+            var f = new BindFunctionInstance(Engine)
+            {
+                TargetFunction = thisObj,
+                BoundThis = thisArg,
+                BoundArgs = arguments.Skip(1),
+                _prototype = Engine.Function.PrototypeObject
+            };
 
-            var o = target as FunctionInstance;
-            if (o != null) {
-                var l = TypeConverter.ToNumber (o.Get ("length")) - (arguments.Length - 1);
-                f.FastAddProperty ("length", System.Math.Max (l, 0), false, false, false);
-            } else {
-                f.FastAddProperty ("length", 0, false, false, false);
+            if (target is FunctionInstance functionInstance)
+            {
+                var l = TypeConverter.ToNumber(functionInstance.Get(CommonProperties.Length, functionInstance)) - (arguments.Length - 1);
+                f.SetOwnProperty(CommonProperties.Length, new PropertyDescriptor(System.Math.Max(l, 0), PropertyFlag.AllForbidden));
+            }
+            else
+            {
+                f.SetOwnProperty(CommonProperties.Length, PropertyDescriptor.AllForbiddenDescriptor.NumberZero);
             }
 
-            var thrower = Engine.Function.ThrowTypeError;
-            f.DefineOwnProperty ("caller", new PropertyDescriptor (thrower, thrower, false, false), false);
-            f.DefineOwnProperty ("arguments", new PropertyDescriptor (thrower, thrower, false, false), false);
+            f.DefineOwnProperty(CommonProperties.Caller, _engine._getSetThrower);
+            f.DefineOwnProperty(CommonProperties.Arguments, _engine._getSetThrower);
 
             return f;
         }
 
-        private JsValue ToString (JsValue thisObj, JsValue[] arguments) {
-            var func = thisObj.TryCast<FunctionInstance> ();
-
-            if (func == null) {
-                throw new JavaScriptException (Engine.TypeError, "Function object expected.");
+        private JsValue ToString(JsValue thisObj, JsValue[] arguments)
+        {
+            if (!(thisObj is FunctionInstance))
+            {
+                return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<FunctionInstance>(_engine, "Function object expected.");
             }
 
-            return System.String.Format ("function() {{ ... }}");
+            return "function() {{ ... }}";
         }
 
-        public JsValue Apply (JsValue thisObject, JsValue[] arguments) {
-            var func = thisObject.TryCast<ICallable> ();
-            var thisArg = arguments.At (0);
-            var argArray = arguments.At (1);
+        internal JsValue Apply(JsValue thisObject, JsValue[] arguments)
+        {
+            var func = thisObject as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ICallable>(Engine);
+            var thisArg = arguments.At(0);
+            var argArray = arguments.At(1);
 
-            if (func == null) {
-                throw new JavaScriptException (Engine.TypeError);
+            if (argArray.IsNullOrUndefined())
+            {
+                return func.Call(thisArg, Arguments.Empty);
             }
 
-            if (argArray == Null.Instance || argArray == Undefined.Instance) {
-                return func.Call (thisArg, Arguments.Empty);
-            }
+            var argList = CreateListFromArrayLike(argArray);
 
-            var argArrayObj = argArray.TryCast<ObjectInstance> ();
-            if (argArrayObj == null) {
-                throw new JavaScriptException (Engine.TypeError);
-            }
+            var result = func.Call(thisArg, argList);
 
-            var len = argArrayObj.Get ("length").AsNumber ();
-            uint n = TypeConverter.ToUint32 (len);
-            var argList = new List<JsValue> ();
-            for (int index = 0; index < n; index++) {
-                string indexName = index.ToString ();
-                var nextArg = argArrayObj.Get (indexName);
-                argList.Add (nextArg);
-            }
-            return func.Call (thisArg, argList.ToArray ());
+            return result;
         }
 
-        public JsValue CallImpl (JsValue thisObject, JsValue[] arguments) {
-            var func = thisObject.TryCast<ICallable> ();
-            if (func == null) {
-                throw new JavaScriptException (Engine.TypeError);
-            }
-
-            return func.Call (arguments.At (0), arguments.Length == 0 ? arguments : arguments.Skip (1).ToArray ());
+        internal JsValue[] CreateListFromArrayLike(JsValue argArray, Types? elementTypes = null)
+        {
+            var argArrayObj = argArray as ObjectInstance ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine);
+            var operations = ArrayOperations.For(argArrayObj);
+            var allowedTypes = elementTypes ??
+                               Types.Undefined | Types.Null | Types.Boolean | Types.String | Types.Symbol | Types.Number | Types.Object;
+            
+            var argList = operations.GetAll(allowedTypes);
+            return argList;
         }
 
-        public override JsValue Call (JsValue thisObject, JsValue[] arguments) {
-            return Undefined.Instance;
+        private JsValue CallImpl(JsValue thisObject, JsValue[] arguments)
+        {
+            var func = thisObject as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ICallable>(Engine);
+            JsValue[] values = System.Array.Empty<JsValue>();
+            if (arguments.Length > 1)
+            {
+                values = new JsValue[arguments.Length - 1];
+                System.Array.Copy(arguments, 1, values, 0, arguments.Length - 1);
+            }
+
+            var result = func.Call(arguments.At(0), values);
+
+            return result;
+        }
+
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
+        {
+            return Undefined;
         }
     }
 }

@@ -1,21 +1,25 @@
-namespace Anura.JavaScript.Runtime {
-    using Anura.JavaScript.Ast;
-    using Anura.JavaScript.Native;
+﻿using Esprima.Ast;
+using Anura.JavaScript.Native;
 
-    public class CallStackElement {
-        private string _shortDescription;
+namespace Anura.JavaScript.Runtime
+{
+    public class CallStackElement
+    {
+        private readonly string _shortDescription;
 
-        public CallStackElement (CallExpression callExpression, JsValue function, string shortDescription) {
+        public CallStackElement(CallExpression callExpression, JsValue function, string shortDescription)
+        {
             _shortDescription = shortDescription;
             CallExpression = callExpression;
             Function = function;
         }
 
-        public CallExpression CallExpression { get; private set; }
+        public CallExpression CallExpression { get; }
 
-        public JsValue Function { get; private set; }
+        public JsValue Function { get; }
 
-        public override string ToString () {
+        public override string ToString()
+        {
             return _shortDescription;
         }
     }

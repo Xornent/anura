@@ -1,50 +1,50 @@
-using System;
+﻿using System;
 
-namespace Anura.JavaScript {
-    public class StrictModeScope : IDisposable {
+namespace Anura.JavaScript
+{
+    public readonly struct StrictModeScope : IDisposable
+    {
         private readonly bool _strict;
         private readonly bool _force;
-        private readonly int _forcedRefCount;
+        private readonly ushort _forcedRefCount;
 
-        [ThreadStatic]
-        private static int _refCount;
+        [ThreadStatic] 
+        private static ushort _refCount;
 
-        public StrictModeScope (bool strict = true, bool force = false) {
+        public StrictModeScope(bool strict = true, bool force = false)
+        {
             _strict = strict;
             _force = force;
 
-            if (_force) {
+            if (_force)
+            {
                 _forcedRefCount = _refCount;
                 _refCount = 0;
             }
-
-            if (_strict) {
-                _refCount++;
+            else
+            {
+                _forcedRefCount = 0;
             }
 
+            if (_strict)
+            {
+                _refCount++;
+            }
         }
 
-        public void Dispose () {
-            if (_strict) {
+        public void Dispose()
+        {
+            if (_strict)
+            {
                 _refCount--;
             }
 
-            if (_force) {
+            if (_force)
+            {
                 _refCount = _forcedRefCount;
-            }
+            } 
         }
 
-        public static bool IsStrictModeCode {
-            get { return _refCount > 0; }
-        }
-
-        public static int RefCount {
-            get {
-                return _refCount;
-            }
-            set {
-                _refCount = value;
-            }
-        }
+        public static bool IsStrictModeCode => _refCount > 0;
     }
 }

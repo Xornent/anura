@@ -1,6 +1,6 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Function;
@@ -8,170 +8,184 @@ using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Descriptors.Specialized;
 
-namespace Anura.JavaScript.Runtime.Interop {
-    public class TypeReference : FunctionInstance, IConstructor, IObjectWrapper {
-        private TypeReference (Engine engine) : base (engine, null, null, false) { }
+namespace Anura.JavaScript.Runtime.Interop
+{
+    public sealed class TypeReference : FunctionInstance, IConstructor, IObjectWrapper
+    {
+        private static readonly JsString _name = new JsString("typereference");
 
-        public Type Type { get; set; }
+        private TypeReference(Engine engine)
+            : base(engine, _name, strict: false, ObjectClass.TypeReference)
+        {
+        }
 
-        public static TypeReference CreateTypeReference (Engine engine, Type type) {
-            var obj = new TypeReference (engine);
-            obj.Extensible = false;
-            obj.Type = type;
+        public Type ReferenceType { get; set; }
+
+        public static TypeReference CreateTypeReference(Engine engine, Type type)
+        {
+            var obj = new TypeReference(engine);
+            obj.PreventExtensions();
+            obj.ReferenceType = type;
 
             // The value of the [[Prototype]] internal property of the TypeReference constructor is the Function prototype object
-            obj.Prototype = engine.Function.PrototypeObject;
-
-            obj.FastAddProperty ("length", 0, false, false, false);
+            obj._prototype = engine.Function.PrototypeObject;
+            obj._length = PropertyDescriptor.AllForbiddenDescriptor.NumberZero;
 
             // The initial value of Boolean.prototype is the Boolean prototype object
-            obj.FastAddProperty ("prototype", engine.Object.PrototypeObject, false, false, false);
+            obj._prototypeDescriptor = new PropertyDescriptor(engine.Object.PrototypeObject, PropertyFlag.AllForbidden);
 
             return obj;
         }
 
-        public override JsValue Call (JsValue thisObject, JsValue[] arguments) {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
+        {
             // direct calls on a TypeReference constructor object is equivalent to the new operator
-            return Construct (arguments);
+            return Construct(arguments, thisObject);
         }
 
-        public ObjectInstance Construct (JsValue[] arguments) {
-            if (arguments.Length == 0 && Type.IsValueType ()) {
-                var instance = Activator.CreateInstance (Type);
-                var result = TypeConverter.ToObject (Engine, JsValue.FromObject (Engine, instance));
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
+        {
+            if (arguments.Length == 0 && ReferenceType.IsValueType)
+            {
+                var instance = Activator.CreateInstance(ReferenceType);
+                var result = TypeConverter.ToObject(Engine, FromObject(Engine, instance));
 
                 return result;
             }
 
-            var constructors = Type.GetConstructors (BindingFlags.Public | BindingFlags.Instance);
+            var constructors = ReferenceType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
 
-            var methods = TypeConverter.FindBestMatch (Engine, constructors, arguments).ToList ();
+            foreach (var tuple in TypeConverter.FindBestMatch(_engine, constructors, (info, b) => arguments))
+            {
+                var method = tuple.Item1;
 
-            foreach (var method in methods) {
                 var parameters = new object[arguments.Length];
-                try {
-                    for (var i = 0; i < arguments.Length; i++) {
-                        var parameterType = method.GetParameters () [i].ParameterType;
+                var methodParameters = method.GetParameters();
+                try
+                {
+                    for (var i = 0; i < arguments.Length; i++)
+                    {
+                        var parameterType = methodParameters[i].ParameterType;
 
-                        if (parameterType == typeof (JsValue)) {
+                        if (typeof(JsValue).IsAssignableFrom(parameterType))
+                        {
                             parameters[i] = arguments[i];
-                        } else {
-                            parameters[i] = Engine.ClrTypeConverter.Convert (
-                                arguments[i].ToObject (),
+                        }
+                        else
+                        {
+                            parameters[i] = Engine.ClrTypeConverter.Convert(
+                                arguments[i].ToObject(),
                                 parameterType,
                                 CultureInfo.InvariantCulture);
                         }
                     }
 
                     var constructor = (ConstructorInfo) method;
-                    var instance = constructor.Invoke (parameters.ToArray ());
-                    var result = TypeConverter.ToObject (Engine, JsValue.FromObject (Engine, instance));
+                    var instance = constructor.Invoke(parameters);
+                    var result = TypeConverter.ToObject(Engine, FromObject(Engine, instance));
 
                     // todo: cache method info
 
                     return result;
-                } catch {
+                }
+                catch
+                {
                     // ignore method
                 }
             }
 
-            throw new JavaScriptException (Engine.TypeError, "No public methods with the specified arguments were found.");
-
+            return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine, "No public methods with the specified arguments were found.");
         }
 
-        public override bool HasInstance (JsValue v) {
-            ObjectWrapper wrapper = v.As<ObjectWrapper> ();
-
-            if (wrapper == null) {
-                return base.HasInstance (v);
+        public override bool HasInstance(JsValue v)
+        {
+            if (v.IsObject())
+            {
+                var wrapper = v.AsObject() as IObjectWrapper;
+                if (wrapper != null)
+                    return wrapper.Target.GetType() == ReferenceType;
             }
 
-            return wrapper.Target.GetType () == this.Type;
+            return base.HasInstance(v);
         }
 
-        public override bool DefineOwnProperty (string propertyName, PropertyDescriptor desc, bool throwOnError) {
-            if (throwOnError) {
-                throw new JavaScriptException (Engine.TypeError, "Can't define a property of a TypeReference");
-            }
-
+        public override bool DefineOwnProperty(JsValue property, PropertyDescriptor desc)
+        {
             return false;
         }
 
-        public override bool Delete (string propertyName, bool throwOnError) {
-            if (throwOnError) {
-                throw new JavaScriptException (Engine.TypeError, "Can't delete a property of a TypeReference");
-            }
-
+        public override bool Delete(JsValue property)
+        {
             return false;
         }
 
-        public override void Put (string propertyName, JsValue value, bool throwOnError) {
-            if (!CanPut (propertyName)) {
-                if (throwOnError) {
-                    throw new JavaScriptException (Engine.TypeError);
-                }
-
-                return;
+        public override bool Set(JsValue property, JsValue value, JsValue receiver)
+        {
+            if (!CanPut(property))
+            {
+                return false;
             }
 
-            var ownDesc = GetOwnProperty (propertyName);
+            var ownDesc = GetOwnProperty(property);
 
-            if (ownDesc == null) {
-                if (throwOnError) {
-                    throw new JavaScriptException (Engine.TypeError, "Unknown member: " + propertyName);
-                } else {
-                    return;
-                }
+            if (ownDesc == null)
+            {
+                return false;
             }
 
             ownDesc.Value = value;
+            return true;
         }
 
-        public override PropertyDescriptor GetOwnProperty (string propertyName) {
+        public override PropertyDescriptor GetOwnProperty(JsValue property)
+        {
             // todo: cache members locally
+            var name = property.ToString();
+            if (ReferenceType.IsEnum)
+            {
+                Array enumValues = Enum.GetValues(ReferenceType);
+                Array enumNames = Enum.GetNames(ReferenceType);
 
-            if (Type.IsEnum ()) {
-                Array enumValues = Enum.GetValues (Type);
-                Array enumNames = Enum.GetNames (Type);
-
-                for (int i = 0; i < enumValues.Length; i++) {
-                    if (enumNames.GetValue (i) as string == propertyName) {
-                        return new PropertyDescriptor ((int) enumValues.GetValue (i), false, false, false);
+                for (int i = 0; i < enumValues.Length; i++)
+                {
+                    if (enumNames.GetValue(i) as string == name)
+                    {
+                        return new PropertyDescriptor((int) enumValues.GetValue(i), PropertyFlag.AllForbidden);
                     }
                 }
                 return PropertyDescriptor.Undefined;
             }
 
-            var propertyInfo = Type.GetProperty (propertyName, BindingFlags.Public | BindingFlags.Static);
-            if (propertyInfo != null) {
-                return new PropertyInfoDescriptor (Engine, propertyInfo, Type);
+            var propertyInfo = ReferenceType.GetProperty(name, BindingFlags.Public | BindingFlags.Static);
+            if (propertyInfo != null)
+            {
+                return new PropertyInfoDescriptor(Engine, propertyInfo, Type);
             }
 
-            var fieldInfo = Type.GetField (propertyName, BindingFlags.Public | BindingFlags.Static);
-            if (fieldInfo != null) {
-                return new FieldInfoDescriptor (Engine, fieldInfo, Type);
+            var fieldInfo = ReferenceType.GetField(name, BindingFlags.Public | BindingFlags.Static);
+            if (fieldInfo != null)
+            {
+                return new FieldInfoDescriptor(Engine, fieldInfo, Type);
             }
 
-            var methodInfo = Type
-                .GetMethods (BindingFlags.Public | BindingFlags.Static)
-                .Where (mi => mi.Name == propertyName)
-                .ToArray ();
+            List<MethodInfo> methodInfo = null;
+            foreach (var mi in ReferenceType.GetMethods(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (mi.Name == name)
+                {
+                    methodInfo = methodInfo ?? new List<MethodInfo>();
+                    methodInfo.Add(mi);
+                }
+            }
 
-            if (methodInfo.Length == 0) {
+            if (methodInfo == null || methodInfo.Count == 0)
+            {
                 return PropertyDescriptor.Undefined;
             }
 
-            return new PropertyDescriptor (new MethodInfoFunctionInstance (Engine, methodInfo), false, false, false);
+            return new PropertyDescriptor(new MethodInfoFunctionInstance(Engine, methodInfo.ToArray()), PropertyFlag.AllForbidden);
         }
 
-        public object Target {
-            get {
-                return Type;
-            }
-        }
-
-        public override string Class {
-            get { return "TypeReference"; }
-        }
+        public object Target => ReferenceType;
     }
 }

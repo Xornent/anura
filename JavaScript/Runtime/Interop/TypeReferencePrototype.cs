@@ -1,4 +1,4 @@
-//using Anura.JavaScript.Native;
+﻿//using Anura.JavaScript.Native;
 //using Anura.JavaScript.Native.Object;
 
 //namespace Anura.JavaScript.Runtime.Interop
@@ -31,7 +31,7 @@
 //            var typeReference = thisObj.As<TypeReference>();
 //            if (typeReference == null)
 //            {
-//                throw new JavaScriptException(Engine.TypeError);
+//                Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
 //            }
 
 //            return typeReference.Type.FullName;

@@ -1,30 +1,69 @@
-using System;
+﻿using System;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Function;
+using Anura.JavaScript.Runtime.Descriptors;
 
-namespace Anura.JavaScript.Runtime.Interop {
+namespace Anura.JavaScript.Runtime.Interop
+{
     /// <summary>
     /// Wraps a Clr method into a FunctionInstance
     /// </summary>
-    public sealed class ClrFunctionInstance : FunctionInstance {
-        private readonly Func<JsValue, JsValue[], JsValue> _func;
+    public sealed class ClrFunctionInstance : FunctionInstance, IEquatable<ClrFunctionInstance>
+    {
+        internal readonly Func<JsValue, JsValue[], JsValue> _func;
 
-        public ClrFunctionInstance (Engine engine, Func<JsValue, JsValue[], JsValue> func, int length) : base (engine, null, null, false) {
+        public ClrFunctionInstance(
+            Engine engine,
+            string name,
+            Func<JsValue, JsValue[], JsValue> func,
+            int length = 0,
+            PropertyFlag lengthFlags = PropertyFlag.AllForbidden)
+            : base(engine, !string.IsNullOrWhiteSpace(name) ? new JsString(name) : null, strict: false)
+        {
             _func = func;
-            Prototype = engine.Function.PrototypeObject;
-            FastAddProperty ("length", length, false, false, false);
-            Extensible = true;
+
+            _prototype = engine.Function.PrototypeObject;
+
+            _length = lengthFlags == PropertyFlag.AllForbidden
+                ? PropertyDescriptor.AllForbiddenDescriptor.ForNumber(length)
+                : new PropertyDescriptor(JsNumber.Create(length), lengthFlags);
         }
 
-        public ClrFunctionInstance (Engine engine, Func<JsValue, JsValue[], JsValue> func) : this (engine, func, 0) { }
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) => _func(thisObject, arguments);
 
-        public override JsValue Call (JsValue thisObject, JsValue[] arguments) {
-            try {
-                var result = _func (thisObject, arguments);
-                return result;
-            } catch (InvalidCastException) {
-                throw new JavaScriptException (Engine.TypeError);
+        public override bool Equals(JsValue obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
             }
+
+            if (!(obj is ClrFunctionInstance s))
+            {
+                return false;
+            }
+
+            return Equals(s);
+        }
+
+        public bool Equals(ClrFunctionInstance other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (_func == other._func)
+            {
+                return true;
+            }
+            
+            return false;
         }
     }
 }
