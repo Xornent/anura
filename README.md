@@ -10,13 +10,13 @@ I am working on the following features before the first release.
 feature|work-item-id|progress
 -|-|-
 javascript es6 standardizing |       | the javascript interpreting engine is forked on an open-source repos *jint*, and with further extensions of es6 capability.
- arrows| #3-01 | :large-blue-diamond: 
+ arrows| #3-01 | "v" 
  classes | #3-02 | :x:
- enhanced object literals | #3-03 |:large-blur-diamond:
- template strings | #3-04 | :o:
- destructuring
- default + rest + spread
- let + const
+ enhanced object literals | #3-03 |:v:
+ template strings | #3-04 | :v:
+ destructuring | |:v:
+ default + rest + spread ||:v:
+ let + const||:o:
  iterators + for..of
  generators
  unicode
