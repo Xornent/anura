@@ -14,7 +14,7 @@ namespace Anura.Html {
         public List<HtmlNode> Children = new List<HtmlNode>();
         
         public HtmlNode First {
-            get{
+            get{ 
                 if(this.Children.Count>0)
                     return this.Children[0];
                 else return null;

@@ -28,11 +28,11 @@ feature|work-item-id|progress
  symbols| #5-0B | :x:
  subclassable built-ins| #5-0C | :x:
  promises| #5-0D | :x:
- math APIs| #5-0E | :x:
- number APIs| #5-0F | :x:
- string APIs| #5-10 | :x:
- array APIs| #5-11 | :x:
- object APIs| #5-12 | :x:
+ math APIs| #5-0E | :white_check_mark:
+ number APIs| #5-0F | :white_check_mark:
+ string APIs| #5-10 | :white_check_mark:
+ array APIs| #5-11 | :white_check_mark:
+ object APIs| #5-12 | :white_check_mark:
  binary and octal literals| #5-13 | :x:
  reflect api| #5-14 | :x:
  tail calls| #5-15 | :x:
