@@ -1,4 +1,4 @@
-/* 浏览器公开接口列表
+/*         浏览器公开接口列表
 ============================================
     SUPPORTED CANDIDATE WEB APPLICATION     
                INTERFACES LIST
@@ -133,8 +133,6 @@ namespace Anura.Objects {
     /// <summary>
     /// 这个类代表 .NET 对象模型对 JS 对象的翻译. 
     /// 每一个允许在网页 JavaScript 类型都应继承此类
-    /// 
-    /// + 本实现需严格遵循 WHATWG ( 和 W3C ) 的定义标准
     /// </summary>
     public interface IPrototypeObjectModel {
         void Configure ();
@@ -165,9 +163,10 @@ namespace Anura.Objects {
         }
 
         public static void RegisterGlobalObjects (JavaScript.Collections.PropertyDictionary inst,
-                                                  JavaScript.Runtime.Descriptors.PropertyFlag defaultFlag) {
+            JavaScript.Runtime.Descriptors.PropertyFlag defaultFlag) {
             JavaScript.Key key = "__Anura__";
-            inst.Add (in key, new JavaScript.Runtime.Descriptors.PropertyDescriptor(ExtensionWebAPIs[0].obj as JavaScript.Native.Function.FunctionInstance, defaultFlag));
+            inst.Add (in key, new JavaScript.Runtime.Descriptors.PropertyDescriptor (
+                ExtensionWebAPIs[0].obj as Extensions.__Anura__Constructor, defaultFlag));
         }
 
         public static List < (int config, IPrototypeObjectModel obj) > ExtensionWebAPIs = new List < (int config, IPrototypeObjectModel obj) > ();

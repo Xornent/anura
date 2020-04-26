@@ -14,7 +14,7 @@ namespace Anura.Html {
         EndTagInside,
         TagOpen,
         TagClosed,
-        Default,
+        BeforeStart,
         End
     }
 }

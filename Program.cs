@@ -4,7 +4,7 @@
  
                                       PROJECT                 
                                        ANURA                    
-
+ 
 ===================================================================================
  Project timeline
 
@@ -54,20 +54,20 @@
 	 https://github.com/Chlumsky/msdfgen
 
  IV. poly2tri (dotnet portal)
-     BSD, 2009-2010, Anura.Typography.Triangulation Contributors, 
+     BSD, 2009-2010, poly2tri Contributors, 
 	 https://github.com/PaintLab/poly2tri-cs
 
  V.  LayoutFarm.Typography
-     Apache 2. Winter Devs
+     Winter Devs : Apache 2
 
 \*===============================================================================*/
-
+                                                                
 using System;
 using Anura.Developer;
 
 namespace Anura {
     public static class Versioning {
-        public static Version CoreVersion = new Version (0, 0, 4, 991);
+        public static Version CoreVersion = new Version (0, 0, 4, 1002);
         public static VersionMode Mode = VersionMode.Insider;
 
         public enum VersionMode {
@@ -81,10 +81,11 @@ namespace Anura {
     class Program {
         static void Main (string[] args) {
             Console.WriteLine ("Anura Core: Version [" + Versioning.Mode.ToString () + "] " + Versioning.CoreVersion.ToString ());
-            
+
             Anura.Developer.Logger.OnLog += Logger;
             JavaScript.Engine engine = new JavaScript.Engine (cfg =>
                 cfg.AllowClr ().DebugMode ());
+
             engine.SetValue ("alert", new Action<object> (Alert));
             engine.Execute ("var __anura__ = new __Anura__(); ");
 

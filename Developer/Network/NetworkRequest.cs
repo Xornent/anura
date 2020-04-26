@@ -82,7 +82,7 @@ namespace Anura.Developer.Network {
                 if (cache.NoRequest)
                     this.SendRequest = false;
 
-                //是否在 Max-Age 内强制保存
+                // 是否在 Max-Age 内强制保存
                 if (cache.Age != null) {
                     if ((present - cache.InCache).TotalSeconds < cache.Age)
                         this.SendRequest = false;
