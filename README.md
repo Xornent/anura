@@ -1,6 +1,6 @@
 
 
-<p style="font-family: PingFang SC Light;font-size:4em; margin:0; text-align:center;"><img width='128' src='https://github.com/xornent/anura-core/blob/master/anura-resources/application/logo/anura.ico' alt='anura project logo' style='margin-top:30px'/><br>Project Anura</h1>
+<p style="font-family: PingFang SC Light;font-size:4em; margin:0; text-align:center;"><img width='128' src='https://img2020.cnblogs.com/blog/1641456/202004/1641456-20200405221924299-1296458803.png' alt='anura project logo' style='margin-top:30px'/><br>Project Anura</h1>
 
 ---
 
