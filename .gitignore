@@ -1,0 +1,8 @@
+﻿
+# The git ignore file of the project.
+
+# It defines which of the partial project will NOT be updated
+# to the git source control system.
+
+.vscode/out/
+obj/

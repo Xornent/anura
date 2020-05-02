@@ -61,14 +61,18 @@
      Winter Devs : Apache 2
 
 \*===============================================================================*/
-                                                                
+
+// #define CMDLINE 
+   #define WINDOWS
+
 using System;
 using Anura.Developer;
 
 namespace Anura {
     public static class Versioning {
-        public static Version CoreVersion = new Version (0, 0, 4, 1002);
+        public static Version CoreVersion = new Version (0, 0, 4, 1013);
         public static VersionMode Mode = VersionMode.Insider;
+        public static bool DebugMode = true;
 
         public enum VersionMode {
             Insider,
@@ -81,7 +85,7 @@ namespace Anura {
     class Program {
         static void Main (string[] args) {
             Console.WriteLine ("Anura Core: Version [" + Versioning.Mode.ToString () + "] " + Versioning.CoreVersion.ToString ());
-
+#if CMDLINE
             Anura.Developer.Logger.OnLog += Logger;
             JavaScript.Engine engine = new JavaScript.Engine (cfg =>
                 cfg.AllowClr ().DebugMode ());
@@ -102,15 +106,18 @@ namespace Anura {
                         else {
                             code = code + uri + "\n";
                         }
-                        //// Anura.Developer.Network.NavigationDocument doc = new Developer.Network.NavigationDocument(
-                        ////    new Developer.Network.NetworkConfiguration(), uri
-                        //// );
                     }
                     engine.Execute (code);
                 } catch (Exception ex) {
                     Developer.Logger.Log ("JS Engine", ex.Message, ex.StackTrace, Developer.Logger.LogStatus.Error);
                 }
             }
+#endif
+#if WINDOWS
+            System.Windows.Forms.Application.EnableVisualStyles();
+            System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
+            System.Windows.Forms.Application.Run(new Windows.Mismatch());
+#endif
         }
 
         private static void Alert (object sender) {
