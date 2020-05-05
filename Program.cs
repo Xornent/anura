@@ -70,7 +70,7 @@ using Anura.Developer;
 
 namespace Anura {
     public static class Versioning {
-        public static Version CoreVersion = new Version (0, 0, 4, 1013);
+        public static Version CoreVersion = new Version (0, 0, 4, 1015);
         public static VersionMode Mode = VersionMode.Insider;
         public static bool DebugMode = true;
 
@@ -114,6 +114,7 @@ namespace Anura {
             }
 #endif
 #if WINDOWS
+            Anura.Windows.Resources.Global.InitializeGlobals();
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
             System.Windows.Forms.Application.Run(new Windows.Mismatch());

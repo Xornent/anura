@@ -21,8 +21,18 @@ using D3D11 = SharpDX.Direct3D11;
 using DXGI = SharpDX.DXGI;
 using SharpDX.DXGI;
 
-namespace Anura.Windows　{
+namespace Anura.Windows {
     public static class Graphics {
+
+        /// <summary>
+        /// ???? GeometrySink ???????????
+        /// </summary>
+        /// <param name="sinkAddress">???? GeometrySink ??</param>
+        /// <param name="left">???????</param>
+        /// <param name="top">???????</param>
+        /// <param name="width">??????</param>
+        /// <param name="height">??????</param>
+        /// <param name="radius">??????? Min(width, height)/2 .</param>
         public static void RoundedRectanglePath (D2D1.GeometrySink sinkAddress, int left, int top, int width, int height, int radius){
             sinkAddress.BeginFigure (new RawVector2 (left, top), D2D1.FigureBegin.Filled);
             sinkAddress.AddArc (new D2D1.ArcSegment () {

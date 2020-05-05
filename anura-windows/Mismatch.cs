@@ -66,16 +66,16 @@ namespace Anura.Windows {
             this.picLogo.TabStop = false;
 
             this.lbProduct.AutoSize = true;
-            this.lbProduct.Font = new System.Drawing.Font ("PingFang SC Regular", 26F);
+            this.lbProduct.Font = Resources.Global.GetInstalledFont("light",26);
             this.lbProduct.ForeColor = System.Drawing.Color.FromArgb (((int) (((byte) (192)))), ((int) (((byte) (0)))), ((int) (((byte) (192)))));
-            this.lbProduct.Location = new System.Drawing.Point (136, 200);
+            this.lbProduct.Location = new System.Drawing.Point (140, 200);
             this.lbProduct.Size = new System.Drawing.Size (118, 37);
             this.lbProduct.TabIndex = 1;
             this.lbProduct.Text = "Anura";
 
             this.lbStatus.AutoSize = true;
-            this.lbStatus.Font = new System.Drawing.Font ("PingFang SC Regular", 15F);
-            this.lbStatus.ForeColor = System.Drawing.Color.Gray;
+            this.lbStatus.Font = Resources.Global.GetInstalledFont("regular",15);
+            this.lbStatus.ForeColor = System.Drawing.Color.Black;
             this.lbStatus.Location = new System.Drawing.Point (69, 273);
             this.lbStatus.Size = new System.Drawing.Size (252, 27);
             this.lbStatus.TabIndex = 2;

@@ -83,7 +83,7 @@ namespace Anura.Windows {
             }
 
             deviceContext.DrawText ("Current FPS: " + (float) 1 / (elapsed / 1000f) + " F (Elapse " + elapsed + ")",
-                new DW.TextFormat (dwFactory, "PingFang SC Regular", 13), new RawRectangleF (0, 0, 1000, 50), fontBrush);
+                new DW.TextFormat (dwFactory, "PingFang SC", 13), new RawRectangleF (0, 0, 1000, 50), fontBrush);
 
             long tag1, tag2;
             deviceContext.TryEndDraw (out tag1, out tag2);

@@ -1,8 +1,9 @@
+<br/>
+<center><img width='128' src='./anura-resources/application/logo/anura.ico' alt='anura project logo'/></center><center><h1>
+    Project Anura
+    </h1></center>
 
 
-<p style="font-family: PingFang SC Light;font-size:4em; margin:0; text-align:center;"><img width='128' src='https://img2020.cnblogs.com/blog/1641456/202004/1641456-20200405221924299-1296458803.png' alt='anura project logo' style='margin-top:30px'/><br>Project Anura</h1>
-
----
 
 # status
 
@@ -138,21 +139,26 @@ I am working on the following features before the first public milestone. (0.1.0
 
 the project has other references, but their code have already been merged into the project, and
 some changes in types, extensions and architecture have been applied. the full dependencies are listed:
-* The SharpDx Projects
+* The SharpDx Projects ***MIT***
   * SharpDx.Core
   * SharpDx.DXGI
   * SharpDx.Direct3D11
   * SharpDx.Direct3D11.Effects
   * SharpDx.Direct2D1
   * SharpDx.D3DCompiler*
-* Esprima-dotnet (2020)
-* Jint (a release published in 2019)
+* Esprima-dotnet (2020) ***3-Clause BSD***
+* Jint ***2-Clause BSD***
+* ExCss ***MIT***
 
 `Thanks to the contributors of these projects`
 
+[anura public license](./anura-resources/licenses/apl-zh-cn.md)
+
+[anura references open-source licenses](./anura-resources/licenses/reference-zh-cn.md)
+
 **[Status Notice]**: the project of this state is* **far from complete** , much of its functions
  and utilities was still **not implemented** , and that bugs remain unnoticed and unfixed. so 
- please not try to fork and spread this inmature repos.
+ please not try to fork and spread this immature repos.
 
 **[Internationalization Notice]**: *due to regional reasons and my lack in English knowledge, 
 a full documentation and guideline in English prove too difficult. the contents of the project 
