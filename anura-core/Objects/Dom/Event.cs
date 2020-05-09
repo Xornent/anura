@@ -1,84 +1,195 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
 using Anura;
-using Anura.Html;
 using Anura.Developer;
-using Anura.Styles;
+using Anura.Html;
 using Anura.JavaScript;
 using Anura.JavaScript.Native;
 using Anura.Objects.Attributes;
+using Anura.Styles;
 
 namespace Anura.Objects.Dom {
+
+    /// <summary>
+    /// Throughout the web platform events are dispatched to objects to signal an occurrence, 
+    /// such as network activity or user interaction. These objects implement the EventTarget 
+    /// interface and can therefore add event listeners to observe events by calling addEventListener():
+    /// ``` js
+    /// obj.addEventListener("load", imgFetched)
+    /// function imgFetched(ev) {
+    ///     // success.
+    /// }
+    /// ```
+    /// Event listeners can be removed by utilizing the removeEventListener() method, passing the same arguments.
+    /// 
+    /// Events are objects too and implement the Event interface (or a derived interface). In the example
+    /// above ev is the event. ev is passed as an argument to the event listener’s callback (typically a
+    ///  JavaScript Function as shown above). Event listeners key off the event’s type attribute value 
+    /// ("load" in the above example). The event’s target attribute value returns the object to which the 
+    /// event was dispatched (obj above).
+    ///
+    /// Although events are typically dispatched by the user agent as the result of user interaction or the 
+    /// completion of some task, applications can dispatch events themselves by using what are commonly known 
+    /// as synthetic events:
+    /// </summary>
     public partial class Event {
 
         /// <summary>
-        /// 用来表示该事件是否在DOM中冒泡
+        /// An event has an associated target (a potential event target). 
+        /// Unless stated otherwise it is null.    
         /// </summary>
-        public bool Bubbles { get; set; } = true;
+        private EventTarget target = null;
 
         /// <summary>
-        /// 用来表示这个事件是否可以取消
+        /// An event has an associated relatedTarget (a potential event target). 
+        /// Unless stated otherwise it is null.
         /// </summary>
-        public bool Cancelable { get; set; } = true;
+        private EventTarget relatedTarget = null;
 
         /// <summary>
-        /// 指示该事件是否可以从 Shadow DOM 传递到一般的 DOM
+        /// An event has an associated touch target list (a list of zero 
+        /// or more potential event targets). Unless stated otherwise it is the empty list.
         /// </summary>
-        public bool Composed { get; set; } = false;
-        
-        /// <summary>
-        /// 当前注册事件的对象的引用。这是一个这个事件目前需要传递到的对象
-        /// （译者：大概意思就是注册这个事件监听的对象）。这个值会在传递的途中进行改变
-        /// </summary>
-        public EventTarget Target{ get; set; }
+        private List<EventTarget> touchTargetList = new List<EventTarget> ();
 
         /// <summary>
-        /// 一个由事件流经过了的 DOM Node 组成的 Array
+        /// An event has an associated path. A path is a list of structs. 
+        /// Each struct consists of an invocation target (an EventTarget object), 
+        /// an invocation-target-in-shadow-tree (a boolean), a shadow-adjusted target 
+        /// (a potential event target), a relatedTarget (a potential event target), 
+        /// a touch target list (a list of potential event targets), a root-of-closed-tree 
+        /// (a boolean), and a slot-in-closed-tree (a boolean). A path is initially the empty list.
         /// </summary>
-        public List<Node> DeepPath { get; set; } = new List<Node>();
+        private List < (EventTarget invocationTarget,
+                bool invocationTargetInShadowTree,
+                EventTarget shadowAdjustedTarget,
+                EventTarget relatedTarget,
+                List<EventTarget> touchTargetList,
+                bool rootOfClosedTree,
+                bool slotInClosedTree) > associatedPath =
+            new List < (EventTarget invocationTarget,
+                bool invocationTargetInShadowTree,
+                EventTarget shadowAdjustedTarget,
+                EventTarget relatedTarget,
+                List<EventTarget> touchTargetList,
+                bool rootOfClosedTree,
+                bool slotInClosedTree) > ();
 
-        public bool DefaultPrevented { get; set; } = false;
-
-        public EventPhase Phase { get; set; } = EventPhase.None;
-
-        [CapabilityObsolete("Internet Explorer")]
-        public bool ReturnValue => DefaultPrevented;
-
-        [CapabilityObsolete("Internet Explorer")]
-        public EventTarget SourceElement => Target;
-        
         /// <summary>
-        /// 事件创建时的时间戳，毫秒级别。按照规定，这个时间戳是距离某个特定时刻的差值，
-        /// 但实际上在浏览器中此处的事件戳的定义有所不同。另外，正在开展工作将其改为 DOMHighResTimeStamp
+        /// The type attribute must return the value it was initialized to. 
+        /// When an event is created the attribute must be initialized to the empty string.
         /// </summary>
-        public DomTimeStamp TimeStamp { get; set; } = null;
-        
-        /// <summary>
-        /// 事件类型，不区分大小写
-        /// </summary>
-        public string Type { get; set; } = "undefined";
-        
-        /// <summary>
-        /// 指明事件是否是由浏览器（当用户点击实例后）或者由脚本（使用事件的创建方法，例如event.initEvent）启动
-        /// </summary>
-        public bool IsTrusted { get; set; } = false;
+        [ApiName ("type")]
+        public string Type { get; private set; } = "";
 
-        private bool? PropagationFlag { get; set; } = null;
-        
-        [CapabilityObsolete("Dom Standard II")]
-        public void InitializeEvent (string type = "undefined", bool bubble = true, bool cancelable = true){
-            this.Type = type;
-            this.Bubbles = bubble;
-            this.Cancelable = cancelable;
+        /// <summary>
+        /// The target attribute’s getter, when invoked, must return this’s target.
+        /// </summary>
+        [ApiName ("target")]
+        public EventTarget Target => target;
+
+        /// <summary>
+        /// The srcElement attribute’s getter, when invoked, must return this’s target.
+        /// </summary>
+        [ApiName ("srcElement")]
+        [CapabilityObsolete ("")]
+        public EventTarget SourceElement => target;
+
+        /// <summary>
+        /// The currentTarget attribute must return the value it was initialized to.
+        /// When an event is created the attribute must be initialized to null.
+        /// </summary>
+        [ApiName ("currentTarget")]
+        public EventTarget CurrentTarget { get; private set; } = null;
+
+        [ApiName ("composePath")]
+        public List<EventTarget> ComposePath () {
+            var composedPath = new List<EventTarget> ();
+            if (associatedPath.Count == 0) return composedPath;
+            composedPath.Add (CurrentTarget);
+            int currentTargetId = 0;
+            int currentTargetHiddenSubTreeLevel = 0;
+            int id = associatedPath.Count - 1;
+            while (id >= 0) {
+                if (associatedPath[id].rootOfClosedTree)
+                    currentTargetHiddenSubTreeLevel++;
+                if (associatedPath[id].invocationTarget == this.CurrentTarget) {
+                    currentTargetId = id;
+                    break;
+                }
+                if (associatedPath[id].slotInClosedTree)
+                    currentTargetHiddenSubTreeLevel--;
+                id--;
+            }
+            int currentHiddenLevel = currentTargetHiddenSubTreeLevel;
+            int maxHiddenLevel = currentTargetHiddenSubTreeLevel;
+            id = currentTargetId - 1;
+            while (id >= 0) {
+                if (associatedPath[id].rootOfClosedTree)
+                    currentHiddenLevel++;
+                if (currentHiddenLevel <= maxHiddenLevel)
+                    composedPath.Insert (0, associatedPath[id].invocationTarget);
+                if (associatedPath[id].slotInClosedTree) {
+                    currentHiddenLevel--;
+                    if (currentHiddenLevel < maxHiddenLevel)
+                        maxHiddenLevel = currentHiddenLevel;
+                }
+                id--;
+            }
+            currentHiddenLevel = currentTargetHiddenSubTreeLevel;
+            maxHiddenLevel = currentTargetHiddenSubTreeLevel;
+            id = currentTargetId + 1;
+            while (id < associatedPath.Count) {
+                if (associatedPath[id].slotInClosedTree)
+                    currentHiddenLevel++;
+                if (currentHiddenLevel <= maxHiddenLevel)
+                    composedPath.Add (associatedPath[id].invocationTarget);
+                if (associatedPath[id].rootOfClosedTree) {
+                    currentHiddenLevel--;
+                    if (currentHiddenLevel < maxHiddenLevel)
+                        maxHiddenLevel = currentHiddenLevel;
+                    id++;
+                }
+            }
+            return composedPath;
         }
+
+        /// <summary>
+        /// The eventPhase attribute must return the value it was initialized to, 
+        /// which must be one of the following:
+        /// Initially the attribute must be initialized to NONE.
+        /// </summary>
+        [ApiName("eventPhase")]
+        public EventPhase Phase = EventPhase.None;
     }
 
+    /// <summary>
+    /// The eventPhase attribute must return the value it was initialized to, 
+    /// which must be one of the following:
+    /// </summary>
     public enum EventPhase {
+
+        /// <summary>
+        /// Events not currently dispatched are in this phase.
+        /// </summary>
         None = 0,
+
+        /// <summary>
+        /// When an event is dispatched to an object that participates
+        /// in a tree it will be in this phase before it reaches its target.
+        /// </summary>
         Capturing = 1,
+
+        /// <summary>
+        /// When an event is dispatched it will be in this phase on its target.
+        /// </summary>
         AtTarget = 2,
+
+        /// <summary>
+        /// When an event is dispatched to an object that participates in a tree 
+        /// it will be in this phase after it reaches its target.
+        /// </summary>
         Bubbling = 3
     }
 }

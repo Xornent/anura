@@ -62,8 +62,8 @@
 
 \*===============================================================================*/
 
-// #define CMDLINE 
-   #define WINDOWS
+#define CMDLINE 
+// #define WINDOWS
 
 using System;
 using Anura.Developer;
@@ -71,6 +71,10 @@ using Anura.Developer;
 namespace Anura {
     public static class Versioning {
         public static Version CoreVersion = new Version (0, 0, 4, 1015);
+        public static Version JsIntepretorVersion = new Version (3, 2, 0, 413);
+        public static Version JsApiVersion = new Version (0, 1, 0, 13);
+        public static Version RendererVersion = new Version (0, 0, 0, 0);
+
         public static VersionMode Mode = VersionMode.Insider;
         public static bool DebugMode = true;
 
@@ -84,7 +88,9 @@ namespace Anura {
 
     class Program {
         static void Main (string[] args) {
+            Anura.Global.InitializeCore();
             Console.WriteLine ("Anura Core: Version [" + Versioning.Mode.ToString () + "] " + Versioning.CoreVersion.ToString ());
+            Console.WriteLine("Anura User Agent: " + Developer.Network.NetworkRequest.UserAgent.Anura);
 #if CMDLINE
             Anura.Developer.Logger.OnLog += Logger;
             JavaScript.Engine engine = new JavaScript.Engine (cfg =>
@@ -114,10 +120,10 @@ namespace Anura {
             }
 #endif
 #if WINDOWS
-            Anura.Windows.Resources.Global.InitializeGlobals();
-            System.Windows.Forms.Application.EnableVisualStyles();
-            System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
-            System.Windows.Forms.Application.Run(new Windows.Mismatch());
+            Anura.Windows.Resources.Global.InitializeGlobals ();
+            System.Windows.Forms.Application.EnableVisualStyles ();
+            System.Windows.Forms.Application.SetCompatibleTextRenderingDefault (false);
+            System.Windows.Forms.Application.Run (new Windows.Mismatch ());
 #endif
         }
 

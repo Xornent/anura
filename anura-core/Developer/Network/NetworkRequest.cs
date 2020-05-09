@@ -135,7 +135,7 @@ namespace Anura.Developer.Network {
 
         public static class UserAgent {
             public static string Anura =
-                "Mozilla/5.0 ({SYS_VER_PLAT}; NETCLR 4.6) Anura/0.3.371";
+                "";
 
             public static string Opera =
                 "Mozilla/5.0 ({SYS_VER_PLAT}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36 OPR/26.0.1656.60";

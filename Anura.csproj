@@ -5,6 +5,15 @@
     <UseWindowsForms>true</UseWindowsForms>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <OutputPath>g:\github\anura core\.vscode\out\netcoreapp3.1</OutputPath>
+
+    <!-- Switch this on to generate the XML project documentation. 
+        [feature]   this will make to c# builder to generate a xml document that contains
+                    all of the xml documentation comments in the project
+        [warning]   allow the build of documentation will throw exceptions if your
+                    exposed public classes are not equipped with documentation. and the
+                    countless warnings (approximately 10000) is truly annoying.                                  -->
+    <!-- <DocumentationFile>g:\github\anura core\.vscode\out\netcoreapp3.1\documentation.xml</DocumentationFile> -->
+    
   </PropertyGroup>
   
   <PropertyGroup>

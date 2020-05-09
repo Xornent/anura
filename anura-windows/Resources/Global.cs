@@ -40,7 +40,7 @@ namespace Anura.Windows.Resources {
             else return new System.Drawing.Font(System.Drawing.FontFamily.GenericSansSerif, pts);
         }
 
-        public static string DefaultCulture = "zh-cn";
+        public static string DefaultCulture = Anura.Global.Culture;
 
         public static System.Collections.Generic.List<string> Dependencies =
             new System.Collections.Generic.List<string> () {

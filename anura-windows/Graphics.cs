@@ -25,14 +25,14 @@ namespace Anura.Windows {
     public static class Graphics {
 
         /// <summary>
-        /// ???? GeometrySink ???????????
+        /// 向指定的 Direct2D.GeometrySink 图形对象中追加一段圆角矩形的路径
         /// </summary>
-        /// <param name="sinkAddress">???? GeometrySink ??</param>
-        /// <param name="left">???????</param>
-        /// <param name="top">???????</param>
-        /// <param name="width">??????</param>
-        /// <param name="height">??????</param>
-        /// <param name="radius">??????? Min(width, height)/2 .</param>
+        /// <param name="sinkAddress">需要追加的 GeometrySink 对象</param>
+        /// <param name="left">圆角矩形左侧的坐标</param>
+        /// <param name="top">圆角矩形顶端的坐标</param>
+        /// <param name="width">宽度</param>
+        /// <param name="height">高度</param>
+        /// <param name="radius">圆角半径，值不应超过 Min(width, height)/2 大小.</param>
         public static void RoundedRectanglePath (D2D1.GeometrySink sinkAddress, int left, int top, int width, int height, int radius){
             sinkAddress.BeginFigure (new RawVector2 (left, top), D2D1.FigureBegin.Filled);
             sinkAddress.AddArc (new D2D1.ArcSegment () {
