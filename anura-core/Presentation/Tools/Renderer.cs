@@ -10,7 +10,7 @@ using Anura.JavaScript;
 using Anura.JavaScript.Native;
 
 namespace Anura.Presentation.Tools {
-    public partial interface IBitmap : ISurface {
+    public partial interface IRenderer : IBitmap {
         
     }
 }

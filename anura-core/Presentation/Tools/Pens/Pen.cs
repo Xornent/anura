@@ -9,8 +9,8 @@ using Anura.Styles;
 using Anura.JavaScript;
 using Anura.JavaScript.Native;
 
-namespace Anura.Presentation.Tools {
-    public partial interface IBitmap : ISurface {
+namespace Anura.Presentation.Tools.Pens {
+    public partial interface IPen {
         
     }
 }

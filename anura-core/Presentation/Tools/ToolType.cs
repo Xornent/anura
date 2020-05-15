@@ -10,7 +10,16 @@ using Anura.JavaScript;
 using Anura.JavaScript.Native;
 
 namespace Anura.Presentation.Tools {
-    public partial interface IBitmap : ISurface {
-        
+    public enum ToolType {
+        SolidBrush,
+        LinearGradientBrush,
+        RadialGradientBrush,
+        TextureBrush,
+        Pen,
+        Bitmap,
+        Effect,
+        Path,
+        Renderer,
+        Unidentified
     }
 }

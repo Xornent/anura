@@ -10,13 +10,13 @@ using Anura.JavaScript;
 using Anura.JavaScript.Native;
 
 namespace Anura.Presentation.Structures {
-    public partial struct Point {
-        public Point(float x, float y) {
-            this.X = x;
-            this.Y = y;
+    public partial struct Size {
+        public Size(float w,float h){
+            this.Width = w;
+            this.Height = h;
         }
-        
-        public float X { get; set; }
-        public float Y { get; set; }
+
+        public float Width { get; set; }
+        public float Height { get; set; }
     }
 }

@@ -160,8 +160,52 @@ namespace Anura.Objects.Dom {
         /// which must be one of the following:
         /// Initially the attribute must be initialized to NONE.
         /// </summary>
-        [ApiName("eventPhase")]
+        [ApiName ("eventPhase")]
         public EventPhase Phase = EventPhase.None;
+        
+        private Nullable<bool> flagStopPropagation = null;
+        private Nullable<bool> flagStopImmediatePropagation = null;
+        private Nullable<bool> flagCanceled = null;
+        private Nullable<bool> flagInPassiveListener = null;
+        private Nullable<bool> flagComposed = null;
+        private Nullable<bool> flagInitialized = null;
+        private Nullable<bool> flagDispatch = null;
+        
+        /// <summary>
+        /// The stopPropagation() method, when invoked, must set this’s stop propagation flag.
+        /// </summary>
+        [ApiName("stopPropagation")]
+        public void StopPropagation (){
+            flagStopPropagation = true;
+        }
+        
+        /// <summary>
+        /// The cancelBubble attribute’s getter, when invoked, 
+        /// must return true if this’s stop propagation flag is set, and false otherwise.
+        /// The cancelBubble attribute’s setter, when invoked, must set this’s stop propagation 
+        /// flag if the given value is true, and do nothing otherwise.
+        /// </summary>
+        [ApiName("cancelBubble")]
+        public bool CancelBubble {
+            get {
+                if(flagStopPropagation != null) return true;
+                else return false;
+            }
+            set {
+                if(value == true)
+                    flagStopPropagation = true;
+            }
+        }
+        
+        /// <summary>
+        /// The stopImmediatePropagation() method, when invoked, 
+        /// must set this’s stop propagation flag and this’s stop immediate propagation flag.
+        /// </summary>
+        [ApiName("stopImmediatePropagation")]
+        public void StopImmediatePropagation (){
+            flagStopPropagation = true;
+            flagStopImmediatePropagation = true;
+        }
     }
 
     /// <summary>

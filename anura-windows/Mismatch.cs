@@ -19,8 +19,10 @@ namespace Anura.Windows {
                     flag = false;
             }
             if ( flag ) {
-
-                // TODO: 检测成功后启动主程序窗体
+                
+                // the flag indicates that all application component is complete, and here to insert
+                // code to run renderer program and other logics.
+                
                 new Render().Show();
 
                 asyn.Interval = 50;

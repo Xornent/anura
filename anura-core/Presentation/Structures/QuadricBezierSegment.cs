@@ -10,13 +10,13 @@ using Anura.JavaScript;
 using Anura.JavaScript.Native;
 
 namespace Anura.Presentation.Structures {
-    public partial struct Point {
-        public Point(float x, float y) {
-            this.X = x;
-            this.Y = y;
+    public partial struct QuadricBezierSegment {
+        public QuadricBezierSegment(Point control, Point end) {
+            this.Control = control;
+            this.End = end;
         }
         
-        public float X { get; set; }
-        public float Y { get; set; }
+        public Point Control { get; set; }
+        public Point End { get; set; }
     }
 }
