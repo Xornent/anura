@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Anura.Developer;
 using Anura.Typography.OpenFont;
 using Anura.Typography.OpenFont.IO;
 using Anura.Typography.OpenFont.Tables;
@@ -398,7 +397,6 @@ namespace Anura.Typography.WebFont {
 				} else {
 					reader.ReadUInt16 ();
 				}
-				Logger.Log ("", false.ToString () + " " + false.ToString (), "", Logger.LogStatus.Silent);
 				if (Glyf.HasFlag (target, Glyf.CompositeGlyphFlags.WE_HAVE_A_SCALE)) {
 					float num = (float) reader.ReadInt16 () / 16384f;
 				} else if (Glyf.HasFlag (target, Glyf.CompositeGlyphFlags.WE_HAVE_AN_X_AND_Y_SCALE)) {

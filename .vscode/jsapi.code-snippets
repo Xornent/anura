@@ -1,0 +1,22 @@
+{
+	"Print to console": {
+		"scope": "csharp",
+		"prefix": "jsapi",
+		"body":[
+			"using System;",
+			"using System.Collections;",
+			"using System.Collections.Generic;",
+			"",
+			"using Anura;",
+			"using Anura.Html;",
+			"using Anura.Objects.Attributes;",
+			"using Anura.JavaScript.Native;",
+			"",
+			"namespace Anura.Objects.$1 {",
+			"    public partial class $2 {",
+			"        $0",
+			"    }",
+			"}"
+		]
+	}
+}

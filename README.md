@@ -94,47 +94,6 @@ the project runtime system-compatible list is as follows:
 * **anura-resources**
   * *no executable files*
 
-# vista
-
-I am working on the following features before the first public milestone. (0.1.0)
-
-| feature                                                     | work-item-id | progress                                                                                                                    |
-|-------------------------------------------------------------|--------------|-----------------------------------------------------------------------------------------------------------------------------|
-| **javascript es6 standardizing**                            |              | the javascript interpreting engine is forked on an open-source repos *jint*, and with further extensions of es6 capability. |
-| arrows                                                      | jint         | :white_check_mark:                                                                                                          |
-| classes                                                     | #5-01        | :x:                                                                                                                         |
-| enhanced object literals                                    | jint         | :white_check_mark:                                                                                                          |
-| template strings                                            | jint         | :white_check_mark:                                                                                                          |
-| destructuring                                               | jint         | :white_check_mark:                                                                                                          |
-| default + rest + spread                                     | jint         | :white_check_mark:                                                                                                          |
-| let + const                                                 | #5-02        | :x:                                                                                                                         |
-| iterators + for..of                                         | #5-03        | :x:                                                                                                                         |
-| generators                                                  | #5-04        | :x:                                                                                                                         |
-| unicode                                                     | #5-05        | :x:                                                                                                                         |
-| modules                                                     | #5-06        | :x:                                                                                                                         |
-| module loaders                                              | #5-07        | :x:                                                                                                                         |
-| map + set                                                   | #5-08        | :x:                                                                                                                         |
-| weakmap + weakset                                           | #5-09        | :x:                                                                                                                         |
-| proxies                                                     | #5-0A        | :x:                                                                                                                         |
-| symbols                                                     | #5-0B        | :x:                                                                                                                         |
-| subclassable built-ins                                      | #5-0C        | :x:                                                                                                                         |
-| promises                                                    | #5-0D        | :x:                                                                                                                         |
-| math APIs                                                   | #5-0E        | :white_check_mark:                                                                                                          |
-| number APIs                                                 | #5-0F        | :white_check_mark:                                                                                                          |
-| string APIs                                                 | #5-10        | :white_check_mark:                                                                                                          |
-| array APIs                                                  | #5-11        | :white_check_mark:                                                                                                          |
-| object APIs                                                 | #5-12        | :white_check_mark:                                                                                                          |
-| binary and octal literals                                   | #5-13        | :x:                                                                                                                         |
-| reflect api                                                 | #5-14        | :x:                                                                                                                         |
-| tail calls                                                  | #5-15        | :x:                                                                                                                         |
-| **javascript web application interfaces**                   |              | extend the javascript object model used in a browser (known as bom.)                                                        |
-| **cascading stylesheet capabilities**                       |              | parsing and utilizing css files and combine its definitions into a render tree                                              |
-| **html parsing**                                            |              | parse html and construct a proto render tree                                                                                |
-| **error tolerance**                                         |              | tolerate simple and common errors made by web designers and developers                                                      |
-| **rendering tree building and presentation infrastructure** |              | packaging a set of common graphic function interfaces for the later implementation on windows and/or other platforms        |
-| **mime and application processors**                         |              | accessing web requests and process the downloaded files                                                                     |
-| **web fontload and font rendering**                         |              | turn font-load into glyph path regardless of format and system settings.                                                    |
-
 # foot notes
 
 the project has other references, but their code have already been merged into the project, and
@@ -165,4 +124,4 @@ a full documentation and guideline in English prove too difficult. the contents 
 are mainly provided in Simplified Chinese.*
 
 ---
-Last Edited: 2nd May, 2020. yang-z.
+Last Edited: 11th June, 2020. yang-z.

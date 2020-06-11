@@ -1,21 +1,16 @@
 using System;
 
-namespace Anura.Typography.TextLayout {
-    public struct GlyphPlanSequenceSnapPixelScaleLayout {
+namespace Anura.Typography.TextLayout
+{
+    public struct GlyphPlanSequenceSnapPixelScaleLayout
+    {
         private GlyphPlanSequence _seq;
-
         private float _pxscale;
-
         private int _accW;
-
         private int _index;
-
         private int _end;
-
         private int _exactX;
-
         private int _exactY;
-
         private ushort _currentGlyphIndex;
 
         public ushort CurrentGlyphIndex => _currentGlyphIndex;
@@ -28,7 +23,7 @@ namespace Anura.Typography.TextLayout {
 
         public int ExactY => _exactY;
 
-        public GlyphPlanSequenceSnapPixelScaleLayout (GlyphPlanSequence glyphPlans, float pxscale) {
+        public GlyphPlanSequenceSnapPixelScaleLayout(GlyphPlanSequence glyphPlans, float pxscale) {
             _seq = glyphPlans;
             _pxscale = pxscale;
             _accW = 0;
@@ -38,7 +33,7 @@ namespace Anura.Typography.TextLayout {
             _currentGlyphIndex = 0;
         }
 
-        public GlyphPlanSequenceSnapPixelScaleLayout (GlyphPlanSequence glyphPlans, int start, int len, float pxscale) {
+        public GlyphPlanSequenceSnapPixelScaleLayout(GlyphPlanSequence glyphPlans, int start, int len, float pxscale) {
             _seq = glyphPlans;
             _pxscale = pxscale;
             _accW = 0;
@@ -48,14 +43,14 @@ namespace Anura.Typography.TextLayout {
             _currentGlyphIndex = 0;
         }
 
-        public bool Read () {
+        public bool Read() {
             if (_index >= _end) {
                 return false;
             }
             UnscaledGlyphPlan unscaledGlyphPlan = _seq[_index];
-            short num = (short) Math.Round ((float) unscaledGlyphPlan.AdvanceX * _pxscale);
-            short num2 = (short) Math.Round ((float) unscaledGlyphPlan.OffsetX * _pxscale);
-            short exactY = (short) Math.Round ((float) unscaledGlyphPlan.OffsetY * _pxscale);
+            short num = (short)Math.Round(unscaledGlyphPlan.AdvanceX * _pxscale);
+            short num2 = (short)Math.Round(unscaledGlyphPlan.OffsetX * _pxscale);
+            short exactY = (short)Math.Round(unscaledGlyphPlan.OffsetY * _pxscale);
             _exactX = _accW + num2;
             _exactY = exactY;
             _accW += num;

@@ -1,32 +1,61 @@
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿
+<!-- Project File of Anura Core -->
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <UseWindowsForms>true</UseWindowsForms>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <OutputPath>g:\github\anura core\.vscode\out\netcoreapp3.1</OutputPath>
+<!-- Switch to Windows Forms and WPF support.
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">                                                                     -->
 
-    <!-- Switch this on to generate the XML project documentation. 
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+
+	    <!-- Switch the following options to automaticly build windows exe with winform or wpf support.
+		     and one should enable the Project sdk to Microsoft.Net.Sdk.WindowsDesktop.
+        <UseWindowsForms>true</UseWindowsForms>
+        <UseWPF>true</UseWPF>                                                                                        -->
+		
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<OutputPath>.\.vscode\out\netcoreapp3.1</OutputPath>
+
+		<!-- Switch this on to generate the XML project documentation. 
         [feature]   this will make to c# builder to generate a xml document that contains
                     all of the xml documentation comments in the project
         [warning]   allow the build of documentation will throw exceptions if your
                     exposed public classes are not equipped with documentation. and the
-                    countless warnings (approximately 10000) is truly annoying.                                  -->
-    <!-- <DocumentationFile>g:\github\anura core\.vscode\out\netcoreapp3.1\documentation.xml</DocumentationFile> -->
-    
-  </PropertyGroup>
-  
-  <PropertyGroup>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  
-  <ItemGroup>
-    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
-    <PackageReference Include="SharpDX.Direct3D11.Effects" Version="4.2.0" />
-    <PackageReference Include="SharpDX" Version="4.2.0" />
-    <PackageReference Include="SharpDX.D3DCompiler" Version="4.2.0" />
-    <PackageReference Include="SharpDX.Direct2D1" Version="4.2.0" />
-    <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
-  </ItemGroup>
+                    countless warnings (approximately 10000) is truly annoying.                                      -->
+		<!-- <DocumentationFile>g:\github\anura core\.vscode\out\netcoreapp3.1\documentation.xml</DocumentationFile> -->
+		
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>latest</LangVersion>
+		<PackageId>Anura.Core</PackageId>
+		<Version>0.4.15</Version>
+		<Authors>Anura Developers and Contributors</Authors>
+		<Company>Anura Developers and Contributors</Company>
+		<PackageLicenseFile>apl-zh-cn.md</PackageLicenseFile>
+		<PackageProjectUrl>xornent.github.io/anura/</PackageProjectUrl>
+		<PackageIcon>anura.ico</PackageIcon>
+		<RepositoryUrl>github.com/xornent/anura/</RepositoryUrl>
+		<ApplicationIcon>anura.ico</ApplicationIcon>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DocumentationFile>.\.vscode\out\netcoreapp3.1\Anura.xml</DocumentationFile>
+	  <NoWarn>1701;1702;1591</NoWarn>
+	  <DefineConstants>TRACE;DEBUG; WINDOWS, DEBUG</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Include="anura-resources\application\logo\anura.ico">
+	    <Pack>True</Pack>
+	    <PackagePath></PackagePath>
+	  </None>
+	  <None Include="anura-resources\licenses\apl-zh-cn.md">
+	    <Pack>True</Pack>
+	    <PackagePath></PackagePath>
+	  </None>
+	</ItemGroup>
 
 </Project>
