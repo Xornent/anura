@@ -44,7 +44,7 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 	  <DocumentationFile>.\.vscode\out\netcoreapp3.1\Anura.xml</DocumentationFile>
 	  <NoWarn>1701;1702;1591</NoWarn>
-	  <DefineConstants>TRACE;DEBUG; WINDOWS, DEBUG</DefineConstants>
+	  <DefineConstants>TRACE;DEBUG;debug, windows, cli,  js, js_int, js_obj, css, graphics, graphics_gi, graphics_gl, net</DefineConstants>
 	</PropertyGroup>
 
 	<ItemGroup>
