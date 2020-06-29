@@ -1,12 +1,12 @@
-﻿using System;
-using System.Globalization;
-using System.Runtime.CompilerServices;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Native.Symbol;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
+using System;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Native.Date
 {
@@ -20,16 +20,14 @@ namespace Anura.JavaScript.Native.Date
         private const double MaxYear = -MinYear;
         private const double MinMonth = -10000000.0;
         private const double MaxMonth = -MinMonth;
-        
+
         private DateConstructor _dateConstructor;
 
         private DatePrototype(Engine engine)
-            : base(engine)
-        {
+            : base(engine) {
         }
 
-        public static DatePrototype CreatePrototypeObject(Engine engine, DateConstructor dateConstructor)
-        {
+        public static DatePrototype CreatePrototypeObject(Engine engine, DateConstructor dateConstructor) {
             var obj = new DatePrototype(engine)
             {
                 _prototype = engine.Object.PrototypeObject,
@@ -39,8 +37,7 @@ namespace Anura.JavaScript.Native.Date
             return obj;
         }
 
-        protected override  void Initialize()
-        {
+        protected override void Initialize() {
             const PropertyFlag lengthFlags = PropertyFlag.Configurable;
             const PropertyFlag propertyFlags = PropertyFlag.Configurable | PropertyFlag.Writable;
 
@@ -102,39 +99,30 @@ namespace Anura.JavaScript.Native.Date
             SetSymbols(symbols);
         }
 
-        private JsValue ToPrimitive(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!(thisObject is ObjectInstance oi))
-            {
+        private JsValue ToPrimitive(JsValue thisObject, JsValue[] arguments) {
+            if (!(thisObject is ObjectInstance oi)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine);
             }
 
             var hint = arguments.At(0);
-            if (!hint.IsString())
-            {
+            if (!hint.IsString()) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine);
             }
 
             var hintString = hint.ToString();
             var tryFirst = Types.None;
-            if (hintString == "default" || hintString == "string")
-            {
+            if (hintString == "default" || hintString == "string") {
                 tryFirst = Types.String;
-            }
-            else  if (hintString == "number")
-            {
+            } else if (hintString == "number") {
                 tryFirst = Types.Number;
-            }
-            else
-            {
+            } else {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine);
             }
 
             return TypeConverter.OrdinaryToPrimitive(oi, tryFirst);
         }
 
-        private JsValue ValueOf(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ValueOf(JsValue thisObj, JsValue[] arguments) {
             return EnsureDateInstance(thisObj).PrimitiveValue;
         }
 
@@ -142,14 +130,12 @@ namespace Anura.JavaScript.Native.Date
         /// Converts a value to a <see cref="DateInstance"/> or throws a TypeError exception.
         /// c.f., http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5
         /// </summary>
-        private DateInstance EnsureDateInstance(JsValue thisObj)
-        {
-            return thisObj as DateInstance 
+        private DateInstance EnsureDateInstance(JsValue thisObj) {
+            return thisObj as DateInstance
                    ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<DateInstance>(_engine, "this is not a Date object");
         }
 
-        public JsValue ToString(JsValue thisObj, JsValue[] arg2)
-        {
+        public JsValue ToString(JsValue thisObj, JsValue[] arg2) {
             var dateInstance = EnsureDateInstance(thisObj);
 
             if (double.IsNaN(dateInstance.PrimitiveValue))
@@ -159,8 +145,7 @@ namespace Anura.JavaScript.Native.Date
             return t.ToString("ddd MMM dd yyyy HH:mm:ss ", CultureInfo.InvariantCulture) + TimeZoneString(t);
         }
 
-        private JsValue ToDateString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToDateString(JsValue thisObj, JsValue[] arguments) {
             var dateInstance = EnsureDateInstance(thisObj);
 
             if (double.IsNaN(dateInstance.PrimitiveValue))
@@ -169,8 +154,7 @@ namespace Anura.JavaScript.Native.Date
             return ToLocalTime(dateInstance.ToDateTime()).ToString("ddd MMM dd yyyy", CultureInfo.InvariantCulture);
         }
 
-        private JsValue ToTimeString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToTimeString(JsValue thisObj, JsValue[] arguments) {
             var dateInstance = EnsureDateInstance(thisObj);
 
             if (double.IsNaN(dateInstance.PrimitiveValue))
@@ -183,13 +167,11 @@ namespace Anura.JavaScript.Native.Date
             return timeString + timeZoneString;
         }
 
-        private static string TimeZoneString(DateTimeOffset t)
-        {
+        private static string TimeZoneString(DateTimeOffset t) {
             return t.ToString("'GMT'K", CultureInfo.InvariantCulture).Replace(":", "");
         }
 
-        private JsValue ToLocaleString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToLocaleString(JsValue thisObj, JsValue[] arguments) {
             var dateInstance = EnsureDateInstance(thisObj);
 
             if (double.IsNaN(dateInstance.PrimitiveValue))
@@ -198,8 +180,7 @@ namespace Anura.JavaScript.Native.Date
             return ToLocalTime(dateInstance.ToDateTime()).ToString("F", Engine.Options._Culture);
         }
 
-        private JsValue ToLocaleDateString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToLocaleDateString(JsValue thisObj, JsValue[] arguments) {
             var dateInstance = EnsureDateInstance(thisObj);
 
             if (double.IsNaN(dateInstance.PrimitiveValue))
@@ -208,8 +189,7 @@ namespace Anura.JavaScript.Native.Date
             return ToLocalTime(dateInstance.ToDateTime()).ToString("D", Engine.Options._Culture);
         }
 
-        private JsValue ToLocaleTimeString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToLocaleTimeString(JsValue thisObj, JsValue[] arguments) {
             var dateInstance = EnsureDateInstance(thisObj);
 
             if (double.IsNaN(dateInstance.PrimitiveValue))
@@ -218,206 +198,165 @@ namespace Anura.JavaScript.Native.Date
             return ToLocalTime(dateInstance.ToDateTime()).ToString("T", Engine.Options._Culture);
         }
 
-        private JsValue GetTime(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetTime(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return t;
         }
 
-        private JsValue GetFullYear(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetFullYear(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return YearFromTime(LocalTime(t));
         }
 
-        private JsValue GetYear(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetYear(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return YearFromTime(LocalTime(t)) - 1900;
         }
 
-        private JsValue GetUTCFullYear(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetUTCFullYear(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return YearFromTime(t);
         }
 
-        private JsValue GetMonth(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetMonth(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return MonthFromTime(LocalTime(t));
         }
 
-        private JsValue GetUTCMonth(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetUTCMonth(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return MonthFromTime(t);
         }
 
-        private JsValue GetDate(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetDate(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return DateFromTime(LocalTime(t));
         }
 
-        private JsValue GetUTCDate(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetUTCDate(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return DateFromTime(t);
         }
 
-        private JsValue GetDay(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetDay(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return WeekDay(LocalTime(t));
         }
 
-        private JsValue GetUTCDay(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetUTCDay(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return WeekDay(t);
         }
 
-        private JsValue GetHours(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetHours(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return HourFromTime(LocalTime(t));
         }
 
-        private JsValue GetUTCHours(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetUTCHours(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return HourFromTime(t);
         }
 
-        private JsValue GetMinutes(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetMinutes(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return MinFromTime(LocalTime(t));
         }
 
-        private JsValue GetUTCMinutes(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetUTCMinutes(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return MinFromTime(t);
         }
 
-        private JsValue GetSeconds(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetSeconds(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return SecFromTime(LocalTime(t));
         }
 
-        private JsValue GetUTCSeconds(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetUTCSeconds(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return SecFromTime(t);
         }
 
-        private JsValue GetMilliseconds(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetMilliseconds(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return MsFromTime(LocalTime(t));
         }
 
-        private JsValue GetUTCMilliseconds(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetUTCMilliseconds(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             return MsFromTime(t);
         }
 
-        private JsValue GetTimezoneOffset(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue GetTimezoneOffset(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
-            return (int) (t - LocalTime(t))/MsPerMinute;
+            return (int)(t - LocalTime(t)) / MsPerMinute;
         }
 
-        private JsValue SetTime(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetTime(JsValue thisObj, JsValue[] arguments) {
             return EnsureDateInstance(thisObj).PrimitiveValue = TimeClip(TypeConverter.ToNumber(arguments.At(0)));
         }
 
-        private JsValue SetMilliseconds(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetMilliseconds(JsValue thisObj, JsValue[] arguments) {
             var t = LocalTime(EnsureDateInstance(thisObj).PrimitiveValue);
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t), TypeConverter.ToNumber(arguments.At(0)));
@@ -426,12 +365,10 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetUTCMilliseconds(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetUTCMilliseconds(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            
-            if (!IsFinite(t))
-            {
+
+            if (!IsFinite(t)) {
                 return double.NaN;
             }
 
@@ -441,11 +378,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetSeconds(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetSeconds(JsValue thisObj, JsValue[] arguments) {
             var t = LocalTime(EnsureDateInstance(thisObj).PrimitiveValue);
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var s = TypeConverter.ToNumber(arguments.At(0));
@@ -456,11 +391,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetUTCSeconds(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetUTCSeconds(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var s = TypeConverter.ToNumber(arguments.At(0));
@@ -471,11 +404,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetMinutes(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetMinutes(JsValue thisObj, JsValue[] arguments) {
             var t = LocalTime(EnsureDateInstance(thisObj).PrimitiveValue);
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var m = TypeConverter.ToNumber(arguments.At(0));
@@ -487,11 +418,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetUTCMinutes(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetUTCMinutes(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var m = TypeConverter.ToNumber(arguments.At(0));
@@ -503,11 +432,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetHours(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetHours(JsValue thisObj, JsValue[] arguments) {
             var t = LocalTime(EnsureDateInstance(thisObj).PrimitiveValue);
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var h = TypeConverter.ToNumber(arguments.At(0));
@@ -520,11 +447,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetUTCHours(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetUTCHours(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var h = TypeConverter.ToNumber(arguments.At(0));
@@ -537,11 +462,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetDate(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetDate(JsValue thisObj, JsValue[] arguments) {
             var t = LocalTime(EnsureDateInstance(thisObj).PrimitiveValue);
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var dt = TypeConverter.ToNumber(arguments.At(0));
@@ -552,11 +475,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetUTCDate(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetUTCDate(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var dt = TypeConverter.ToNumber(arguments.At(0));
@@ -566,11 +487,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetMonth(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetMonth(JsValue thisObj, JsValue[] arguments) {
             var t = LocalTime(EnsureDateInstance(thisObj).PrimitiveValue);
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var m = TypeConverter.ToNumber(arguments.At(0));
@@ -581,11 +500,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetUTCMonth(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetUTCMonth(JsValue thisObj, JsValue[] arguments) {
             var t = EnsureDateInstance(thisObj).PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 return JsNumber.DoubleNaN;
             }
             var m = TypeConverter.ToNumber(arguments.At(0));
@@ -596,8 +513,7 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetFullYear(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetFullYear(JsValue thisObj, JsValue[] arguments) {
             var thisTime = EnsureDateInstance(thisObj).PrimitiveValue;
             var t = double.IsNaN(thisTime) ? 0 : LocalTime(thisTime);
             var y = TypeConverter.ToNumber(arguments.At(0));
@@ -609,20 +525,17 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetYear(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetYear(JsValue thisObj, JsValue[] arguments) {
             var thisTime = EnsureDateInstance(thisObj).PrimitiveValue;
             var t = double.IsNaN(thisTime) ? 0 : LocalTime(thisTime);
             var y = TypeConverter.ToNumber(arguments.At(0));
-            if (double.IsNaN(y))
-            {
+            if (double.IsNaN(y)) {
                 EnsureDateInstance(thisObj).PrimitiveValue = double.NaN;
                 return JsNumber.DoubleNaN;
             }
 
             var fy = TypeConverter.ToInteger(y);
-            if (y >= 0 && y <= 99)
-            {
+            if (y >= 0 && y <= 99) {
                 fy += 1900;
             }
 
@@ -632,10 +545,9 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue SetUTCFullYear(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue SetUTCFullYear(JsValue thisObj, JsValue[] arguments) {
             var thisTime = EnsureDateInstance(thisObj).PrimitiveValue;
-            var t = (long) (double.IsNaN(thisTime) ? 0 : thisTime);
+            var t = (long)(double.IsNaN(thisTime) ? 0 : thisTime);
             var y = TypeConverter.ToNumber(arguments.At(0));
             var m = arguments.Length <= 1 ? MonthFromTime(t) : TypeConverter.ToNumber(arguments.At(1));
             var dt = arguments.Length <= 2 ? DateFromTime(t) : TypeConverter.ToNumber(arguments.At(2));
@@ -645,27 +557,22 @@ namespace Anura.JavaScript.Native.Date
             return u;
         }
 
-        private JsValue ToUtcString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToUtcString(JsValue thisObj, JsValue[] arguments) {
             var thisTime = EnsureDateInstance(thisObj);
-            if (!IsFinite(thisTime.PrimitiveValue))
-            {
+            if (!IsFinite(thisTime.PrimitiveValue)) {
                 return "Invalid Date";
             }
             return thisTime.ToDateTime().ToUniversalTime().ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'", CultureInfo.InvariantCulture);
         }
 
-        private JsValue ToISOString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToISOString(JsValue thisObj, JsValue[] arguments) {
             var thisTime = EnsureDateInstance(thisObj);
             var t = thisTime.PrimitiveValue;
-            if (!IsFinite(t))
-            {
+            if (!IsFinite(t)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine);
             }
 
-            if (thisTime.DateTimeRangeValid)
-            {
+            if (thisTime.DateTimeRangeValid) {
                 // shortcut 
                 var dt = thisTime.ToDateTime();
                 return $"{dt.Year:0000}-{dt.Month:00}-{dt.Day:00}T{dt.Hour:00}:{dt.Minute:00}:{dt.Second:00}.{dt.Millisecond:000}Z";
@@ -684,18 +591,15 @@ namespace Anura.JavaScript.Native.Date
             return $"{year:0000}-{month:00}-{day:00}T{h:00}:{m:00}:{s:00}.{ms:000}Z";
         }
 
-        private JsValue ToJSON(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToJSON(JsValue thisObj, JsValue[] arguments) {
             var o = TypeConverter.ToObject(Engine, thisObj);
             var tv = TypeConverter.ToPrimitive(o, Types.Number);
-            if (tv.IsNumber() && double.IsInfinity(((JsNumber) tv)._value))
-            {
+            if (tv.IsNumber() && double.IsInfinity(((JsNumber)tv)._value)) {
                 return Null;
             }
 
             var toIso = o.Get("toISOString", o);
-            if (!(toIso is ICallable callable))
-            {
+            if (!(toIso is ICallable callable)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(Engine);
             }
 
@@ -713,20 +617,17 @@ namespace Anura.JavaScript.Native.Date
         /// <summary>
         /// 15.9.1.2
         /// </summary>
-        public static int Day(double t)
-        {
-            return (int) System.Math.Floor(t / MsPerDay);
+        public static int Day(double t) {
+            return (int)System.Math.Floor(t / MsPerDay);
         }
 
         /// <summary>
         /// 15.9.1.2
         /// </summary>
-        public static double TimeWithinDay(double t)
-        {
+        public static double TimeWithinDay(double t) {
             var result = t % MsPerDay;
 
-            if (result < 0)
-            {
+            if (result < 0) {
                 result += MsPerDay;
             }
 
@@ -736,25 +637,20 @@ namespace Anura.JavaScript.Native.Date
         /// <summary>
         /// The number of days in a year
         /// </summary>
-        public static int DaysInYear(double y)
-        {
-            if (y%4 != 0)
-            {
+        public static int DaysInYear(double y) {
+            if (y % 4 != 0) {
                 return 365;
             }
 
-            if (y%4 == 0 && y%100 != 0)
-            {
+            if (y % 4 == 0 && y % 100 != 0) {
                 return 366;
             }
 
-            if (y%100 == 0 && y%400 != 0)
-            {
+            if (y % 100 == 0 && y % 400 != 0) {
                 return 365;
             }
 
-            if (y%400 == 0)
-            {
+            if (y % 400 == 0) {
                 return 366;
             }
 
@@ -764,27 +660,24 @@ namespace Anura.JavaScript.Native.Date
         /// <summary>
         /// The day number of the first day of the year.
         /// </summary>
-        public static int DayFromYear(double y)
-        {
-            return (int) (365*(y - 1970)
-                          + System.Math.Floor((y - 1969)/4)
-                          - System.Math.Floor((y - 1901)/100)
-                          + System.Math.Floor((y - 1601)/400));
+        public static int DayFromYear(double y) {
+            return (int)(365 * (y - 1970)
+                          + System.Math.Floor((y - 1969) / 4)
+                          - System.Math.Floor((y - 1901) / 100)
+                          + System.Math.Floor((y - 1601) / 400));
         }
 
         /// <summary>
         /// The time value of the start of the year
         /// </summary>
-        public static long TimeFromYear(double y)
-        {
-            return MsPerDay*DayFromYear(y);
+        public static long TimeFromYear(double y) {
+            return MsPerDay * DayFromYear(y);
         }
 
         /// <summary>
         /// The year of a time value.
         /// </summary>
-        public static int YearFromTime(double t)
-        {
+        public static int YearFromTime(double t) {
             var (year, _, _) = YearMonthDayFromTime(t);
             return year;
         }
@@ -792,17 +685,14 @@ namespace Anura.JavaScript.Native.Date
         /// <summary>
         /// <value>true</value> if the time is within a leap year, <value>false</value> otherwise
         /// </summary>
-        public static int InLeapYear(double t)
-        {
+        public static int InLeapYear(double t) {
             var daysInYear = DaysInYear(YearFromTime(t));
 
-            if (daysInYear == 365)
-            {
+            if (daysInYear == 365) {
                 return 0;
             }
 
-            if (daysInYear == 366)
-            {
+            if (daysInYear == 366) {
                 return 1;
             }
 
@@ -812,68 +702,55 @@ namespace Anura.JavaScript.Native.Date
         /// <summary>
         /// The month number of a time value.
         /// </summary>
-        public static int MonthFromTime(double t)
-        {
+        public static int MonthFromTime(double t) {
             var dayWithinYear = DayWithinYear(t);
             var inLeapYear = InLeapYear(t);
 
-            if (dayWithinYear < 31)
-            {
+            if (dayWithinYear < 31) {
                 return 0;
             }
 
-            if (dayWithinYear < 59 + inLeapYear)
-            {
+            if (dayWithinYear < 59 + inLeapYear) {
                 return 1;
             }
 
-            if (dayWithinYear < 90 + inLeapYear)
-            {
+            if (dayWithinYear < 90 + inLeapYear) {
                 return 2;
             }
 
-            if (dayWithinYear < 120 + inLeapYear)
-            {
+            if (dayWithinYear < 120 + inLeapYear) {
                 return 3;
             }
 
-            if (dayWithinYear < 151 + inLeapYear)
-            {
+            if (dayWithinYear < 151 + inLeapYear) {
                 return 4;
             }
 
-            if (dayWithinYear < 181 + inLeapYear)
-            {
+            if (dayWithinYear < 181 + inLeapYear) {
                 return 5;
             }
 
-            if (dayWithinYear < 212 + inLeapYear)
-            {
+            if (dayWithinYear < 212 + inLeapYear) {
                 return 6;
             }
 
-            if (dayWithinYear < 243 + inLeapYear)
-            {
+            if (dayWithinYear < 243 + inLeapYear) {
                 return 7;
             }
 
-            if (dayWithinYear < 273 + inLeapYear)
-            {
+            if (dayWithinYear < 273 + inLeapYear) {
                 return 8;
             }
 
-            if (dayWithinYear < 304 + inLeapYear)
-            {
+            if (dayWithinYear < 304 + inLeapYear) {
                 return 9;
             }
 
-            if (dayWithinYear < 334 + inLeapYear)
-            {
+            if (dayWithinYear < 334 + inLeapYear) {
                 return 10;
             }
 
-            if (dayWithinYear < 365 + inLeapYear)
-            {
+            if (dayWithinYear < 365 + inLeapYear) {
                 return 11;
             }
 
@@ -881,73 +758,59 @@ namespace Anura.JavaScript.Native.Date
             return 0;
         }
 
-        public static int DayWithinYear(double t)
-        {
+        public static int DayWithinYear(double t) {
             return Day(t) - DayFromYear(YearFromTime(t));
         }
 
-        public static int DateFromTime(double t)
-        {
+        public static int DateFromTime(double t) {
             var monthFromTime = MonthFromTime(t);
             var dayWithinYear = DayWithinYear(t);
 
-            if (monthFromTime == 0)
-            {
+            if (monthFromTime == 0) {
                 return dayWithinYear + 1;
             }
 
-            if (monthFromTime== 1)
-            {
+            if (monthFromTime == 1) {
                 return dayWithinYear - 30;
             }
 
-            if (monthFromTime == 2)
-            {
+            if (monthFromTime == 2) {
                 return dayWithinYear - 58 - InLeapYear(t);
             }
 
-            if (monthFromTime == 3)
-            {
+            if (monthFromTime == 3) {
                 return dayWithinYear - 89 - InLeapYear(t);
             }
 
-            if (monthFromTime == 4)
-            {
+            if (monthFromTime == 4) {
                 return dayWithinYear - 119 - InLeapYear(t);
             }
 
-            if (monthFromTime == 5)
-            {
+            if (monthFromTime == 5) {
                 return dayWithinYear - 150 - InLeapYear(t);
             }
 
-            if (monthFromTime == 6)
-            {
+            if (monthFromTime == 6) {
                 return dayWithinYear - 180 - InLeapYear(t);
             }
 
-            if (monthFromTime == 7)
-            {
+            if (monthFromTime == 7) {
                 return dayWithinYear - 211 - InLeapYear(t);
             }
 
-            if (monthFromTime == 8)
-            {
+            if (monthFromTime == 8) {
                 return dayWithinYear - 242 - InLeapYear(t);
             }
 
-            if (monthFromTime == 9)
-            {
+            if (monthFromTime == 9) {
                 return dayWithinYear - 272 - InLeapYear(t);
             }
 
-            if (monthFromTime == 10)
-            {
+            if (monthFromTime == 10) {
                 return dayWithinYear - 303 - InLeapYear(t);
             }
 
-            if (monthFromTime == 11)
-            {
+            if (monthFromTime == 11) {
                 return dayWithinYear - 333 - InLeapYear(t);
             }
 
@@ -958,36 +821,29 @@ namespace Anura.JavaScript.Native.Date
         /// <summary>
         /// The weekday for a particular time value.
         /// </summary>
-        public static int WeekDay(double t)
-        {
-            return (Day(t) + 4)%7;
+        public static int WeekDay(double t) {
+            return (Day(t) + 4) % 7;
         }
 
-        public long LocalTza => (long) Engine.Options._LocalTimeZone.BaseUtcOffset.TotalMilliseconds;
+        public long LocalTza => (long)Engine.Options._LocalTimeZone.BaseUtcOffset.TotalMilliseconds;
 
-        public double DaylightSavingTa(double t)
-        {
-            if (double.IsNaN(t))
-            {
+        public double DaylightSavingTa(double t) {
+            if (double.IsNaN(t)) {
                 return t;
             }
 
             var year = YearFromTime(t);
             var timeInYear = t - TimeFromYear(year);
 
-            if (double.IsInfinity(timeInYear) || double.IsNaN(timeInYear))
-            {
+            if (double.IsInfinity(timeInYear) || double.IsNaN(timeInYear)) {
                 return 0;
             }
 
-            if (year < 9999 && year > -9999 && year != 0)
-            {
+            if (year < 9999 && year > -9999 && year != 0) {
                 // in DateTimeOffset range so we can use it
-            }
-            else
-            {
+            } else {
                 // use similar leap-ed year
-                var isLeapYear = InLeapYear((long) t) == 1;
+                var isLeapYear = InLeapYear((long)t) == 1;
                 year = isLeapYear ? 2000 : 1999;
             }
 
@@ -996,10 +852,8 @@ namespace Anura.JavaScript.Native.Date
             return Engine.Options._LocalTimeZone.IsDaylightSavingTime(dateTime) ? MsPerHour : 0;
         }
 
-        public DateTimeOffset ToLocalTime(DateTime t)
-        {
-            switch (t.Kind)
-            {
+        public DateTimeOffset ToLocalTime(DateTime t) {
+            switch (t.Kind) {
                 case DateTimeKind.Local:
                     return new DateTimeOffset(TimeZoneInfo.ConvertTime(t.ToUniversalTime(), Engine.Options._LocalTimeZone), Engine.Options._LocalTimeZone.GetUtcOffset(t));
                 case DateTimeKind.Utc:
@@ -1009,73 +863,60 @@ namespace Anura.JavaScript.Native.Date
             }
         }
 
-        public double LocalTime(double t)
-        {
-            if (!IsFinite(t))
-            {
+        public double LocalTime(double t) {
+            if (!IsFinite(t)) {
                 return double.NaN;
             }
-            
-            return (long) (t + LocalTza + DaylightSavingTa((long) t));
+
+            return (long)(t + LocalTza + DaylightSavingTa((long)t));
         }
 
-        public double Utc(double t)
-        {
+        public double Utc(double t) {
             return t - LocalTza - DaylightSavingTa(t - LocalTza);
         }
 
-        public static int HourFromTime(double t)
-        {
+        public static int HourFromTime(double t) {
             var hours = System.Math.Floor(t / MsPerHour) % HoursPerDay;
 
-            if (hours < 0)
-            {
+            if (hours < 0) {
                 hours += HoursPerDay;
             }
 
-            return (int) hours;
+            return (int)hours;
         }
 
-        public static int MinFromTime(double t)
-        {
+        public static int MinFromTime(double t) {
             var minutes = System.Math.Floor(t / MsPerMinute) % MinutesPerHour;
 
-            if (minutes < 0)
-            {
+            if (minutes < 0) {
                 minutes += MinutesPerHour;
             }
 
-            return (int) minutes;
+            return (int)minutes;
         }
 
-        public static int SecFromTime(double t)
-        {
+        public static int SecFromTime(double t) {
             var seconds = System.Math.Floor(t / MsPerSecond) % SecondsPerMinute;
 
-            if (seconds < 0)
-            {
+            if (seconds < 0) {
                 seconds += SecondsPerMinute;
             }
 
-            return (int) seconds;
+            return (int)seconds;
         }
 
-        public static int MsFromTime(double t)
-        {
+        public static int MsFromTime(double t) {
             var milli = t % MsPerSecond;
 
-            if (milli < 0)
-            {
+            if (milli < 0) {
                 milli += MsPerSecond;
             }
 
-            return (int) milli;
+            return (int)milli;
         }
 
-        public static double MakeTime(double hour, double min, double sec, double ms)
-        {
-            if (!AreFinite(hour, min, sec, ms))
-            {
+        public static double MakeTime(double hour, double min, double sec, double ms) {
+            if (!AreFinite(hour, min, sec, ms)) {
                 return double.NaN;
             }
 
@@ -1083,27 +924,25 @@ namespace Anura.JavaScript.Native.Date
             var m = TypeConverter.ToInteger(min);
             var s = TypeConverter.ToInteger(sec);
             var milli = TypeConverter.ToInteger(ms);
-            var t = h*MsPerHour + m*MsPerMinute + s*MsPerSecond + milli;
+            var t = h * MsPerHour + m * MsPerMinute + s * MsPerSecond + milli;
 
             return t;
         }
 
-        public static double MakeDay(double year, double month, double date)
-        {
-            if ((year < MinYear || year > MaxYear) || month < MinMonth  || month > MaxMonth || !AreFinite(year, month, date))
-            {
+        public static double MakeDay(double year, double month, double date) {
+            if ((year < MinYear || year > MaxYear) || month < MinMonth || month > MaxMonth || !AreFinite(year, month, date)) {
                 return double.NaN;
             }
 
-            var y = (long) TypeConverter.ToInteger(year);
-            var m = (long) TypeConverter.ToInteger(month);
+            var y = (long)TypeConverter.ToInteger(year);
+            var m = (long)TypeConverter.ToInteger(month);
             y += m / 12;
             m %= 12;
             if (m < 0) {
                 m += 12;
                 y -= 1;
             }
-            
+
             // kYearDelta is an arbitrary number such that:
             // a) kYearDelta = -1 (mod 400)
             // b) year + kYearDelta > 0 for years in the range defined by
@@ -1116,69 +955,59 @@ namespace Anura.JavaScript.Native.Date
             const int kBaseDay =
                 365 * (1970 + kYearDelta) + (1970 + kYearDelta) / 4 -
                 (1970 + kYearDelta) / 100 + (1970 + kYearDelta) / 400;
-            
+
             long dayFromYear = 365 * (y + kYearDelta) + (y + kYearDelta) / 4 -
-                                (y + kYearDelta) / 100 + (y + kYearDelta) / 400 -  kBaseDay;
+                                (y + kYearDelta) / 100 + (y + kYearDelta) / 400 - kBaseDay;
 
             if ((y % 4 != 0) || (y % 100 == 0 && y % 400 != 0)) {
-                var dayFromMonth = new [] {0,   31,  59,  90,  120, 151,  181, 212, 243, 273, 304, 334};
+                var dayFromMonth = new[] { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
                 dayFromYear += dayFromMonth[m];
             } else {
-                var dayFromMonthLeapYear = new [] {0,   31,  60,  91,  121, 152, 182, 213, 244, 274, 305, 335};
+                var dayFromMonthLeapYear = new[] { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
                 dayFromYear += dayFromMonthLeapYear[m];
             }
             return dayFromYear - 1 + TypeConverter.ToInteger(date);
         }
 
-        public static double MakeDate(double day, double time)
-        {
-            if (!AreFinite(day, time))
-            {
+        public static double MakeDate(double day, double time) {
+            if (!AreFinite(day, time)) {
                 return double.NaN;
             }
 
             return day * MsPerDay + time;
         }
 
-        public static double TimeClip(double time)
-        {
-            if (!IsFinite(time))
-            {
+        public static double TimeClip(double time) {
+            if (!IsFinite(time)) {
                 return double.NaN;
             }
 
-            if (System.Math.Abs(time) > 8640000000000000)
-            {
+            if (System.Math.Abs(time) > 8640000000000000) {
                 return double.NaN;
             }
 
-            return (long) time + 0;
+            return (long)time + 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsFinite(double value)
-        {
+        private static bool IsFinite(double value) {
             return !double.IsNaN(value) && !double.IsInfinity(value);
         }
 
-        private static bool AreFinite(double value1, double value2)
-        {
+        private static bool AreFinite(double value1, double value2) {
             return IsFinite(value1) && IsFinite(value2);
         }
 
-        private static bool AreFinite(double value1, double value2, double value3)
-        {
-            return IsFinite(value1) && IsFinite(value2) &&  IsFinite(value3);
+        private static bool AreFinite(double value1, double value2, double value3) {
+            return IsFinite(value1) && IsFinite(value2) && IsFinite(value3);
         }
 
-        private static bool AreFinite(double value1, double value2, double value3, double value4)
-        {
-            return IsFinite(value1) && IsFinite(value2) &&  IsFinite(value3) && IsFinite(value4);
+        private static bool AreFinite(double value1, double value2, double value3, double value4) {
+            return IsFinite(value1) && IsFinite(value2) && IsFinite(value3) && IsFinite(value4);
         }
         private readonly struct Date
         {
-            public Date(int year, int month, int day)
-            {
+            public Date(int year, int month, int day) {
                 Year = year;
                 Month = month;
                 Day = day;
@@ -1188,20 +1017,20 @@ namespace Anura.JavaScript.Native.Date
             public readonly int Month;
             public readonly int Day;
 
-            public void Deconstruct(out int year, out int month, out int day)
-            {
+            public void Deconstruct(out int year, out int month, out int day) {
                 year = Year;
                 month = Month;
                 day = Day;
             }
         }
 
-        private static readonly int[] kDaysInMonths = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        private static readonly int[] kDaysInMonths = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-        private static Date YearMonthDayFromTime(double t) => YearMonthDayFromDays((long) (t / 1000 / 60 / 60 / 24));
+        private static Date YearMonthDayFromTime(double t) {
+            return YearMonthDayFromDays((long)(t / 1000 / 60 / 60 / 24));
+        }
 
-        private static Date YearMonthDayFromDays(long days)
-        {
+        private static Date YearMonthDayFromDays(long days) {
             const int kDaysIn4Years = 4 * 365 + 1;
             const int kDaysIn100Years = 25 * kDaysIn4Years - 1;
             const int kDaysIn400Years = 4 * kDaysIn100Years + 1;
@@ -1237,42 +1066,33 @@ namespace Anura.JavaScript.Native.Date
             var day = 0;
 
             // Check if the date is after February.
-            if (days >= 31 + 28 + (is_leap ? 1 : 0))
-            {
+            if (days >= 31 + 28 + (is_leap ? 1 : 0)) {
                 days -= 31 + 28 + (is_leap ? 1 : 0);
                 // Find the date starting from March.
-                for (int i = 2; i < 12; i++)
-                {
-                    if (days < kDaysInMonths[i])
-                    {
+                for (int i = 2; i < 12; i++) {
+                    if (days < kDaysInMonths[i]) {
                         month = i;
-                        day = (int) (days + 1);
+                        day = (int)(days + 1);
                         break;
                     }
 
                     days -= kDaysInMonths[i];
                 }
-            }
-            else
-            {
+            } else {
                 // Check January and February.
-                if (days < 31)
-                {
+                if (days < 31) {
                     month = 0;
-                    day = (int) (days + 1);
-                }
-                else
-                {
+                    day = (int)(days + 1);
+                } else {
                     month = 1;
-                    day = (int) (days - 31 + 1);
+                    day = (int)(days - 31 + 1);
                 }
             }
 
-            return new Date((int) year, month, day);
+            return new Date((int)year, month, day);
         }
-        
-        public override string ToString()
-        {
+
+        public override string ToString() {
             return "Date.prototype";
         }
     }

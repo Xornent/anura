@@ -1,13 +1,15 @@
 using System.IO;
 
-namespace Anura.Styles {
-    internal sealed class UnknownSelector : StylesheetNode, ISelector {
+namespace Anura.Styles
+{
+    internal sealed class UnknownSelector : StylesheetNode, ISelector
+    {
         public Priority Specifity => Priority.Zero;
 
-        public string Text => this.ToCss ();
+        public string Text => this.ToCss();
 
-        public override void ToCss (TextWriter writer, IStyleFormatter formatter) {
-            writer.Write (StylesheetText?.Text);
+        public override void ToCss(TextWriter writer, IStyleFormatter formatter) {
+            writer.Write(StylesheetText?.Text);
         }
     }
 }

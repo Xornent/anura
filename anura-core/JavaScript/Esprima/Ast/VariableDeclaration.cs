@@ -11,8 +11,7 @@ namespace Esprima.Ast
         public VariableDeclaration(
             in NodeList<VariableDeclarator> declarations,
             VariableDeclarationKind kind) :
-            base(Nodes.VariableDeclaration)
-        {
+            base(Nodes.VariableDeclaration) {
             _declarations = declarations;
             Kind = kind;
         }

@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public static class FeatureNames {
+namespace Anura.Styles
+{
+    public static class FeatureNames
+    {
         public static readonly string MinWidth = "min-width";
         public static readonly string MinHeight = "min-height";
         public static readonly string MinDeviceWidth = "min-device-width";

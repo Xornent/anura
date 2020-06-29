@@ -11,8 +11,7 @@ namespace Esprima.Ast
         public readonly Statement Body;
 
         public ForStatement(INode init, Expression test, Expression update, Statement body) :
-            base(Nodes.ForStatement)
-        {
+            base(Nodes.ForStatement) {
             Init = init;
             Test = test;
             Update = update;

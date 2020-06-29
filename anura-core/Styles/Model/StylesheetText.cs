@@ -1,10 +1,12 @@
 using System;
 
-namespace Anura.Styles {
-    public class StylesheetText {
+namespace Anura.Styles
+{
+    public class StylesheetText
+    {
         private readonly TextSource _source;
 
-        internal StylesheetText (TextRange range, TextSource source) {
+        internal StylesheetText(TextRange range, TextSource source) {
             Range = range;
             _source = source;
         }
@@ -13,7 +15,7 @@ namespace Anura.Styles {
 
         public string Text {
             get {
-                var start = Math.Max (Range.Start.Position - 1, 0);
+                var start = Math.Max(Range.Start.Position - 1, 0);
                 var length = Range.End.Position + 1 - Range.Start.Position;
                 var text = _source.Text;
 
@@ -21,7 +23,7 @@ namespace Anura.Styles {
                     length = text.Length - start;
                 }
 
-                return text.Substring (start, length);
+                return text.Substring(start, length);
             }
         }
     }

@@ -16,13 +16,11 @@ namespace Anura.JavaScript.Native.Number
         internal const long MaxSafeInteger = 9007199254740991;
 
         public NumberConstructor(Engine engine)
-            : base(engine, _functionName, strict: false)
-        {
+            : base(engine, _functionName, strict: false) {
 
         }
 
-        public static NumberConstructor CreateNumberConstructor(Engine engine)
-        {
+        public static NumberConstructor CreateNumberConstructor(Engine engine) {
             var obj = new NumberConstructor(engine)
             {
                 _prototype = engine.Function.PrototypeObject
@@ -39,8 +37,7 @@ namespace Anura.JavaScript.Native.Number
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(15, checkExistingKeys: false)
             {
                 ["MAX_VALUE"] = new PropertyDescriptor(new PropertyDescriptor(double.MaxValue, PropertyFlag.AllForbidden)),
@@ -61,25 +58,20 @@ namespace Anura.JavaScript.Native.Number
             SetProperties(properties);
         }
 
-        private static JsValue IsFinite(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is JsNumber num))
-            {
+        private static JsValue IsFinite(JsValue thisObj, JsValue[] arguments) {
+            if (!(arguments.At(0) is JsNumber num)) {
                 return false;
             }
 
             return double.IsInfinity(num._value) || double.IsNaN(num._value) ? JsBoolean.False : JsBoolean.True;
         }
 
-        private static JsValue IsInteger(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is JsNumber num))
-            {
+        private static JsValue IsInteger(JsValue thisObj, JsValue[] arguments) {
+            if (!(arguments.At(0) is JsNumber num)) {
                 return false;
             }
 
-            if (double.IsInfinity(num._value) || double.IsNaN(num._value))
-            {
+            if (double.IsInfinity(num._value) || double.IsNaN(num._value)) {
                 return JsBoolean.False;
             }
 
@@ -88,42 +80,34 @@ namespace Anura.JavaScript.Native.Number
             return integer == num._value;
         }
 
-        private static JsValue IsNaN(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is JsNumber num))
-            {
+        private static JsValue IsNaN(JsValue thisObj, JsValue[] arguments) {
+            if (!(arguments.At(0) is JsNumber num)) {
                 return false;
             }
 
             return double.IsNaN(num._value);
         }
 
-        private static JsValue IsSafeInteger(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is JsNumber num))
-            {
+        private static JsValue IsSafeInteger(JsValue thisObj, JsValue[] arguments) {
+            if (!(arguments.At(0) is JsNumber num)) {
                 return false;
             }
 
-            if (double.IsInfinity(num._value) || double.IsNaN(num._value))
-            {
+            if (double.IsInfinity(num._value) || double.IsNaN(num._value)) {
                 return JsBoolean.False;
             }
 
             var integer = TypeConverter.ToInteger(num);
 
-            if (integer != num._value)
-            {
+            if (integer != num._value) {
                 return false;
             }
 
             return System.Math.Abs(integer) <= MaxSafeInteger;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
-            if (arguments.Length == 0)
-            {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
+            if (arguments.Length == 0) {
                 return 0d;
             }
 
@@ -134,21 +118,19 @@ namespace Anura.JavaScript.Native.Number
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.2.1
         /// </summary>
         /// <param name="arguments"></param>
+        /// <param name="newTarget"></param>
         /// <returns></returns>
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             return Construct(arguments.Length > 0 ? TypeConverter.ToNumber(arguments[0]) : 0);
         }
 
         public NumberPrototype PrototypeObject { get; private set; }
 
-        public NumberInstance Construct(double value)
-        {
+        public NumberInstance Construct(double value) {
             return Construct(JsNumber.Create(value));
         }
 
-        public NumberInstance Construct(JsNumber value)
-        {
+        public NumberInstance Construct(JsNumber value) {
             var instance = new NumberInstance(Engine)
             {
                 _prototype = PrototypeObject,

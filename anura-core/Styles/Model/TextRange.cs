@@ -1,8 +1,10 @@
 using System;
 
-namespace Anura.Styles {
-    public struct TextRange : IEquatable<TextRange>, IComparable<TextRange> {
-        public TextRange (TextPosition start, TextPosition end) {
+namespace Anura.Styles
+{
+    public struct TextRange : IEquatable<TextRange>, IComparable<TextRange>
+    {
+        public TextRange(TextPosition start, TextPosition end) {
             Start = start;
             End = end;
         }
@@ -10,32 +12,32 @@ namespace Anura.Styles {
         public TextPosition Start { get; }
         public TextPosition End { get; }
 
-        public override string ToString () {
+        public override string ToString() {
             return $"({Start}) -- ({End})";
         }
 
-        public override int GetHashCode () {
-            return End.GetHashCode () ^ Start.GetHashCode ();
+        public override int GetHashCode() {
+            return End.GetHashCode() ^ Start.GetHashCode();
         }
 
-        public override bool Equals (object obj) {
+        public override bool Equals(object obj) {
             var other = obj as TextRange?;
-            return other.HasValue && Equals (other.Value);
+            return other.HasValue && Equals(other.Value);
         }
 
-        public bool Equals (TextRange other) {
-            return Start.Equals (other.Start) && End.Equals (other.End);
+        public bool Equals(TextRange other) {
+            return Start.Equals(other.Start) && End.Equals(other.End);
         }
 
-        public static bool operator > (TextRange a, TextRange b) {
+        public static bool operator >(TextRange a, TextRange b) {
             return a.Start > b.End;
         }
 
-        public static bool operator < (TextRange a, TextRange b) {
+        public static bool operator <(TextRange a, TextRange b) {
             return a.End < b.Start;
         }
 
-        public int CompareTo (TextRange other) {
+        public int CompareTo(TextRange other) {
             if (this > other) {
                 return 1;
             }

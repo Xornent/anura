@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public static class FunctionNames {
+namespace Anura.Styles
+{
+    public static class FunctionNames
+    {
         public static readonly string Url = "url";
         public static readonly string UrlPrefix = "url-prefix";
         public static readonly string Domain = "domain";

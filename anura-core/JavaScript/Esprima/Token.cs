@@ -43,8 +43,7 @@ namespace Esprima
         public object Value;
         public RegexValue RegexValue;
 
-        public void Clear()
-        {
+        public void Clear() {
             Type = TokenType.BooleanLiteral;
             Literal = null;
             Start = 0;

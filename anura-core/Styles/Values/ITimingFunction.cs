@@ -1,3 +1,4 @@
-namespace Anura.Styles {
+namespace Anura.Styles
+{
     public interface ITimingFunction { }
 }

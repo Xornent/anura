@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum TextAlignLast : byte {
+namespace Anura.Styles
+{
+    public enum TextAlignLast : byte
+    {
         Auto,
         Start,
         End,

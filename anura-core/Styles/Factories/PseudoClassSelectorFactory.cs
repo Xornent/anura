@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
 
-namespace Anura.Styles {
-    public sealed class PseudoClassSelectorFactory {
+namespace Anura.Styles
+{
+    public sealed class PseudoClassSelectorFactory
+    {
         private static readonly Lazy<PseudoClassSelectorFactory> Lazy =
-            new Lazy<PseudoClassSelectorFactory> (() => {
-                var factory = new PseudoClassSelectorFactory ();
-                _selectors.Add (PseudoElementNames.Before, PseudoElementSelectorFactory.Instance.Create (PseudoElementNames.Before));
-                _selectors.Add (PseudoElementNames.After, PseudoElementSelectorFactory.Instance.Create (PseudoElementNames.After));
-                _selectors.Add (PseudoElementNames.FirstLine, PseudoElementSelectorFactory.Instance.Create (PseudoElementNames.FirstLine));
-                _selectors.Add (PseudoElementNames.FirstLetter, PseudoElementSelectorFactory.Instance.Create (PseudoElementNames.FirstLetter));
+            new Lazy<PseudoClassSelectorFactory>(() => {
+                var factory = new PseudoClassSelectorFactory();
+                _selectors.Add(PseudoElementNames.Before, PseudoElementSelectorFactory.Instance.Create(PseudoElementNames.Before));
+                _selectors.Add(PseudoElementNames.After, PseudoElementSelectorFactory.Instance.Create(PseudoElementNames.After));
+                _selectors.Add(PseudoElementNames.FirstLine, PseudoElementSelectorFactory.Instance.Create(PseudoElementNames.FirstLine));
+                _selectors.Add(PseudoElementNames.FirstLetter, PseudoElementSelectorFactory.Instance.Create(PseudoElementNames.FirstLetter));
                 return factory;
             });
 
@@ -17,7 +19,7 @@ namespace Anura.Styles {
 
         #region Selectors
         private static readonly Dictionary<string, ISelector> _selectors =
-            new Dictionary<string, ISelector> (StringComparer.OrdinalIgnoreCase) {
+            new Dictionary<string, ISelector>(StringComparer.OrdinalIgnoreCase) {
                 {
                 PseudoClassNames.Root,
                 SimpleSelector.PseudoClass (PseudoClassNames.Root)
@@ -98,10 +100,10 @@ namespace Anura.Styles {
             };
         #endregion
 
-        public ISelector Create (string name) {
+        public ISelector Create(string name) {
             ISelector selector;
 
-            if (_selectors.TryGetValue (name, out selector)) {
+            if (_selectors.TryGetValue(name, out selector)) {
                 return selector;
             }
 

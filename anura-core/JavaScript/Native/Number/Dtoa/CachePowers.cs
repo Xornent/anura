@@ -42,9 +42,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             internal readonly short BinaryExponent;
             internal readonly short DecimalExponent;
 
-            internal CachedPower(ulong significand, short binaryExponent, short decimalExponent)
-            {
-                Significand =  significand;
+            internal CachedPower(ulong significand, short binaryExponent, short decimalExponent) {
+                Significand = significand;
                 BinaryExponent = binaryExponent;
                 DecimalExponent = decimalExponent;
             }
@@ -52,8 +51,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
 
         internal readonly struct GetCachedPowerResult
         {
-            public GetCachedPowerResult(short decimalExponent, DiyFp cMk)
-            {
+            public GetCachedPowerResult(short decimalExponent, DiyFp cMk) {
                 this.decimalExponent = decimalExponent;
                 this.cMk = cMk;
             }
@@ -62,13 +60,12 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             internal readonly DiyFp cMk;
         }
 
-        internal static GetCachedPowerResult GetCachedPowerForBinaryExponentRange(int min_exponent, int max_exponent)
-        {
+        internal static GetCachedPowerResult GetCachedPowerForBinaryExponentRange(int min_exponent, int max_exponent) {
             const int kQ = DiyFp.KSignificandSize;
             double k = System.Math.Ceiling((min_exponent + kQ - 1) * Kd1Log210);
             int foo = kCachedPowersOffset;
             int index =
-                (foo + (int) k - 1) / kDecimalExponentDistance + 1;
+                (foo + (int)k - 1) / kDecimalExponentDistance + 1;
             Debug.Assert(0 <= index && index < CACHED_POWERS.Length);
             CachedPower cachedPower = CACHED_POWERS[index];
             Debug.Assert(min_exponent <= cachedPower.BinaryExponent);

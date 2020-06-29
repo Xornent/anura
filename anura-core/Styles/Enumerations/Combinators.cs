@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    internal static class Combinators {
+namespace Anura.Styles
+{
+    internal static class Combinators
+    {
         public static readonly string Exactly = "=";
         public static readonly string Unlike = "!=";
         public static readonly string InList = "~=";

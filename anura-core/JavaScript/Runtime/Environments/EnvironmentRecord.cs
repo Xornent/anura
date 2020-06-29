@@ -10,8 +10,7 @@ namespace Anura.JavaScript.Runtime.Environments
     {
         protected readonly Engine _engine;
 
-        protected EnvironmentRecord(Engine engine) : base(InternalTypes.ObjectEnvironmentRecord)
-        {
+        protected EnvironmentRecord(Engine engine) : base(InternalTypes.ObjectEnvironmentRecord) {
             _engine = engine;
         }
 
@@ -70,14 +69,12 @@ namespace Anura.JavaScript.Runtime.Environments
         /// </summary>
         /// <returns>The array of all defined bindings</returns>
         internal abstract string[] GetAllBindingNames();
-        
-        public override object ToObject()
-        {
+
+        public override object ToObject() {
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException<object>();
         }
 
-        public override bool Equals(JsValue other)
-        {
+        public override bool Equals(JsValue other) {
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException<bool>();
         }
     }

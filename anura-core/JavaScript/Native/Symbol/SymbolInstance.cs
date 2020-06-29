@@ -6,8 +6,7 @@ namespace Anura.JavaScript.Native.Symbol
     public class SymbolInstance : ObjectInstance, IPrimitiveInstance
     {
         public SymbolInstance(Engine engine)
-            : base(engine, ObjectClass.Symbol)
-        {
+            : base(engine, ObjectClass.Symbol) {
         }
 
         Types IPrimitiveInstance.Type => Types.Symbol;

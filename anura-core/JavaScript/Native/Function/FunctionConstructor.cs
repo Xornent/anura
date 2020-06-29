@@ -1,9 +1,9 @@
-﻿using Esprima;
-using Esprima.Ast;
-using Anura.JavaScript.Native.Object;
+﻿using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Environments;
+using Esprima;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Native.Function
 {
@@ -16,12 +16,10 @@ namespace Anura.JavaScript.Native.Function
         private static readonly char[] ArgumentNameSeparator = new[] { ',' };
 
         private FunctionConstructor(Engine engine)
-            : base(engine, _functionName, strict: false)
-        {
+            : base(engine, _functionName, strict: false) {
         }
 
-        public static FunctionConstructor CreateFunctionConstructor(Engine engine)
-        {
+        public static FunctionConstructor CreateFunctionConstructor(Engine engine) {
             var obj = new FunctionConstructor(engine)
             {
                 PrototypeObject = FunctionPrototype.CreatePrototypeObject(engine)
@@ -40,43 +38,34 @@ namespace Anura.JavaScript.Native.Function
 
         public FunctionPrototype PrototypeObject { get; private set; }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             return Construct(arguments, thisObject);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             var argCount = arguments.Length;
             string p = "";
             string body = "";
 
-            if (argCount == 1)
-            {
+            if (argCount == 1) {
                 body = TypeConverter.ToString(arguments[0]);
-            }
-            else if (argCount > 1)
-            {
+            } else if (argCount > 1) {
                 var firstArg = arguments[0];
                 p = TypeConverter.ToString(firstArg);
-                for (var k = 1; k < argCount - 1; k++)
-                {
+                for (var k = 1; k < argCount - 1; k++) {
                     var nextArg = arguments[k];
                     p += "," + TypeConverter.ToString(nextArg);
                 }
 
-                body = TypeConverter.ToString(arguments[argCount-1]);
+                body = TypeConverter.ToString(arguments[argCount - 1]);
             }
 
             IFunction function;
-            try
-            {
+            try {
                 var functionExpression = "function f(" + p + ") { " + body + "}";
                 var parser = new JavaScriptParser(functionExpression, ParserOptions);
-                function = (IFunction) parser.ParseScript().Body[0];
-            }
-            catch (ParserException)
-            {
+                function = (IFunction)parser.ParseScript().Body[0];
+            } catch (ParserException) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError<ObjectInstance>(_engine);
             }
 
@@ -95,8 +84,7 @@ namespace Anura.JavaScript.Native.Function
         /// </summary>
         /// <param name="functionDeclaration"></param>
         /// <returns></returns>
-        public FunctionInstance CreateFunctionObject(IFunctionDeclaration functionDeclaration)
-        {
+        public FunctionInstance CreateFunctionObject(IFunctionDeclaration functionDeclaration) {
             var functionObject = new ScriptFunctionInstance(
                 Engine,
                 functionDeclaration,
@@ -106,12 +94,9 @@ namespace Anura.JavaScript.Native.Function
             return functionObject;
         }
 
-        public FunctionInstance ThrowTypeError
-        {
-            get
-            {
-                if (!ReferenceEquals(_throwTypeError, null))
-                {
+        public FunctionInstance ThrowTypeError {
+            get {
+                if (!ReferenceEquals(_throwTypeError, null)) {
                     return _throwTypeError;
                 }
 
@@ -120,10 +105,8 @@ namespace Anura.JavaScript.Native.Function
             }
         }
 
-        public object Apply(JsValue thisObject, JsValue[] arguments)
-        {
-            if (arguments.Length != 2)
-            {
+        public object Apply(JsValue thisObject, JsValue[] arguments) {
+            if (arguments.Length != 2) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("Apply has to be called with two arguments.");
             }
 
@@ -131,27 +114,23 @@ namespace Anura.JavaScript.Native.Function
             var thisArg = arguments[0];
             var argArray = arguments[1];
 
-            if (func is null)
-            {
+            if (func is null) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<object>(Engine);
             }
 
-            if (argArray.IsNullOrUndefined())
-            {
+            if (argArray.IsNullOrUndefined()) {
                 return func.Call(thisArg, Arguments.Empty);
             }
 
             var argArrayObj = argArray.TryCast<ObjectInstance>();
-            if (ReferenceEquals(argArrayObj, null))
-            {
+            if (ReferenceEquals(argArrayObj, null)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
             var len = argArrayObj.Get(CommonProperties.Length, argArrayObj);
             var n = TypeConverter.ToUint32(len);
             var argList = new JsValue[n];
-            for (var index = 0; index < n; index++)
-            {
+            for (var index = 0; index < n; index++) {
                 var indexName = TypeConverter.ToString(index);
                 var nextArg = argArrayObj.Get(JsString.Create(indexName), argArrayObj);
                 argList[index] = nextArg;

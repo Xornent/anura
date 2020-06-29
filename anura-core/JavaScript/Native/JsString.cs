@@ -1,7 +1,7 @@
-﻿using System;
-using System.Text;
-using Anura.JavaScript.Native.Array;
+﻿using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Runtime;
+using System;
+using System.Text;
 
 namespace Anura.JavaScript.Native
 {
@@ -30,235 +30,190 @@ namespace Anura.JavaScript.Native
 
         internal string _value;
 
-        static JsString()
-        {
+        static JsString() {
             _charToJsValue = new JsString[AsciiMax + 1];
             _charToStringJsValue = new JsString[AsciiMax + 1];
 
-            for (var i = 0; i <= AsciiMax; i++)
-            {
-                _charToJsValue[i] = new JsString((char) i);
-                _charToStringJsValue[i] = new JsString(((char) i).ToString());
+            for (var i = 0; i <= AsciiMax; i++) {
+                _charToJsValue[i] = new JsString((char)i);
+                _charToStringJsValue[i] = new JsString(((char)i).ToString());
             }
 
             _intToStringJsValue = new JsString[1024];
-            for (var i = 0; i < _intToStringJsValue.Length; ++i)
-            {
+            for (var i = 0; i < _intToStringJsValue.Length; ++i) {
                 _intToStringJsValue[i] = new JsString(TypeConverter.ToString(i));
             }
         }
 
-        public JsString(string value) : this(value, InternalTypes.String)
-        {
+        public JsString(string value) : this(value, InternalTypes.String) {
         }
 
-        private JsString(string value, InternalTypes type) : base(type)
-        {
+        private JsString(string value, InternalTypes type) : base(type) {
             _value = value;
         }
 
-        public override object ToObject()
-        {
+        public override object ToObject() {
             return _value;
         }
 
-        public JsString(char value) : base(Types.String)
-        {
+        public JsString(char value) : base(Types.String) {
             _value = value.ToString();
         }
 
-        public static bool operator ==(JsValue a, JsString b)
-        {
-            if (a is JsString s && b is object)
-            {
+        public static bool operator ==(JsValue a, JsString b) {
+            if (a is JsString s && b is object) {
                 return s.ToString() == b.ToString();
             }
 
-            if ((object) a == null)
-            {
-                return (object) b == null;
+            if ((object)a == null) {
+                return (object)b == null;
             }
 
-            return (object) b != null && a.Equals(b);
+            return (object)b != null && a.Equals(b);
         }
 
-        public static bool operator ==(JsString a, JsValue b)
-        {
-            if (a is object && b is JsString s)
-            {
+        public static bool operator ==(JsString a, JsValue b) {
+            if (a is object && b is JsString s) {
                 return s.ToString() == b.ToString();
             }
 
-            if ((object) a == null)
-            {
-                return (object) b == null;
+            if ((object)a == null) {
+                return (object)b == null;
             }
 
-            return (object) b != null && a.Equals(b);
+            return (object)b != null && a.Equals(b);
         }
 
-        public static bool operator !=(JsString a, JsValue b)
-        {
+        public static bool operator !=(JsString a, JsValue b) {
             return !(a == b);
         }
 
-        public static bool operator !=(JsValue a, JsString b)
-        {
+        public static bool operator !=(JsValue a, JsString b) {
             return !(a == b);
         }
 
         public virtual char this[int index] => _value[index];
 
-        public virtual JsString Append(JsValue jsValue)
-        {
+        public virtual JsString Append(JsValue jsValue) {
             return new ConcatenatedString(string.Concat(_value, TypeConverter.ToString(jsValue)));
         }
 
-        internal virtual JsString EnsureCapacity(int capacity)
-        {
+        internal virtual JsString EnsureCapacity(int capacity) {
             return new ConcatenatedString(_value, capacity);
         }
 
-        internal virtual bool IsNullOrEmpty()
-        {
+        internal virtual bool IsNullOrEmpty() {
             return string.IsNullOrEmpty(_value);
         }
 
         public virtual int Length => _value.Length;
 
-        internal static JsString Create(string value)
-        {
-            if (value.Length > 1)
-            {
+        internal static JsString Create(string value) {
+            if (value.Length > 1) {
                 return new JsString(value);
             }
 
-            if (value.Length == 0)
-            {
+            if (value.Length == 0) {
                 return Empty;
             }
 
-            var i = (uint) value[0];
-            if (i < (uint) _charToStringJsValue.Length)
-            {
+            var i = (uint)value[0];
+            if (i < (uint)_charToStringJsValue.Length) {
                 return _charToStringJsValue[i];
             }
             return new JsString(value);
         }
 
-        internal static JsString Create(char value)
-        {
-            if (value < (uint) _charToJsValue.Length)
-            {
+        internal static JsString Create(char value) {
+            if (value < (uint)_charToJsValue.Length) {
                 return _charToJsValue[value];
             }
 
             return new JsString(value);
         }
 
-        internal static JsString Create(int value)
-        {
-            if (value < (uint) _intToStringJsValue.Length)
-            {
+        internal static JsString Create(int value) {
+            if (value < (uint)_intToStringJsValue.Length) {
                 return _intToStringJsValue[value];
             }
 
             return new JsString(TypeConverter.ToString(value));
         }
 
-        internal static JsValue Create(uint value)
-        {
-            if (value < (uint) _intToStringJsValue.Length)
-            {
+        internal static JsValue Create(uint value) {
+            if (value < (uint)_intToStringJsValue.Length) {
                 return _intToStringJsValue[value];
             }
 
             return new JsString(TypeConverter.ToString(value));
         }
 
-        internal static JsValue Create(ulong value)
-        {
-            if (value < (uint) _intToStringJsValue.Length)
-            {
+        internal static JsValue Create(ulong value) {
+            if (value < (uint)_intToStringJsValue.Length) {
                 return _intToStringJsValue[value];
             }
 
             return new JsString(TypeConverter.ToString(value));
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return _value;
         }
 
-        public ArrayInstance ToArray(Engine engine)
-        {
-            var array = engine.Array.ConstructFast((uint) _value.Length);
-            for (int i = 0; i < _value.Length; ++i)
-            {
-                array.SetIndexValue((uint) i, _value[i], updateLength: false);
+        public ArrayInstance ToArray(Engine engine) {
+            var array = engine.Array.ConstructFast((uint)_value.Length);
+            for (int i = 0; i < _value.Length; ++i) {
+                array.SetIndexValue((uint)i, _value[i], updateLength: false);
             }
 
             return array;
         }
 
-        internal int IndexOf(string value, StringComparison comparisonType)
-        {
+        internal int IndexOf(string value, StringComparison comparisonType) {
             return ToString().IndexOf(value, comparisonType);
         }
 
-        internal int IndexOf(char value)
-        {
+        internal int IndexOf(char value) {
             return ToString().IndexOf(value);
         }
 
-        internal string Substring(int startIndex, int length)
-        {
+        internal string Substring(int startIndex, int length) {
             return ToString().Substring(startIndex, length);
         }
 
-        internal string Substring(int startIndex)
-        {
+        internal string Substring(int startIndex) {
             return ToString().Substring(startIndex);
         }
 
-        public override bool Equals(JsValue obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
+        public override bool Equals(JsValue obj) {
+            if (ReferenceEquals(null, obj)) {
                 return false;
             }
 
-            if (!(obj is JsString s))
-            {
+            if (!(obj is JsString s)) {
                 return false;
             }
 
             return Equals(s);
         }
 
-        public bool Equals(JsString other)
-        {
-            if (ReferenceEquals(null, other))
-            {
+        public bool Equals(JsString other) {
+            if (ReferenceEquals(null, other)) {
                 return false;
             }
 
-            if (ReferenceEquals(this, other))
-            {
+            if (ReferenceEquals(this, other)) {
                 return true;
             }
 
             return _value == other.ToString();
         }
 
-        public override bool Equals(object obj)
-        {
+        public override bool Equals(object obj) {
             return ReferenceEquals(this, obj) || obj is JsString other && Equals(other);
         }
 
-        public override int GetHashCode()
-        {
+        public override int GetHashCode() {
             return _value.GetHashCode();
         }
 
@@ -268,22 +223,16 @@ namespace Anura.JavaScript.Native
             private bool _dirty;
 
             internal ConcatenatedString(string value, int capacity = 0)
-                : base(value, InternalTypes.String | InternalTypes.RequiresCloning)
-            {
-                if (capacity > 0)
-                {
+                : base(value, InternalTypes.String | InternalTypes.RequiresCloning) {
+                if (capacity > 0) {
                     _stringBuilder = new StringBuilder(value, capacity);
-                }
-                else
-                {
+                } else {
                     _value = value;
                 }
             }
 
-            public override string ToString()
-            {
-                if (_dirty)
-                {
+            public override string ToString() {
+                if (_dirty) {
                     _value = _stringBuilder.ToString();
                     _dirty = false;
                 }
@@ -293,11 +242,9 @@ namespace Anura.JavaScript.Native
 
             public override char this[int index] => _stringBuilder?[index] ?? _value[index];
 
-            public override JsString Append(JsValue jsValue)
-            {
+            public override JsString Append(JsValue jsValue) {
                 var value = TypeConverter.ToString(jsValue);
-                if (_stringBuilder == null)
-                {
+                if (_stringBuilder == null) {
                     _stringBuilder = new StringBuilder(_value, _value.Length + value.Length);
                 }
 
@@ -307,38 +254,33 @@ namespace Anura.JavaScript.Native
                 return this;
             }
 
-            internal override JsString EnsureCapacity(int capacity)
-            {
+            internal override JsString EnsureCapacity(int capacity) {
                 _stringBuilder.EnsureCapacity(capacity);
                 return this;
             }
 
-            internal override bool IsNullOrEmpty()
-            {
+            internal override bool IsNullOrEmpty() {
                 return _stringBuilder == null && string.IsNullOrEmpty(_value)
                     || _stringBuilder != null && _stringBuilder.Length == 0;
             }
 
             public override int Length => _stringBuilder?.Length ?? _value?.Length ?? 0;
 
-            public override object ToObject() => ToString();
+            public override object ToObject() {
+                return ToString();
+            }
 
-            public override bool Equals(JsValue other)
-            {
-                if (other is ConcatenatedString cs)
-                {
-                    if (_stringBuilder != null && cs._stringBuilder != null)
-                    {
+            public override bool Equals(JsValue other) {
+                if (other is ConcatenatedString cs) {
+                    if (_stringBuilder != null && cs._stringBuilder != null) {
                         return _stringBuilder.Equals(cs._stringBuilder);
                     }
 
                     return ToString() == cs.ToString();
                 }
 
-                if (other is JsString jsString)
-                {
-                    if (jsString._value.Length != Length)
-                    {
+                if (other is JsString jsString) {
+                    if (jsString._value.Length != Length) {
                         return false;
                     }
 
@@ -348,13 +290,11 @@ namespace Anura.JavaScript.Native
                 return base.Equals(other);
             }
 
-            public override int GetHashCode()
-            {
+            public override int GetHashCode() {
                 return _stringBuilder?.GetHashCode() ?? _value.GetHashCode();
             }
 
-            internal override JsValue DoClone()
-            {
+            internal override JsValue DoClone() {
                 return new JsString(ToString());
             }
         }

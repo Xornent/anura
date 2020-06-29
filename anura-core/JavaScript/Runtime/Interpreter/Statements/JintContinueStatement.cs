@@ -9,13 +9,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
     {
         private readonly string _labelName;
 
-        public JintContinueStatement(Engine engine, ContinueStatement statement) : base(engine, statement)
-        {
+        public JintContinueStatement(Engine engine, ContinueStatement statement) : base(engine, statement) {
             _labelName = _statement.Label?.Name;
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             return new Completion(CompletionType.Continue, null, _labelName, Location);
         }
     }

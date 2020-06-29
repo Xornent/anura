@@ -2,72 +2,74 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Anura.Styles {
-    public abstract class StylesheetNode : IStylesheetNode {
+namespace Anura.Styles
+{
+    public abstract class StylesheetNode : IStylesheetNode
+    {
         private readonly List<IStylesheetNode> _children;
 
-        protected StylesheetNode () {
-            _children = new List<IStylesheetNode> ();
+        protected StylesheetNode() {
+            _children = new List<IStylesheetNode>();
             StylesheetText = null;
         }
 
-        protected void ReplaceAll (IStylesheetNode node) {
-            Clear ();
+        protected void ReplaceAll(IStylesheetNode node) {
+            Clear();
             StylesheetText = node.StylesheetText;
             foreach (var child in node.Children) {
-                AppendChild (child);
+                AppendChild(child);
             }
         }
 
         public StylesheetText StylesheetText { get; internal set; }
 
-        public IEnumerable<IStylesheetNode> Children => _children.AsEnumerable ();
+        public IEnumerable<IStylesheetNode> Children => _children.AsEnumerable();
 
-        public abstract void ToCss (TextWriter writer, IStyleFormatter formatter);
+        public abstract void ToCss(TextWriter writer, IStyleFormatter formatter);
 
-        public void AppendChild (IStylesheetNode child) {
-            Setup (child);
-            _children.Add (child);
+        public void AppendChild(IStylesheetNode child) {
+            Setup(child);
+            _children.Add(child);
         }
 
-        public void ReplaceChild (IStylesheetNode oldChild, IStylesheetNode newChild) {
+        public void ReplaceChild(IStylesheetNode oldChild, IStylesheetNode newChild) {
             for (var i = 0; i < _children.Count; i++) {
-                if (ReferenceEquals (oldChild, _children[i])) {
-                    Teardown (oldChild);
-                    Setup (newChild);
+                if (ReferenceEquals(oldChild, _children[i])) {
+                    Teardown(oldChild);
+                    Setup(newChild);
                     _children[i] = newChild;
                     return;
                 }
             }
         }
 
-        public void InsertBefore (IStylesheetNode referenceChild, IStylesheetNode child) {
+        public void InsertBefore(IStylesheetNode referenceChild, IStylesheetNode child) {
             if (referenceChild != null) {
-                var index = _children.IndexOf (referenceChild);
-                InsertChild (index, child);
+                var index = _children.IndexOf(referenceChild);
+                InsertChild(index, child);
             } else {
-                AppendChild (child);
+                AppendChild(child);
             }
         }
 
-        public void InsertChild (int index, IStylesheetNode child) {
-            Setup (child);
-            _children.Insert (index, child);
+        public void InsertChild(int index, IStylesheetNode child) {
+            Setup(child);
+            _children.Insert(index, child);
         }
 
-        public void RemoveChild (IStylesheetNode child) {
-            Teardown (child);
-            _children.Remove (child);
+        public void RemoveChild(IStylesheetNode child) {
+            Teardown(child);
+            _children.Remove(child);
         }
 
-        public void Clear () {
+        public void Clear() {
             for (var i = _children.Count - 1; i >= 0; i--) {
                 var child = _children[i];
-                RemoveChild (child);
+                RemoveChild(child);
             }
         }
 
-        private void Setup (IStylesheetNode child) {
+        private void Setup(IStylesheetNode child) {
             var rule = child as Rule;
             if (rule == null) {
                 return;
@@ -76,7 +78,7 @@ namespace Anura.Styles {
             rule.Parent = this as IRule;
         }
 
-        private static void Teardown (IStylesheetNode child) {
+        private static void Teardown(IStylesheetNode child) {
             var rule = child as Rule;
             if (rule == null) {
                 return;

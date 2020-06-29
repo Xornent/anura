@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum VerticalAlignment : byte {
+namespace Anura.Styles
+{
+    public enum VerticalAlignment : byte
+    {
         Baseline,
         Sub,
         Super,

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Native.Symbol;
 using Anura.JavaScript.Pooling;
@@ -8,7 +6,8 @@ using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
-
+using System;
+using System.Collections.Generic;
 using static System.String;
 
 namespace Anura.JavaScript.Native.Array
@@ -20,12 +19,10 @@ namespace Anura.JavaScript.Native.Array
     {
         private ArrayConstructor _arrayConstructor;
 
-        private ArrayPrototype(Engine engine) : base(engine)
-        {
+        private ArrayPrototype(Engine engine) : base(engine) {
         }
 
-        public static ArrayPrototype CreatePrototypeObject(Engine engine, ArrayConstructor arrayConstructor)
-        {
+        public static ArrayPrototype CreatePrototypeObject(Engine engine, ArrayConstructor arrayConstructor) {
             var obj = new ArrayPrototype(engine)
             {
                 _prototype = engine.Object.PrototypeObject,
@@ -35,8 +32,7 @@ namespace Anura.JavaScript.Native.Array
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var unscopables = new ObjectInstance(_engine)
             {
                 _prototype = null
@@ -52,7 +48,7 @@ namespace Anura.JavaScript.Native.Array
             unscopables.SetDataProperty("includes", JsBoolean.True);
             unscopables.SetDataProperty("keys", JsBoolean.True);
             unscopables.SetDataProperty("values", JsBoolean.True);
-            
+
             const PropertyFlag propertyFlags = PropertyFlag.Writable | PropertyFlag.Configurable;
             var properties = new PropertyDictionary(30, checkExistingKeys: false)
             {
@@ -96,41 +92,33 @@ namespace Anura.JavaScript.Native.Array
             };
             SetSymbols(symbols);
         }
-        
-        private ObjectInstance Keys(JsValue thisObj, JsValue[] arguments)
-        {
-            if (thisObj is ObjectInstance oi && oi.IsArrayLike)
-            {
+
+        private ObjectInstance Keys(JsValue thisObj, JsValue[] arguments) {
+            if (thisObj is ObjectInstance oi && oi.IsArrayLike) {
                 return _engine.Iterator.ConstructArrayLikeKeyIterator(oi);
             }
 
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine, "cannot construct iterator");
         }
 
-        internal ObjectInstance Values(JsValue thisObj, JsValue[] arguments)
-        {
-            if (thisObj is ObjectInstance oi && oi.IsArrayLike)
-            {
+        internal ObjectInstance Values(JsValue thisObj, JsValue[] arguments) {
+            if (thisObj is ObjectInstance oi && oi.IsArrayLike) {
                 return _engine.Iterator.ConstructArrayLikeValueIterator(oi);
             }
 
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine, "cannot construct iterator");
         }
 
-        private ObjectInstance Iterator(JsValue thisObj, JsValue[] arguments)
-        {
-            if (thisObj is ObjectInstance oi)
-            {
+        private ObjectInstance Iterator(JsValue thisObj, JsValue[] arguments) {
+            if (thisObj is ObjectInstance oi) {
                 return _engine.Iterator.Construct(oi);
             }
 
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine, "cannot construct iterator");
         }
 
-        private JsValue Fill(JsValue thisObj, JsValue[] arguments)
-        {
-            if (thisObj.IsNullOrUndefined())
-            {
+        private JsValue Fill(JsValue thisObj, JsValue[] arguments) {
+            if (thisObj.IsNullOrUndefined()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Cannot convert undefined or null to object");
             }
 
@@ -143,40 +131,31 @@ namespace Anura.JavaScript.Native.Array
 
             var relativeStart = TypeConverter.ToInteger(start);
             uint actualStart;
-            if (relativeStart < 0)
-            {
-                actualStart = (uint) System.Math.Max(length + relativeStart, 0);
-            }
-            else
-            {
-                actualStart = (uint) System.Math.Min(relativeStart, length);
+            if (relativeStart < 0) {
+                actualStart = (uint)System.Math.Max(length + relativeStart, 0);
+            } else {
+                actualStart = (uint)System.Math.Min(relativeStart, length);
             }
 
             var end = ConvertAndCheckForInfinity(arguments.At(2), length);
             var relativeEnd = TypeConverter.ToInteger(end);
             uint actualEnd;
-            if (relativeEnd < 0)
-            {
-                actualEnd = (uint) System.Math.Max(length + relativeEnd, 0);
-            }
-            else
-            {
-                actualEnd = (uint) System.Math.Min(relativeEnd, length);
+            if (relativeEnd < 0) {
+                actualEnd = (uint)System.Math.Max(length + relativeEnd, 0);
+            } else {
+                actualEnd = (uint)System.Math.Min(relativeEnd, length);
             }
 
-            for (var i = actualStart; i < actualEnd; ++i)
-            {
+            for (var i = actualStart; i < actualEnd; ++i) {
                 operations.Set(i, value, updateLength: false, throwOnError: false);
             }
 
             return thisObj;
         }
 
-        private JsValue CopyWithin(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue CopyWithin(JsValue thisObj, JsValue[] arguments) {
             // Steps 1-2.
-            if (thisObj.IsNullOrUndefined())
-            {
+            if (thisObj.IsNullOrUndefined()) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "this is null or not defined");
             }
 
@@ -210,94 +189,76 @@ namespace Anura.JavaScript.Native.Array
 
             var direction = 1;
 
-            if (from < to && to < from + count) 
-            {
+            if (from < to && to < from + count) {
                 direction = -1;
-                from += (uint) count - 1;
-                to += (uint) count - 1;
+                from += (uint)count - 1;
+                to += (uint)count - 1;
             }
 
-            while (count > 0)
-            {
-                var fromPresent = operations.HasProperty((ulong) from);
-                if (fromPresent)
-                {
-                    var fromValue = operations.Get((ulong) from);
-                    operations.Set((ulong) to, fromValue, updateLength: true, throwOnError: true);
+            while (count > 0) {
+                var fromPresent = operations.HasProperty((ulong)from);
+                if (fromPresent) {
+                    var fromValue = operations.Get((ulong)from);
+                    operations.Set((ulong)to, fromValue, updateLength: true, throwOnError: true);
+                } else {
+                    operations.DeletePropertyOrThrow((ulong)to);
                 }
-                else
-                {
-                    operations.DeletePropertyOrThrow((ulong) to);
-                }
-                from = (uint) (from + direction);
-                to = (uint) (to + direction);
+                from = (uint)(from + direction);
+                to = (uint)(to + direction);
                 count--;
             }
 
             return thisObj;
         }
 
-        long ConvertAndCheckForInfinity(JsValue jsValue, long defaultValue)
-        {
-            if (jsValue.IsUndefined())
-            {
+        long ConvertAndCheckForInfinity(JsValue jsValue, long defaultValue) {
+            if (jsValue.IsUndefined()) {
                 return defaultValue;
             }
 
             var num = TypeConverter.ToNumber(jsValue);
 
-            if (double.IsPositiveInfinity(num))
-            {
+            if (double.IsPositiveInfinity(num)) {
                 return long.MaxValue;
             }
 
-            return (long) num;
+            return (long)num;
         }
 
-        private JsValue LastIndexOf(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue LastIndexOf(JsValue thisObj, JsValue[] arguments) {
             var o = ArrayOperations.For(Engine, thisObj);
             var len = o.GetLongLength();
-            if (len == 0)
-            {
+            if (len == 0) {
                 return -1;
             }
 
-            var n = arguments.Length > 1 
-                ? TypeConverter.ToInteger(arguments[1]) 
+            var n = arguments.Length > 1
+                ? TypeConverter.ToInteger(arguments[1])
                 : len - 1;
             double k;
-            if (n >= 0)
-            {
+            if (n >= 0) {
                 k = System.Math.Min(n, len - 1); // min
-            }
-            else
-            {
+            } else {
                 k = len - System.Math.Abs(n);
             }
 
-            if (k < 0 || k > uint.MaxValue)
-            {
+            if (k < 0 || k > uint.MaxValue) {
                 return -1;
             }
 
             var searchElement = arguments.At(0);
-            var i = (uint) k;
-            for (;; i--)
-            {
+            var i = (uint)k;
+            for (; ; i--) {
                 var kPresent = o.HasProperty(i);
-                if (kPresent)
-                {
+                if (kPresent) {
                     var elementK = o.Get(i);
                     var same = JintBinaryExpression.StrictlyEqual(elementK, searchElement);
-                    if (same)
-                    {
+                    if (same) {
                         return i;
                     }
                 }
 
-                if (i == 0)
-                {
+                if (i == 0) {
                     break;
                 }
             }
@@ -305,8 +266,7 @@ namespace Anura.JavaScript.Native.Array
             return -1;
         }
 
-        private JsValue Reduce(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Reduce(JsValue thisObj, JsValue[] arguments) {
             var callbackfn = arguments.At(0);
             var initialValue = arguments.At(1);
 
@@ -315,43 +275,34 @@ namespace Anura.JavaScript.Native.Array
 
             var callable = GetCallable(callbackfn);
 
-            if (len == 0 && arguments.Length < 2)
-            {
+            if (len == 0 && arguments.Length < 2) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
             var k = 0;
             JsValue accumulator = Undefined;
-            if (arguments.Length > 1)
-            {
+            if (arguments.Length > 1) {
                 accumulator = initialValue;
-            }
-            else
-            {
+            } else {
                 var kPresent = false;
-                while (kPresent == false && k < len)
-                {
-                    if (kPresent = o.TryGetValue((uint) k, out var temp))
-                    {
+                while (kPresent == false && k < len) {
+                    if (kPresent = o.TryGetValue((uint)k, out var temp)) {
                         accumulator = temp;
                     }
 
                     k++;
                 }
 
-                if (kPresent == false)
-                {
+                if (kPresent == false) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
                 }
             }
 
             var args = new JsValue[4];
             args[3] = o.Target;
-            while (k < len)
-            {
-                var i = (uint) k;
-                if (o.TryGetValue(i, out var kvalue))
-                {
+            while (k < len) {
+                var i = (uint)k;
+                if (o.TryGetValue(i, out var kvalue)) {
                     args[0] = accumulator;
                     args[1] = kvalue;
                     args[2] = i;
@@ -364,8 +315,7 @@ namespace Anura.JavaScript.Native.Array
             return accumulator;
         }
 
-        private JsValue Filter(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Filter(JsValue thisObj, JsValue[] arguments) {
             var callbackfn = arguments.At(0);
             var thisArg = arguments.At(1);
 
@@ -380,15 +330,12 @@ namespace Anura.JavaScript.Native.Array
             uint to = 0;
             var args = _engine._jsValueArrayPool.RentArray(3);
             args[2] = o.Target;
-            for (uint k = 0; k < len; k++)
-            {
-                if (o.TryGetValue(k, out var kvalue))
-                {
+            for (uint k = 0; k < len; k++) {
+                if (o.TryGetValue(k, out var kvalue)) {
                     args[0] = kvalue;
                     args[1] = k;
                     var selected = callable.Call(thisArg, args);
-                    if (TypeConverter.ToBoolean(selected))
-                    {
+                    if (TypeConverter.ToBoolean(selected)) {
                         operations.Set(to, kvalue, updateLength: false, throwOnError: false);
                         to++;
                     }
@@ -401,32 +348,27 @@ namespace Anura.JavaScript.Native.Array
             return a;
         }
 
-        private JsValue Map(JsValue thisObj, JsValue[] arguments)
-        {
-            if (thisObj is ArrayInstance arrayInstance && !arrayInstance.HasOwnProperty(CommonProperties.Constructor))
-            {
+        private JsValue Map(JsValue thisObj, JsValue[] arguments) {
+            if (thisObj is ArrayInstance arrayInstance && !arrayInstance.HasOwnProperty(CommonProperties.Constructor)) {
                 return arrayInstance.Map(arguments);
             }
 
             var o = ArrayOperations.For(Engine, thisObj);
             var len = o.GetLongLength();
 
-            if (len > ArrayOperations.MaxArrayLength)
-            {
-                Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "Invalid array length");;
+            if (len > ArrayOperations.MaxArrayLength) {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "Invalid array length"); ;
             }
 
             var callbackfn = arguments.At(0);
             var thisArg = arguments.At(1);
             var callable = GetCallable(callbackfn);
 
-            var a = ArrayOperations.For(Engine.Array.ArraySpeciesCreate(TypeConverter.ToObject(_engine, thisObj), (uint) len));
+            var a = ArrayOperations.For(Engine.Array.ArraySpeciesCreate(TypeConverter.ToObject(_engine, thisObj), (uint)len));
             var args = _engine._jsValueArrayPool.RentArray(3);
             args[2] = o.Target;
-            for (uint k = 0; k < len; k++)
-            {
-                if (o.TryGetValue(k, out var kvalue))
-                {
+            for (uint k = 0; k < len; k++) {
+                if (o.TryGetValue(k, out var kvalue)) {
                     args[0] = kvalue;
                     args[1] = k;
                     var mappedValue = callable.Call(thisArg, args);
@@ -437,8 +379,7 @@ namespace Anura.JavaScript.Native.Array
             return a.Target;
         }
 
-        private JsValue ForEach(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ForEach(JsValue thisObj, JsValue[] arguments) {
             var callbackfn = arguments.At(0);
             var thisArg = arguments.At(1);
 
@@ -449,10 +390,8 @@ namespace Anura.JavaScript.Native.Array
 
             var args = _engine._jsValueArrayPool.RentArray(3);
             args[2] = o.Target;
-            for (uint k = 0; k < len; k++)
-            {
-                if (o.TryGetValue(k, out var kvalue))
-                {
+            for (uint k = 0; k < len; k++) {
+                if (o.TryGetValue(k, out var kvalue)) {
                     args[0] = kvalue;
                     args[1] = k;
                     callable.Call(thisArg, args);
@@ -463,13 +402,11 @@ namespace Anura.JavaScript.Native.Array
             return Undefined;
         }
 
-        private JsValue Includes(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Includes(JsValue thisObj, JsValue[] arguments) {
             var o = ArrayOperations.For(Engine, thisObj);
             var len = o.GetLongLength();
 
-            if (len == 0)
-            {
+            if (len == 0) {
                 return false;
             }
 
@@ -481,21 +418,18 @@ namespace Anura.JavaScript.Native.Array
                 ? ArrayOperations.MaxArrayLikeLength
                 : n;
 
-            var k = (ulong) System.Math.Max(
-                n >= 0 
+            var k = (ulong)System.Math.Max(
+                n >= 0
                     ? n
                     : len - System.Math.Abs(n), 0);
 
-            static bool SameValueZero(JsValue x, JsValue y)
-            {
+            static bool SameValueZero(JsValue x, JsValue y) {
                 return x == y || (x is JsNumber xNum && y is JsNumber yNum && double.IsNaN(xNum._value) && double.IsNaN(yNum._value));
             }
 
-            while (k < len)
-            {
+            while (k < len) {
                 var value = o.Get(k);
-                if (SameValueZero(value, searchElement))
-                {
+                if (SameValueZero(value, searchElement)) {
                     return true;
                 }
                 k++;
@@ -503,19 +437,16 @@ namespace Anura.JavaScript.Native.Array
             return false;
         }
 
-        private JsValue Some(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Some(JsValue thisObj, JsValue[] arguments) {
             var target = TypeConverter.ToObject(Engine, thisObj);
             return target.FindWithCallback(arguments, out _, out _, false);
         }
 
-        private JsValue Every(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Every(JsValue thisObj, JsValue[] arguments) {
             var o = ArrayOperations.For(Engine, thisObj);
             ulong len = o.GetLongLength();
 
-            if (len == 0)
-            {
+            if (len == 0) {
                 return JsBoolean.True;
             }
 
@@ -525,15 +456,12 @@ namespace Anura.JavaScript.Native.Array
 
             var args = _engine._jsValueArrayPool.RentArray(3);
             args[2] = o.Target;
-            for (uint k = 0; k < len; k++)
-            {
-                if (o.TryGetValue(k, out var kvalue))
-                {
+            for (uint k = 0; k < len; k++) {
+                if (o.TryGetValue(k, out var kvalue)) {
                     args[0] = kvalue;
                     args[1] = k;
                     var testResult = callable.Call(thisArg, args);
-                    if (false == TypeConverter.ToBoolean(testResult))
-                    {
+                    if (false == TypeConverter.ToBoolean(testResult)) {
                         return JsBoolean.False;
                     }
                 }
@@ -543,62 +471,50 @@ namespace Anura.JavaScript.Native.Array
             return JsBoolean.True;
         }
 
-        private JsValue IndexOf(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue IndexOf(JsValue thisObj, JsValue[] arguments) {
             var o = ArrayOperations.For(Engine, thisObj);
             var len = o.GetLongLength();
-            if (len == 0)
-            {
+            if (len == 0) {
                 return -1;
             }
 
             var startIndex = arguments.Length > 1
-                ? TypeConverter.ToNumber(arguments[1]) 
+                ? TypeConverter.ToNumber(arguments[1])
                 : 0;
 
-            if (startIndex > uint.MaxValue)
-            {
+            if (startIndex > uint.MaxValue) {
                 return -1;
             }
 
             ulong k;
-            if (startIndex < 0)
-            {
+            if (startIndex < 0) {
                 var abs = System.Math.Abs(startIndex);
-                ulong temp = len - (uint) abs;
-                if (abs > len || temp < 0)
-                {
+                ulong temp = len - (uint)abs;
+                if (abs > len || temp < 0) {
                     temp = 0;
                 }
 
                 k = temp;
-            }
-            else
-            {
-                k = (ulong) startIndex;
+            } else {
+                k = (ulong)startIndex;
             }
 
-            if (k >= len)
-            {
+            if (k >= len) {
                 return -1;
             }
 
             ulong smallestIndex = o.GetSmallestIndex(len);
-            if (smallestIndex > k)
-            {
+            if (smallestIndex > k) {
                 k = smallestIndex;
             }
 
             var searchElement = arguments.At(0);
-            for (; k < len; k++)
-            {
+            for (; k < len; k++) {
                 var kPresent = o.HasProperty(k);
-                if (kPresent)
-                {
+                if (kPresent) {
                     var elementK = o.Get(k);
                     var same = JintBinaryExpression.StrictlyEqual(elementK, searchElement);
-                    if (same)
-                    {
+                    if (same) {
                         return k;
                     }
                 }
@@ -607,25 +523,21 @@ namespace Anura.JavaScript.Native.Array
             return -1;
         }
 
-        private JsValue Find(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Find(JsValue thisObj, JsValue[] arguments) {
             var target = TypeConverter.ToObject(Engine, thisObj);
             target.FindWithCallback(arguments, out _, out var value, true);
             return value;
         }
 
-        private JsValue FindIndex(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue FindIndex(JsValue thisObj, JsValue[] arguments) {
             var target = TypeConverter.ToObject(Engine, thisObj);
-            if (target.FindWithCallback(arguments, out var index, out _, true))
-            {
+            if (target.FindWithCallback(arguments, out var index, out _, true)) {
                 return index;
             }
             return -1;
         }
 
-        private JsValue Splice(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Splice(JsValue thisObj, JsValue[] arguments) {
             var start = arguments.At(0);
             var deleteCount = arguments.At(1);
 
@@ -634,104 +546,79 @@ namespace Anura.JavaScript.Native.Array
             var relativeStart = TypeConverter.ToInteger(start);
 
             ulong actualStart;
-            if (relativeStart < 0)
-            {
-                actualStart = (ulong) System.Math.Max(len + relativeStart, 0);
-            }
-            else
-            {
-                actualStart = (ulong) System.Math.Min(relativeStart, len);
+            if (relativeStart < 0) {
+                actualStart = (ulong)System.Math.Max(len + relativeStart, 0);
+            } else {
+                actualStart = (ulong)System.Math.Min(relativeStart, len);
             }
 
             var items = System.Array.Empty<JsValue>();
             ulong insertCount;
             ulong actualDeleteCount;
-            if (arguments.Length == 0)
-            {
+            if (arguments.Length == 0) {
                 insertCount = 0;
                 actualDeleteCount = 0;
-            }
-            else if (arguments.Length == 1)
-            {
+            } else if (arguments.Length == 1) {
                 insertCount = 0;
                 actualDeleteCount = len - actualStart;
-            }
-            else
-            {
-                insertCount = (ulong) (arguments.Length - 2);
+            } else {
+                insertCount = (ulong)(arguments.Length - 2);
                 var dc = TypeConverter.ToInteger(deleteCount);
-                actualDeleteCount = (ulong) System.Math.Min(System.Math.Max(dc,0), len - actualStart);
+                actualDeleteCount = (ulong)System.Math.Min(System.Math.Max(dc, 0), len - actualStart);
 
                 items = System.Array.Empty<JsValue>();
-                if (arguments.Length > 2)
-                {
+                if (arguments.Length > 2) {
                     items = new JsValue[arguments.Length - 2];
                     System.Array.Copy(arguments, 2, items, 0, items.Length);
                 }
             }
 
-            if (len + insertCount - actualDeleteCount > ArrayOperations.MaxArrayLikeLength)
-            {
+            if (len + insertCount - actualDeleteCount > ArrayOperations.MaxArrayLikeLength) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Invalid array length");
             }
 
             var instance = Engine.Array.ArraySpeciesCreate(TypeConverter.ToObject(_engine, thisObj), actualDeleteCount);
             var a = ArrayOperations.For(instance);
-            for (uint k = 0; k < actualDeleteCount; k++)
-            {
+            for (uint k = 0; k < actualDeleteCount; k++) {
                 var index = actualStart + k;
-                if (o.HasProperty(index))
-                {
+                if (o.HasProperty(index)) {
                     var fromValue = o.Get(index);
                     a.CreateDataPropertyOrThrow(k, fromValue);
                 }
             }
-            a.SetLength((uint) actualDeleteCount);
+            a.SetLength((uint)actualDeleteCount);
 
-            var length = len - actualDeleteCount + (uint) items.Length;
+            var length = len - actualDeleteCount + (uint)items.Length;
             o.EnsureCapacity(length);
-            if ((ulong) items.Length < actualDeleteCount)
-            {
-                for (ulong k = actualStart; k < len - actualDeleteCount; k++)
-                {
+            if ((ulong)items.Length < actualDeleteCount) {
+                for (ulong k = actualStart; k < len - actualDeleteCount; k++) {
                     var from = k + actualDeleteCount;
-                    var to = k + (ulong) items.Length;
-                    if (o.HasProperty(from))
-                    {
+                    var to = k + (ulong)items.Length;
+                    if (o.HasProperty(from)) {
                         var fromValue = o.Get(from);
                         o.Set(to, fromValue, updateLength: false, throwOnError: false);
-                    }
-                    else
-                    {
+                    } else {
                         o.DeletePropertyOrThrow(to);
                     }
                 }
 
-                for (var k = len; k > len - actualDeleteCount + (ulong) items.Length; k--)
-                {
+                for (var k = len; k > len - actualDeleteCount + (ulong)items.Length; k--) {
                     o.DeletePropertyOrThrow(k - 1);
                 }
-            }
-            else if ((ulong) items.Length > actualDeleteCount)
-            {
-                for (var k = len - actualDeleteCount; k > actualStart; k--)
-                {
+            } else if ((ulong)items.Length > actualDeleteCount) {
+                for (var k = len - actualDeleteCount; k > actualStart; k--) {
                     var from = k + actualDeleteCount - 1;
-                    var to =  k + (ulong) items.Length - 1;
-                    if (o.HasProperty(from))
-                    {
+                    var to = k + (ulong)items.Length - 1;
+                    if (o.HasProperty(from)) {
                         var fromValue = o.Get(from);
                         o.Set(to, fromValue, updateLength: false, throwOnError: true);
-                    }
-                    else
-                    {
+                    } else {
                         o.DeletePropertyOrThrow(to);
                     }
                 }
             }
 
-            for (uint k = 0; k < items.Length; k++)
-            {
+            for (uint k = 0; k < items.Length; k++) {
                 var e = items[k];
                 o.Set(k + actualStart, e, updateLength: false, throwOnError: true);
             }
@@ -740,35 +627,28 @@ namespace Anura.JavaScript.Native.Array
             return a.Target;
         }
 
-        private JsValue Unshift(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Unshift(JsValue thisObj, JsValue[] arguments) {
             var o = ArrayOperations.For(Engine, thisObj);
             var len = o.GetLongLength();
-            var argCount = (uint) arguments.Length;
+            var argCount = (uint)arguments.Length;
 
-            if (len + argCount > ArrayOperations.MaxArrayLikeLength)
-            {
+            if (len + argCount > ArrayOperations.MaxArrayLikeLength) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Invalid array length");
             }
 
             o.EnsureCapacity(len + argCount);
             var minIndex = o.GetSmallestIndex(len);
-            for (var k = len; k > minIndex; k--)
-            {
+            for (var k = len; k > minIndex; k--) {
                 var from = k - 1;
                 var to = k + argCount - 1;
-                if (o.TryGetValue(from, out var fromValue))
-                {
+                if (o.TryGetValue(from, out var fromValue)) {
                     o.Set(to, fromValue, false, true);
-                }
-                else
-                {
+                } else {
                     o.DeletePropertyOrThrow(to);
                 }
             }
 
-            for (uint j = 0; j < argCount; j++)
-            {
+            for (uint j = 0; j < argCount; j++) {
                 o.Set(j, arguments[j], false, true);
             }
 
@@ -776,10 +656,8 @@ namespace Anura.JavaScript.Native.Array
             return len + argCount;
         }
 
-        private JsValue Sort(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!thisObj.IsObject())
-            {
+        private JsValue Sort(JsValue thisObj, JsValue[] arguments) {
+            if (!thisObj.IsObject()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Array.prorotype.sort can only be applied on objects");
             }
 
@@ -787,61 +665,49 @@ namespace Anura.JavaScript.Native.Array
 
             var compareArg = arguments.At(0);
             ICallable compareFn = null;
-            if (!compareArg.IsUndefined())
-            {
-                if (compareArg.IsNull() || !(compareArg is ICallable))
-                {
+            if (!compareArg.IsUndefined()) {
+                if (compareArg.IsNull() || !(compareArg is ICallable)) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "The comparison function must be either a function or undefined");
                 }
 
-                compareFn = (ICallable) compareArg;
+                compareFn = (ICallable)compareArg;
             }
 
             var len = obj.GetLength();
-            if (len <= 1)
-            {
+            if (len <= 1) {
                 return obj.Target;
             }
 
-            int Comparer(JsValue x, JsValue y)
-            {
-                if (ReferenceEquals(x, null))
-                {
+            int Comparer(JsValue x, JsValue y) {
+                if (ReferenceEquals(x, null)) {
                     return 1;
                 }
 
-                if (ReferenceEquals(y, null))
-                {
+                if (ReferenceEquals(y, null)) {
                     return -1;
                 }
 
                 var xUndefined = x.IsUndefined();
                 var yUndefined = y.IsUndefined();
-                if (xUndefined && yUndefined)
-                {
+                if (xUndefined && yUndefined) {
                     return 0;
                 }
 
-                if (xUndefined)
-                {
+                if (xUndefined) {
                     return 1;
                 }
 
-                if (yUndefined)
-                {
+                if (yUndefined) {
                     return -1;
                 }
 
-                if (compareFn != null)
-                {
-                    var s = TypeConverter.ToNumber(compareFn.Call(Undefined, new[] {x, y}));
-                    if (s < 0)
-                    {
+                if (compareFn != null) {
+                    var s = TypeConverter.ToNumber(compareFn.Call(Undefined, new[] { x, y }));
+                    if (s < 0) {
                         return -1;
                     }
 
-                    if (s > 0)
-                    {
+                    if (s > 0) {
                         return 1;
                     }
 
@@ -856,8 +722,7 @@ namespace Anura.JavaScript.Native.Array
             }
 
             var array = new JsValue[len];
-            for (uint i = 0; i < (uint) array.Length; ++i)
-            {
+            for (uint i = 0; i < (uint)array.Length; ++i) {
                 var value = obj.TryGetValue(i, out var temp)
                     ? temp
                     : null;
@@ -865,23 +730,16 @@ namespace Anura.JavaScript.Native.Array
             }
 
             // don't eat inner exceptions
-            try
-            {
+            try {
                 System.Array.Sort(array, Comparer);
-            }
-            catch (InvalidOperationException e)
-            {
+            } catch (InvalidOperationException e) {
                 throw e.InnerException;
             }
 
-            for (uint i = 0; i < (uint) array.Length; ++i)
-            {
-                if (!ReferenceEquals(array[i], null))
-                {
+            for (uint i = 0; i < (uint)array.Length; ++i) {
+                if (!ReferenceEquals(array[i], null)) {
                     obj.Set(i, array[i], updateLength: false, throwOnError: false);
-                }
-                else
-                {
+                } else {
                     obj.DeletePropertyOrThrow(i);
                 }
             }
@@ -889,8 +747,7 @@ namespace Anura.JavaScript.Native.Array
             return obj.Target;
         }
 
-        internal JsValue Slice(JsValue thisObj, JsValue[] arguments)
-        {
+        internal JsValue Slice(JsValue thisObj, JsValue[] arguments) {
             var start = arguments.At(0);
             var end = arguments.At(1);
 
@@ -899,52 +756,37 @@ namespace Anura.JavaScript.Native.Array
 
             var relativeStart = TypeConverter.ToInteger(start);
             ulong k;
-            if (relativeStart < 0)
-            {
-                k = (ulong) System.Math.Max(len + relativeStart, 0);
-            }
-            else
-            {
-                k = (ulong) System.Math.Min(TypeConverter.ToInteger(start), len);
+            if (relativeStart < 0) {
+                k = (ulong)System.Math.Max(len + relativeStart, 0);
+            } else {
+                k = (ulong)System.Math.Min(TypeConverter.ToInteger(start), len);
             }
 
             ulong final;
-            if (end.IsUndefined())
-            {
-                final = (ulong) TypeConverter.ToNumber(len);
-            }
-            else
-            {
+            if (end.IsUndefined()) {
+                final = (ulong)TypeConverter.ToNumber(len);
+            } else {
                 double relativeEnd = TypeConverter.ToInteger(end);
-                if (relativeEnd < 0)
-                {
-                    final = (ulong) System.Math.Max(len + relativeEnd, 0);
-                }
-                else
-                {
-                    final = (ulong) System.Math.Min(TypeConverter.ToInteger(relativeEnd), len);
+                if (relativeEnd < 0) {
+                    final = (ulong)System.Math.Max(len + relativeEnd, 0);
+                } else {
+                    final = (ulong)System.Math.Min(TypeConverter.ToInteger(relativeEnd), len);
                 }
             }
 
-            if (k < final && final - k > ArrayOperations.MaxArrayLength)
-            {
-                Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "Invalid array length");;
+            if (k < final && final - k > ArrayOperations.MaxArrayLength) {
+                Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "Invalid array length"); ;
             }
 
-            var length = (uint) System.Math.Max(0, (long) final - (long) k);
+            var length = (uint)System.Math.Max(0, (long)final - (long)k);
             var a = Engine.Array.ArraySpeciesCreate(TypeConverter.ToObject(_engine, thisObj), length);
-            if (thisObj is ArrayInstance ai && a is ArrayInstance a2)
-            {
-                a2.CopyValues(ai, (uint) k, 0, length);
-            }
-            else
-            {
+            if (thisObj is ArrayInstance ai && a is ArrayInstance a2) {
+                a2.CopyValues(ai, (uint)k, 0, length);
+            } else {
                 // slower path
                 var operations = ArrayOperations.For(a);
-                for (uint n = 0; k < final; k++, n++)
-                {
-                    if (o.TryGetValue(k, out var kValue))
-                    {
+                for (uint n = 0; k < final; k++, n++) {
+                    if (o.TryGetValue(k, out var kValue)) {
                         operations.Set(n, kValue, updateLength: false, throwOnError: false);
                     }
                 }
@@ -954,26 +796,20 @@ namespace Anura.JavaScript.Native.Array
             return a;
         }
 
-        private JsValue Shift(JsValue thisObj, JsValue[] arg2)
-        {
+        private JsValue Shift(JsValue thisObj, JsValue[] arg2) {
             var o = ArrayOperations.For(Engine, thisObj);
             var len = o.GetLength();
-            if (len == 0)
-            {
+            if (len == 0) {
                 o.SetLength(0);
                 return Undefined;
             }
 
             var first = o.Get(0);
-            for (uint k = 1; k < len; k++)
-            {
+            for (uint k = 1; k < len; k++) {
                 var to = k - 1;
-                if (o.TryGetValue(k, out var fromVal))
-                {
+                if (o.TryGetValue(k, out var fromVal)) {
                     o.Set(to, fromVal, updateLength: false, throwOnError: false);
-                }
-                else
-                {
+                } else {
                     o.DeletePropertyOrThrow(to);
                 }
             }
@@ -984,14 +820,12 @@ namespace Anura.JavaScript.Native.Array
             return first;
         }
 
-        private JsValue Reverse(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Reverse(JsValue thisObj, JsValue[] arguments) {
             var o = ArrayOperations.For(Engine, thisObj);
             var len = o.GetLongLength();
-            var middle = (ulong) System.Math.Floor(len / 2.0);
+            var middle = (ulong)System.Math.Floor(len / 2.0);
             uint lower = 0;
-            while (lower != middle)
-            {
+            while (lower != middle) {
                 var upper = len - lower - 1;
 
                 var lowerExists = o.HasProperty(lower);
@@ -999,21 +833,18 @@ namespace Anura.JavaScript.Native.Array
 
                 var upperExists = o.HasProperty(upper);
                 var upperValue = upperExists ? o.Get(upper) : null;
-                
-                if (lowerExists && upperExists)
-                {
+
+                if (lowerExists && upperExists) {
                     o.Set(lower, upperValue, updateLength: true, throwOnError: true);
                     o.Set(upper, lowerValue, updateLength: true, throwOnError: true);
                 }
 
-                if (!lowerExists && upperExists)
-                {
+                if (!lowerExists && upperExists) {
                     o.Set(lower, upperValue, updateLength: true, throwOnError: true);
                     o.DeletePropertyOrThrow(upper);
                 }
 
-                if (lowerExists && !upperExists)
-                {
+                if (lowerExists && !upperExists) {
                     o.DeletePropertyOrThrow(lower);
                     o.Set(upper, lowerValue, updateLength: true, throwOnError: true);
                 }
@@ -1024,42 +855,35 @@ namespace Anura.JavaScript.Native.Array
             return o.Target;
         }
 
-        private JsValue Join(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Join(JsValue thisObj, JsValue[] arguments) {
             var separator = arguments.At(0);
             var o = ArrayOperations.For(Engine, thisObj);
             var len = o.GetLength();
-            if (separator.IsUndefined())
-            {
+            if (separator.IsUndefined()) {
                 separator = ",";
             }
 
             var sep = TypeConverter.ToString(separator);
 
             // as per the spec, this has to be called after ToString(separator)
-            if (len == 0)
-            {
+            if (len == 0) {
                 return JsString.Empty;
             }
 
-            string StringFromJsValue(JsValue value)
-            {
+            string StringFromJsValue(JsValue value) {
                 return value.IsNullOrUndefined()
                     ? ""
                     : TypeConverter.ToString(value);
             }
 
             var s = StringFromJsValue(o.Get(0));
-            if (len == 1)
-            {
+            if (len == 1) {
                 return s;
             }
 
-            using (var sb = StringBuilderPool.Rent())
-            {
+            using (var sb = StringBuilderPool.Rent()) {
                 sb.Builder.Append(s);
-                for (uint k = 1; k < len; k++)
-                {
+                for (uint k = 1; k < len; k++) {
                     sb.Builder.Append(sep);
                     sb.Builder.Append(StringFromJsValue(o.Get(k)));
                 }
@@ -1068,38 +892,29 @@ namespace Anura.JavaScript.Native.Array
             }
         }
 
-        private JsValue ToLocaleString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToLocaleString(JsValue thisObj, JsValue[] arguments) {
             var array = ArrayOperations.For(Engine, thisObj);
             var len = array.GetLength();
             const string separator = ",";
-            if (len == 0)
-            {
+            if (len == 0) {
                 return JsString.Empty;
             }
 
             JsValue r;
-            if (!array.TryGetValue(0, out var firstElement) || firstElement.IsNull() || firstElement.IsUndefined())
-            {
+            if (!array.TryGetValue(0, out var firstElement) || firstElement.IsNull() || firstElement.IsUndefined()) {
                 r = JsString.Empty;
-            }
-            else
-            {
+            } else {
                 var elementObj = TypeConverter.ToObject(Engine, firstElement);
                 var func = elementObj.Get("toLocaleString", elementObj) as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ICallable>(_engine);
 
                 r = func.Call(elementObj, Arguments.Empty);
             }
 
-            for (uint k = 1; k < len; k++)
-            {
+            for (uint k = 1; k < len; k++) {
                 string s = r + separator;
-                if (!array.TryGetValue(k, out var nextElement) || nextElement.IsNull())
-                {
+                if (!array.TryGetValue(k, out var nextElement) || nextElement.IsNull()) {
                     r = JsString.Empty;
-                }
-                else
-                {
+                } else {
                     var elementObj = TypeConverter.ToObject(Engine, nextElement);
                     var func = elementObj.Get("toLocaleString", elementObj) as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ICallable>(_engine);
                     r = func.Call(elementObj, Arguments.Empty);
@@ -1111,27 +926,22 @@ namespace Anura.JavaScript.Native.Array
             return r;
         }
 
-        private JsValue Concat(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Concat(JsValue thisObj, JsValue[] arguments) {
             var o = TypeConverter.ToObject(Engine, thisObj);
-            var items = new List<JsValue>(arguments.Length + 1) {o};
+            var items = new List<JsValue>(arguments.Length + 1) { o };
             items.AddRange(arguments);
 
             // try to find best capacity
             bool hasObjectSpreadables = false;
             uint capacity = 0;
-            for (var i = 0; i < items.Count; i++)
-            {
+            for (var i = 0; i < items.Count; i++) {
                 uint increment;
-                if (!(items[i] is ObjectInstance objectInstance))
-                {
+                if (!(items[i] is ObjectInstance objectInstance)) {
                     increment = 1;
-                }
-                else
-                {
+                } else {
                     var isConcatSpreadable = objectInstance.IsConcatSpreadable;
                     hasObjectSpreadables |= isConcatSpreadable;
-                    increment = isConcatSpreadable ? ArrayOperations.For(objectInstance).GetLength() : 1; 
+                    increment = isConcatSpreadable ? ArrayOperations.For(objectInstance).GetLength() : 1;
                 }
                 capacity += increment;
             }
@@ -1139,31 +949,24 @@ namespace Anura.JavaScript.Native.Array
             uint n = 0;
             var a = Engine.Array.ArraySpeciesCreate(TypeConverter.ToObject(_engine, thisObj), capacity);
             var aOperations = ArrayOperations.For(a);
-            for (var i = 0; i < items.Count; i++)
-            {
+            for (var i = 0; i < items.Count; i++) {
                 var e = items[i];
                 if (e is ArrayInstance eArray
                     && eArray.IsConcatSpreadable
-                    && a is ArrayInstance a2)
-                {
+                    && a is ArrayInstance a2) {
                     a2.CopyValues(eArray, 0, n, eArray.GetLength());
                     n += eArray.GetLength();
-                }
-                else if (hasObjectSpreadables
-                         && e is ObjectInstance oi 
-                         && oi.IsConcatSpreadable)
-                {
+                } else if (hasObjectSpreadables
+                           && e is ObjectInstance oi
+                           && oi.IsConcatSpreadable) {
                     var operations = ArrayOperations.For(oi);
                     var len = operations.GetLength();
-                    for (uint k = 0; k < len; k++)
-                    {
+                    for (uint k = 0; k < len; k++) {
                         operations.TryGetValue(k, out var subElement);
                         aOperations.Set(n, subElement, updateLength: false, throwOnError: false);
                         n++;
                     }
-                }
-                else
-                {
+                } else {
                     aOperations.Set(n, e, updateLength: false, throwOnError: false);
                     n++;
                 }
@@ -1176,13 +979,11 @@ namespace Anura.JavaScript.Native.Array
             return a;
         }
 
-        private JsValue ToString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToString(JsValue thisObj, JsValue[] arguments) {
             var array = TypeConverter.ToObject(Engine, thisObj);
 
             ICallable func;
-            func = array.Get("join", array).TryCast<ICallable>(x =>
-            {
+            func = array.Get("join", array).TryCast<ICallable>(x => {
                 func = Engine.Object.PrototypeObject.Get("toString", array).TryCast<ICallable>(y => Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException());
             });
 
@@ -1192,8 +993,7 @@ namespace Anura.JavaScript.Native.Array
             return func.Call(array, Arguments.Empty);
         }
 
-        private JsValue ReduceRight(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ReduceRight(JsValue thisObj, JsValue[] arguments) {
             var callbackfn = arguments.At(0);
             var initialValue = arguments.At(1);
 
@@ -1202,42 +1002,33 @@ namespace Anura.JavaScript.Native.Array
 
             var callable = GetCallable(callbackfn);
 
-            if (len == 0 && arguments.Length < 2)
-            {
+            if (len == 0 && arguments.Length < 2) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
-            long k = (long) (len - 1);
+            long k = (long)(len - 1);
             JsValue accumulator = Undefined;
-            if (arguments.Length > 1)
-            {
+            if (arguments.Length > 1) {
                 accumulator = initialValue;
-            }
-            else
-            {
+            } else {
                 var kPresent = false;
-                while (kPresent == false && k >= 0)
-                {
-                    if ((kPresent = o.TryGetValue((ulong) k, out var temp)))
-                    {
+                while (kPresent == false && k >= 0) {
+                    if ((kPresent = o.TryGetValue((ulong)k, out var temp))) {
                         accumulator = temp;
                     }
 
                     k--;
                 }
 
-                if (kPresent == false)
-                {
+                if (kPresent == false) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
                 }
             }
 
             var jsValues = new JsValue[4];
             jsValues[3] = o.Target;
-            for (; k >= 0; k--)
-            {
-                if (o.TryGetValue((ulong) k, out var kvalue))
-                {
+            for (; k >= 0; k--) {
+                if (o.TryGetValue((ulong)k, out var kvalue)) {
                     jsValues[0] = accumulator;
                     jsValues[1] = kvalue;
                     jsValues[2] = k;
@@ -1248,24 +1039,20 @@ namespace Anura.JavaScript.Native.Array
             return accumulator;
         }
 
-        public JsValue Push(JsValue thisObject, JsValue[] arguments)
-        {
-            if (thisObject is ArrayInstance arrayInstance)
-            {
+        public JsValue Push(JsValue thisObject, JsValue[] arguments) {
+            if (thisObject is ArrayInstance arrayInstance) {
                 return arrayInstance.Push(arguments);
             }
 
             var o = ArrayOperations.For(thisObject as ObjectInstance);
             var n = o.GetLongLength();
 
-            if (n + (ulong) arguments.Length > ArrayOperations.MaxArrayLikeLength)
-            {
+            if (n + (ulong)arguments.Length > ArrayOperations.MaxArrayLikeLength) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Invalid array length");
             }
 
             // cast to double as we need to prevent an overflow
-            foreach (var a in arguments)
-            {
+            foreach (var a in arguments) {
                 o.Set(n, a, false, false);
                 n++;
             }
@@ -1274,12 +1061,10 @@ namespace Anura.JavaScript.Native.Array
             return n;
         }
 
-        public JsValue Pop(JsValue thisObject, JsValue[] arguments)
-        {
+        public JsValue Pop(JsValue thisObject, JsValue[] arguments) {
             var o = ArrayOperations.For(Engine, thisObject);
             ulong len = o.GetLongLength();
-            if (len == 0)
-            {
+            if (len == 0) {
                 o.SetLength(0);
                 return Undefined;
             }

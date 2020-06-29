@@ -5,8 +5,7 @@
         public readonly bool Static;
 
         public MethodDefinition(Expression key, bool computed, FunctionExpression value, PropertyKind kind, bool isStatic) :
-            base(Nodes.MethodDefinition)
-        {
+            base(Nodes.MethodDefinition) {
             Static = isStatic;
             Key = key;
             Computed = computed;

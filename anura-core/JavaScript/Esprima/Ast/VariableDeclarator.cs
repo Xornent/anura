@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly Expression Init;
 
         public VariableDeclarator(IArrayPatternElement id, Expression init) :
-            base(Nodes.VariableDeclarator)
-        {
+            base(Nodes.VariableDeclarator) {
             Id = id;
             Init = init;
         }

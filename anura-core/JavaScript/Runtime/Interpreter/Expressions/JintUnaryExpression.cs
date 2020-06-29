@@ -1,8 +1,8 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Proxy;
 using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.References;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -11,20 +11,16 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private readonly JintExpression _argument;
         private readonly UnaryOperator _operator;
 
-        private JintUnaryExpression(Engine engine, UnaryExpression expression) : base(engine, expression)
-        {
+        private JintUnaryExpression(Engine engine, UnaryExpression expression) : base(engine, expression) {
             _argument = Build(engine, expression.Argument);
             _operator = expression.Operator;
         }
 
-        internal static JintExpression Build(Engine engine, UnaryExpression expression)
-        {
+        internal static JintExpression Build(Engine engine, UnaryExpression expression) {
             if (expression.Operator == UnaryOperator.Minus
-                && expression.Argument is Literal literal)
-            {
+                && expression.Argument is Literal literal) {
                 var value = JintLiteralExpression.ConvertToJsValue(literal);
-                if (!(value is null))
-                {
+                if (!(value is null)) {
                     // valid for caching
                     return new JintConstantExpression(engine, expression, EvaluateMinus(value));
                 }
@@ -33,18 +29,15 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             return new JintUnaryExpression(engine, expression);
         }
 
-        public override JsValue GetValue()
-        {
+        public override JsValue GetValue() {
             // need to notify correct node when taking shortcut
             _engine._lastSyntaxNode = _expression;
 
-            return (JsValue) EvaluateInternal();
+            return (JsValue)EvaluateInternal();
         }
 
-        protected override object EvaluateInternal()
-        {
-            switch (_operator)
-            {
+        protected override object EvaluateInternal() {
+            switch (_operator) {
                 case UnaryOperator.Plus:
                     var plusValue = _argument.GetValue();
                     return plusValue.IsInteger() && plusValue.AsInteger() != 0
@@ -62,15 +55,12 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
                 case UnaryOperator.Delete:
                     var r = _argument.Evaluate() as Reference;
-                    if (r == null)
-                    {
+                    if (r == null) {
                         return JsBoolean.True;
                     }
 
-                    if (r.IsUnresolvableReference())
-                    {
-                        if (r.IsStrictReference())
-                        {
+                    if (r.IsUnresolvableReference()) {
+                        if (r.IsStrictReference()) {
                             Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine);
                         }
 
@@ -78,12 +68,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                         return JsBoolean.True;
                     }
 
-                    if (r.IsPropertyReference())
-                    {
+                    if (r.IsPropertyReference()) {
                         var o = TypeConverter.ToObject(_engine, r.GetBase());
-                        var deleteStatus  = o.Delete(r.GetReferencedName());
-                        if (!deleteStatus && r.IsStrictReference())
-                        {
+                        var deleteStatus = o.Delete(r.GetReferencedName());
+                        if (!deleteStatus && r.IsStrictReference()) {
                             Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
                         }
 
@@ -91,8 +79,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                         return deleteStatus ? JsBoolean.True : JsBoolean.False;
                     }
 
-                    if (r.IsStrictReference())
-                    {
+                    if (r.IsStrictReference()) {
                         Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine);
                     }
 
@@ -109,10 +96,8 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                 case UnaryOperator.TypeOf:
                     var value = _argument.Evaluate();
                     r = value as Reference;
-                    if (r != null)
-                    {
-                        if (r.IsUnresolvableReference())
-                        {
+                    if (r != null) {
+                        if (r.IsUnresolvableReference()) {
                             _engine._referencePool.Return(r);
                             return JsString.UndefinedString;
                         }
@@ -120,31 +105,26 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
                     var v = _argument.GetValue();
 
-                    if (v.IsUndefined())
-                    {
+                    if (v.IsUndefined()) {
                         return JsString.UndefinedString;
                     }
 
-                    if (v.IsNull())
-                    {
+                    if (v.IsNull()) {
                         return JsString.ObjectString;
                     }
 
-                    switch (v.Type)
-                    {
+                    switch (v.Type) {
                         case Types.Boolean: return JsString.BooleanString;
                         case Types.Number: return JsString.NumberString;
                         case Types.String: return JsString.StringString;
                         case Types.Symbol: return JsString.SymbolString;
                     }
 
-                    if (v is ProxyInstance)
-                    {
+                    if (v is ProxyInstance) {
                         return JsString.ObjectString;
                     }
 
-                    if (v is ICallable)
-                    {
+                    if (v is ICallable) {
                         return JsString.FunctionString;
                     }
 
@@ -155,14 +135,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             }
         }
 
-        private static JsNumber EvaluateMinus(JsValue value)
-        {
+        private static JsNumber EvaluateMinus(JsValue value) {
             var minusValue = value;
-            if (minusValue.IsInteger())
-            {
+            if (minusValue.IsInteger()) {
                 var asInteger = minusValue.AsInteger();
-                if (asInteger != 0)
-                {
+                if (asInteger != 0) {
                     return JsNumber.Create(asInteger * -1);
                 }
             }

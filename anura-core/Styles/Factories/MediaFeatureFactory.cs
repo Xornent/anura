@@ -1,27 +1,29 @@
 using System;
 using System.Collections.Generic;
 
-namespace Anura.Styles {
-    internal sealed class MediaFeatureFactory {
-        private delegate MediaFeature Creator ();
+namespace Anura.Styles
+{
+    internal sealed class MediaFeatureFactory
+    {
+        private delegate MediaFeature Creator();
 
         private static readonly Lazy<MediaFeatureFactory> Lazy =
-            new Lazy<MediaFeatureFactory> (() => new MediaFeatureFactory ());
+            new Lazy<MediaFeatureFactory>(() => new MediaFeatureFactory());
 
         internal static MediaFeatureFactory Instance => Lazy.Value;
 
-        private MediaFeatureFactory () { }
+        private MediaFeatureFactory() { }
 
-        public MediaFeature Create (string name) {
+        public MediaFeature Create(string name) {
             Creator creator;
-            return _creators.TryGetValue (name, out creator) ?
-                creator () :
-                default (MediaFeature);
+            return _creators.TryGetValue(name, out creator) ?
+                creator() :
+                default(MediaFeature);
         }
 
         #region Creators
         private readonly Dictionary<string, Creator> _creators =
-            new Dictionary<string, Creator> (StringComparer.OrdinalIgnoreCase) { { FeatureNames.MinWidth, () => new WidthMediaFeature (FeatureNames.MinWidth) }, { FeatureNames.MaxWidth, () => new WidthMediaFeature (FeatureNames.MaxWidth) }, { FeatureNames.Width, () => new WidthMediaFeature (FeatureNames.Width) }, { FeatureNames.MinHeight, () => new HeightMediaFeature (FeatureNames.MinHeight) }, { FeatureNames.MaxHeight, () => new HeightMediaFeature (FeatureNames.MaxHeight) }, { FeatureNames.Height, () => new HeightMediaFeature (FeatureNames.Height) }, { FeatureNames.MinDeviceWidth, () => new DeviceWidthMediaFeature (FeatureNames.MinDeviceWidth) }, { FeatureNames.MaxDeviceWidth, () => new DeviceWidthMediaFeature (FeatureNames.MaxDeviceWidth) }, { FeatureNames.DeviceWidth, () => new DeviceWidthMediaFeature (FeatureNames.DeviceWidth) }, { FeatureNames.MinDevicePixelRatio, () => new DevicePixelRatioFeature (FeatureNames.MinDevicePixelRatio) }, { FeatureNames.MaxDevicePixelRatio, () => new DevicePixelRatioFeature (FeatureNames.MaxDevicePixelRatio) }, { FeatureNames.DevicePixelRatio, () => new DevicePixelRatioFeature (FeatureNames.DevicePixelRatio) }, { FeatureNames.MinDeviceHeight, () => new DeviceHeightMediaFeature (FeatureNames.MinDeviceHeight) }, { FeatureNames.MaxDeviceHeight, () => new DeviceHeightMediaFeature (FeatureNames.MaxDeviceHeight) }, { FeatureNames.DeviceHeight, () => new DeviceHeightMediaFeature (FeatureNames.DeviceHeight) }, { FeatureNames.MinAspectRatio, () => new AspectRatioMediaFeature (FeatureNames.MinAspectRatio) }, { FeatureNames.MaxAspectRatio, () => new AspectRatioMediaFeature (FeatureNames.MaxAspectRatio) }, { FeatureNames.AspectRatio, () => new AspectRatioMediaFeature (FeatureNames.AspectRatio) }, {
+            new Dictionary<string, Creator>(StringComparer.OrdinalIgnoreCase) { { FeatureNames.MinWidth, () => new WidthMediaFeature (FeatureNames.MinWidth) }, { FeatureNames.MaxWidth, () => new WidthMediaFeature (FeatureNames.MaxWidth) }, { FeatureNames.Width, () => new WidthMediaFeature (FeatureNames.Width) }, { FeatureNames.MinHeight, () => new HeightMediaFeature (FeatureNames.MinHeight) }, { FeatureNames.MaxHeight, () => new HeightMediaFeature (FeatureNames.MaxHeight) }, { FeatureNames.Height, () => new HeightMediaFeature (FeatureNames.Height) }, { FeatureNames.MinDeviceWidth, () => new DeviceWidthMediaFeature (FeatureNames.MinDeviceWidth) }, { FeatureNames.MaxDeviceWidth, () => new DeviceWidthMediaFeature (FeatureNames.MaxDeviceWidth) }, { FeatureNames.DeviceWidth, () => new DeviceWidthMediaFeature (FeatureNames.DeviceWidth) }, { FeatureNames.MinDevicePixelRatio, () => new DevicePixelRatioFeature (FeatureNames.MinDevicePixelRatio) }, { FeatureNames.MaxDevicePixelRatio, () => new DevicePixelRatioFeature (FeatureNames.MaxDevicePixelRatio) }, { FeatureNames.DevicePixelRatio, () => new DevicePixelRatioFeature (FeatureNames.DevicePixelRatio) }, { FeatureNames.MinDeviceHeight, () => new DeviceHeightMediaFeature (FeatureNames.MinDeviceHeight) }, { FeatureNames.MaxDeviceHeight, () => new DeviceHeightMediaFeature (FeatureNames.MaxDeviceHeight) }, { FeatureNames.DeviceHeight, () => new DeviceHeightMediaFeature (FeatureNames.DeviceHeight) }, { FeatureNames.MinAspectRatio, () => new AspectRatioMediaFeature (FeatureNames.MinAspectRatio) }, { FeatureNames.MaxAspectRatio, () => new AspectRatioMediaFeature (FeatureNames.MaxAspectRatio) }, { FeatureNames.AspectRatio, () => new AspectRatioMediaFeature (FeatureNames.AspectRatio) }, {
                     FeatureNames.MinDeviceAspectRatio,
                     () => new DeviceAspectRatioMediaFeature (FeatureNames.MinDeviceAspectRatio)
                     }, {

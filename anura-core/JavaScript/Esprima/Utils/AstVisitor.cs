@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Esprima.Ast;
+using System;
 using System.Linq;
-using Esprima.Ast;
 
 namespace Esprima.Utils
 {
@@ -8,10 +8,8 @@ namespace Esprima.Utils
     {
         public bool IsStrictMode { get; set; } = false;
 
-        public virtual void Visit(INode node)
-        {
-            switch (node.Type)
-            {
+        public virtual void Visit(INode node) {
+            switch (node.Type) {
                 case Nodes.AssignmentExpression:
                     VisitAssignmentExpression(node.As<AssignmentExpression>());
                     break;
@@ -222,10 +220,8 @@ namespace Esprima.Utils
             }
         }
 
-        protected virtual void VisitStatement(Statement statement)
-        {
-            switch (statement.Type)
-            {
+        protected virtual void VisitStatement(Statement statement) {
+            switch (statement.Type) {
                 case Nodes.BlockStatement:
                     VisitBlockStatement(statement.As<BlockStatement>());
                     break;
@@ -298,157 +294,123 @@ namespace Esprima.Utils
             }
         }
 
-        protected virtual void VisitProgram(Program program)
-        {
-            foreach (var statement in program.Body)
-            {
+        protected virtual void VisitProgram(Program program) {
+            foreach (var statement in program.Body) {
                 VisitStatement((Statement)statement);
             }
         }
 
-        protected virtual void VisitUnknownNode(INode node)
-        {
+        protected virtual void VisitUnknownNode(INode node) {
             throw new NotImplementedException($"AST visitor doesn't support nodes of type {node.Type}, you can override VisitUnknownNode to handle this case.");
         }
 
-        protected virtual void VisitCatchClause(CatchClause catchClause)
-        {
+        protected virtual void VisitCatchClause(CatchClause catchClause) {
             VisitIdentifier(catchClause.Param.As<Identifier>());
             VisitStatement(catchClause.Body);
         }
 
-        protected virtual void VisitFunctionDeclaration(FunctionDeclaration functionDeclaration)
-        {
-            foreach (var p in functionDeclaration.Params)
-            {
+        protected virtual void VisitFunctionDeclaration(FunctionDeclaration functionDeclaration) {
+            foreach (var p in functionDeclaration.Params) {
                 Visit(p);
             }
 
             Visit(functionDeclaration.Body);
         }
 
-        protected virtual void VisitWithStatement(WithStatement withStatement)
-        {
+        protected virtual void VisitWithStatement(WithStatement withStatement) {
             VisitExpression(withStatement.Object);
             VisitStatement(withStatement.Body);
         }
 
-        protected virtual void VisitWhileStatement(WhileStatement whileStatement)
-        {
+        protected virtual void VisitWhileStatement(WhileStatement whileStatement) {
             VisitExpression(whileStatement.Test);
             VisitStatement(whileStatement.Body);
         }
 
-        protected virtual void VisitVariableDeclaration(VariableDeclaration variableDeclaration)
-        {
-            foreach (var declaration in variableDeclaration.Declarations)
-            {
+        protected virtual void VisitVariableDeclaration(VariableDeclaration variableDeclaration) {
+            foreach (var declaration in variableDeclaration.Declarations) {
                 Visit(declaration);
             }
         }
 
-        protected virtual void VisitTryStatement(TryStatement tryStatement)
-        {
+        protected virtual void VisitTryStatement(TryStatement tryStatement) {
             VisitStatement(tryStatement.Block);
-            if (tryStatement.Handler != null)
-            {
+            if (tryStatement.Handler != null) {
                 VisitCatchClause(tryStatement.Handler);
             }
 
-            if (tryStatement.Finalizer != null)
-            {
+            if (tryStatement.Finalizer != null) {
                 VisitStatement(tryStatement.Finalizer);
             }
         }
 
-        protected virtual void VisitThrowStatement(ThrowStatement throwStatement)
-        {
+        protected virtual void VisitThrowStatement(ThrowStatement throwStatement) {
             VisitExpression(throwStatement.Argument);
         }
 
-        protected virtual void VisitSwitchStatement(SwitchStatement switchStatement)
-        {
+        protected virtual void VisitSwitchStatement(SwitchStatement switchStatement) {
             VisitExpression(switchStatement.Discriminant);
-            foreach (var c in switchStatement.Cases)
-            {
+            foreach (var c in switchStatement.Cases) {
                 VisitSwitchCase(c);
             }
         }
 
-        protected virtual void VisitSwitchCase(SwitchCase switchCase)
-        {
-            if (switchCase.Test != null)
-            {
+        protected virtual void VisitSwitchCase(SwitchCase switchCase) {
+            if (switchCase.Test != null) {
                 VisitExpression(switchCase.Test);
             }
 
-            foreach (var s in switchCase.Consequent)
-            {
+            foreach (var s in switchCase.Consequent) {
                 VisitStatement(s.As<Statement>());
             }
         }
 
-        protected virtual void VisitReturnStatement(ReturnStatement returnStatement)
-        {
+        protected virtual void VisitReturnStatement(ReturnStatement returnStatement) {
             if (returnStatement.Argument == null)
                 return;
             VisitExpression(returnStatement.Argument);
         }
 
-        protected virtual void VisitLabeledStatement(LabeledStatement labeledStatement)
-        {
+        protected virtual void VisitLabeledStatement(LabeledStatement labeledStatement) {
             VisitStatement(labeledStatement.Body);
         }
 
-        protected virtual void VisitIfStatement(IfStatement ifStatement)
-        {
+        protected virtual void VisitIfStatement(IfStatement ifStatement) {
             VisitExpression(ifStatement.Test);
             VisitStatement(ifStatement.Consequent);
-            if (ifStatement.Alternate != null)
-            {
+            if (ifStatement.Alternate != null) {
                 VisitStatement(ifStatement.Alternate);
             }
         }
 
-        protected virtual void VisitEmptyStatement(EmptyStatement emptyStatement)
-        {
+        protected virtual void VisitEmptyStatement(EmptyStatement emptyStatement) {
         }
 
-        protected virtual void VisitDebuggerStatement(DebuggerStatement debuggerStatement)
-        {
+        protected virtual void VisitDebuggerStatement(DebuggerStatement debuggerStatement) {
         }
 
-        protected virtual void VisitExpressionStatement(ExpressionStatement expressionStatement)
-        {
+        protected virtual void VisitExpressionStatement(ExpressionStatement expressionStatement) {
             VisitExpression(expressionStatement.Expression);
         }
 
-        protected virtual void VisitForStatement(ForStatement forStatement)
-        {
-            if (forStatement.Init != null)
-            {
-                if (forStatement.Init.Type == Nodes.VariableDeclaration)
-                {
+        protected virtual void VisitForStatement(ForStatement forStatement) {
+            if (forStatement.Init != null) {
+                if (forStatement.Init.Type == Nodes.VariableDeclaration) {
                     VisitStatement(forStatement.Init.As<Statement>());
-                }
-                else
-                {
+                } else {
                     VisitExpression(forStatement.Init.As<Expression>());
                 }
             }
-            if (forStatement.Test != null)
-            {
+            if (forStatement.Test != null) {
                 VisitExpression(forStatement.Test);
             }
             VisitStatement(forStatement.Body);
-            if (forStatement.Update != null)
-            {
+            if (forStatement.Update != null) {
                 VisitExpression(forStatement.Update);
             }
         }
 
-        protected virtual void VisitForInStatement(ForInStatement forInStatement)
-        {
+        protected virtual void VisitForInStatement(ForInStatement forInStatement) {
             Identifier identifier = forInStatement.Left.Type == Nodes.VariableDeclaration
                 ? forInStatement.Left.As<VariableDeclaration>().Declarations.First().Id.As<Identifier>()
                 : forInStatement.Left.As<Identifier>();
@@ -457,16 +419,13 @@ namespace Esprima.Utils
             VisitStatement(forInStatement.Body);
         }
 
-        protected virtual void VisitDoWhileStatement(DoWhileStatement doWhileStatement)
-        {
+        protected virtual void VisitDoWhileStatement(DoWhileStatement doWhileStatement) {
             VisitStatement(doWhileStatement.Body.As<Statement>());
             VisitExpression(doWhileStatement.Test);
         }
 
-        protected virtual void VisitExpression(Expression expression)
-        {
-            switch (expression.Type)
-            {
+        protected virtual void VisitExpression(Expression expression) {
+            switch (expression.Type) {
                 case Nodes.AssignmentExpression:
                     VisitAssignmentExpression(expression.As<AssignmentExpression>());
                     break;
@@ -524,11 +483,10 @@ namespace Esprima.Utils
             }
         }
 
-        protected virtual void VisitArrowFunctionExpression(ArrowFunctionExpression arrowFunctionExpression)
-        {
+        protected virtual void VisitArrowFunctionExpression(ArrowFunctionExpression arrowFunctionExpression) {
             //Here we construct the function so if we iterate only functions we will be able to iterate ArrowFunctions too
             var statement = arrowFunctionExpression.Expression
-                ? new BlockStatement(new NodeList<IStatementListItem>(new IStatementListItem[] {new ReturnStatement(arrowFunctionExpression.Body.As<Expression>())}, 1))
+                ? new BlockStatement(new NodeList<IStatementListItem>(new IStatementListItem[] { new ReturnStatement(arrowFunctionExpression.Body.As<Expression>()) }, 1))
                 : arrowFunctionExpression.Body.As<BlockStatement>();
 
             var func = new FunctionExpression(new Identifier(null),
@@ -542,202 +500,154 @@ namespace Esprima.Utils
             VisitFunctionExpression(func);
         }
 
-        protected virtual void VisitUnaryExpression(UnaryExpression unaryExpression)
-        {
+        protected virtual void VisitUnaryExpression(UnaryExpression unaryExpression) {
             VisitExpression(unaryExpression.Argument);
         }
 
-        protected virtual void VisitUpdateExpression(UpdateExpression updateExpression)
-        {
+        protected virtual void VisitUpdateExpression(UpdateExpression updateExpression) {
             VisitExpression(updateExpression.Argument);
         }
 
-        protected virtual void VisitThisExpression(ThisExpression thisExpression)
-        {
+        protected virtual void VisitThisExpression(ThisExpression thisExpression) {
         }
 
-        protected virtual void VisitSequenceExpression(SequenceExpression sequenceExpression)
-        {
-            foreach (var e in sequenceExpression.Expressions)
-            {
+        protected virtual void VisitSequenceExpression(SequenceExpression sequenceExpression) {
+            foreach (var e in sequenceExpression.Expressions) {
                 VisitExpression(e);
             }
         }
 
-        protected virtual void VisitObjectExpression(ObjectExpression objectExpression)
-        {
-            foreach (var p in objectExpression.Properties)
-            {
-                if (p is SpreadElement spreadElement)
-                {
+        protected virtual void VisitObjectExpression(ObjectExpression objectExpression) {
+            foreach (var p in objectExpression.Properties) {
+                if (p is SpreadElement spreadElement) {
                     VisitSpreadElement(spreadElement);
-                }
-                else
-                {
-                    VisitProperty((Property) p);
+                } else {
+                    VisitProperty((Property)p);
                 }
             }
         }
 
-        protected virtual void VisitNewExpression(NewExpression newExpression)
-        {
-            foreach (var e in newExpression.Arguments)
-            {
+        protected virtual void VisitNewExpression(NewExpression newExpression) {
+            foreach (var e in newExpression.Arguments) {
                 VisitExpression(e.As<Expression>());
             }
             VisitExpression(newExpression.Callee);
         }
 
-        protected virtual void VisitMemberExpression(MemberExpression memberExpression)
-        {
+        protected virtual void VisitMemberExpression(MemberExpression memberExpression) {
             VisitExpression(memberExpression.Object);
             VisitExpression(memberExpression.Property);
         }
 
-        protected virtual void VisitLogicalExpression(BinaryExpression binaryExpression)
-        {
+        protected virtual void VisitLogicalExpression(BinaryExpression binaryExpression) {
             VisitBinaryExpression(binaryExpression);
         }
 
-        protected virtual void VisitLiteral(Literal literal)
-        {
+        protected virtual void VisitLiteral(Literal literal) {
         }
 
-        protected virtual void VisitIdentifier(Identifier identifier)
-        {
+        protected virtual void VisitIdentifier(Identifier identifier) {
         }
 
-        protected virtual void VisitFunctionExpression(IFunction function)
-        {
-            foreach (var param in function.Params)
-            {
+        protected virtual void VisitFunctionExpression(IFunction function) {
+            foreach (var param in function.Params) {
                 Visit(param);
             }
             Visit(function.Body);
         }
 
-        protected virtual void VisitClassExpression(ClassExpression classExpression)
-        {
+        protected virtual void VisitClassExpression(ClassExpression classExpression) {
         }
 
-        protected virtual void VisitExportDefaultDeclaration(ExportDefaultDeclaration exportDefaultDeclaration)
-        {
+        protected virtual void VisitExportDefaultDeclaration(ExportDefaultDeclaration exportDefaultDeclaration) {
         }
 
-        protected virtual void VisitExportAllDeclaration(ExportAllDeclaration exportAllDeclaration)
-        {
+        protected virtual void VisitExportAllDeclaration(ExportAllDeclaration exportAllDeclaration) {
         }
 
-        protected virtual void VisitExportNamedDeclaration(ExportNamedDeclaration exportNamedDeclaration)
-        {
+        protected virtual void VisitExportNamedDeclaration(ExportNamedDeclaration exportNamedDeclaration) {
         }
 
-        protected virtual void VisitExportSpecifier(ExportSpecifier exportSpecifier)
-        {
+        protected virtual void VisitExportSpecifier(ExportSpecifier exportSpecifier) {
         }
 
-        protected virtual void VisitImport(Import import)
-        {
+        protected virtual void VisitImport(Import import) {
         }
 
-        protected virtual void VisitImportDeclaration(ImportDeclaration importDeclaration)
-        {
+        protected virtual void VisitImportDeclaration(ImportDeclaration importDeclaration) {
         }
 
-        protected virtual void VisitImportNamespaceSpecifier(ImportNamespaceSpecifier importNamespaceSpecifier)
-        {
+        protected virtual void VisitImportNamespaceSpecifier(ImportNamespaceSpecifier importNamespaceSpecifier) {
         }
 
-        protected virtual void VisitImportDefaultSpecifier(ImportDefaultSpecifier importDefaultSpecifier)
-        {
+        protected virtual void VisitImportDefaultSpecifier(ImportDefaultSpecifier importDefaultSpecifier) {
         }
 
-        protected virtual void VisitImportSpecifier(ImportSpecifier importSpecifier)
-        {
+        protected virtual void VisitImportSpecifier(ImportSpecifier importSpecifier) {
         }
 
-        protected virtual void VisitMethodDefinition(MethodDefinition methodDefinitions)
-        {
+        protected virtual void VisitMethodDefinition(MethodDefinition methodDefinitions) {
         }
 
-        protected virtual void VisitForOfStatement(ForOfStatement forOfStatement)
-        {
+        protected virtual void VisitForOfStatement(ForOfStatement forOfStatement) {
             VisitExpression(forOfStatement.Right);
             Visit(forOfStatement.Left);
             VisitStatement(forOfStatement.Body);
         }
 
-        protected virtual void VisitClassDeclaration(ClassDeclaration classDeclaration)
-        {
+        protected virtual void VisitClassDeclaration(ClassDeclaration classDeclaration) {
         }
 
-        protected virtual void VisitClassBody(ClassBody classBody)
-        {
+        protected virtual void VisitClassBody(ClassBody classBody) {
         }
 
-        protected virtual void VisitYieldExpression(YieldExpression yieldExpression)
-        {
+        protected virtual void VisitYieldExpression(YieldExpression yieldExpression) {
         }
 
-        protected virtual void VisitTaggedTemplateExpression(TaggedTemplateExpression taggedTemplateExpression)
-        {
+        protected virtual void VisitTaggedTemplateExpression(TaggedTemplateExpression taggedTemplateExpression) {
         }
 
-        protected virtual void VisitSuper(Super super)
-        {
+        protected virtual void VisitSuper(Super super) {
         }
 
-        protected virtual void VisitMetaProperty(MetaProperty metaProperty)
-        {
+        protected virtual void VisitMetaProperty(MetaProperty metaProperty) {
         }
 
-        protected virtual void VisitArrowParameterPlaceHolder(ArrowParameterPlaceHolder arrowParameterPlaceHolder)
-        {
+        protected virtual void VisitArrowParameterPlaceHolder(ArrowParameterPlaceHolder arrowParameterPlaceHolder) {
         }
 
-        protected virtual void VisitObjectPattern(ObjectPattern objectPattern)
-        {
+        protected virtual void VisitObjectPattern(ObjectPattern objectPattern) {
         }
 
-        protected virtual void VisitSpreadElement(SpreadElement spreadElement)
-        {
+        protected virtual void VisitSpreadElement(SpreadElement spreadElement) {
         }
 
-        protected virtual void VisitAssignmentPattern(AssignmentPattern assignmentPattern)
-        {
+        protected virtual void VisitAssignmentPattern(AssignmentPattern assignmentPattern) {
         }
 
-        protected virtual void VisitArrayPattern(ArrayPattern arrayPattern)
-        {
+        protected virtual void VisitArrayPattern(ArrayPattern arrayPattern) {
         }
 
-        protected virtual void VisitVariableDeclarator(VariableDeclarator variableDeclarator)
-        {
+        protected virtual void VisitVariableDeclarator(VariableDeclarator variableDeclarator) {
             VisitIdentifier(variableDeclarator.Id.As<Identifier>());
-            if (variableDeclarator.Init != null)
-            {
+            if (variableDeclarator.Init != null) {
                 VisitExpression(variableDeclarator.Init);
             }
         }
 
-        protected virtual void VisitTemplateLiteral(TemplateLiteral templateLiteral)
-        {
+        protected virtual void VisitTemplateLiteral(TemplateLiteral templateLiteral) {
         }
 
-        protected virtual void VisitTemplateElement(TemplateElement templateElement)
-        {
+        protected virtual void VisitTemplateElement(TemplateElement templateElement) {
         }
 
-        protected virtual void VisitRestElement(RestElement restElement)
-        {
+        protected virtual void VisitRestElement(RestElement restElement) {
         }
 
-        protected virtual void VisitProperty(Property property)
-        {
+        protected virtual void VisitProperty(Property property) {
             VisitExpression(property.Key);
 
-            switch (property.Kind)
-            {
+            switch (property.Kind) {
                 case PropertyKind.Init:
                 case PropertyKind.Data:
                     VisitExpression(property.Value.As<Expression>());
@@ -757,59 +667,47 @@ namespace Esprima.Utils
             }
         }
 
-        protected virtual void VisitAwaitExpression(AwaitExpression awaitExpression)
-        {
+        protected virtual void VisitAwaitExpression(AwaitExpression awaitExpression) {
             VisitExpression(awaitExpression.Argument);
         }
 
-        protected virtual void VisitConditionalExpression(ConditionalExpression conditionalExpression)
-        {
+        protected virtual void VisitConditionalExpression(ConditionalExpression conditionalExpression) {
             VisitExpression(conditionalExpression.Test);
             VisitExpression(conditionalExpression.Consequent);
             VisitExpression(conditionalExpression.Alternate);
         }
 
-        protected virtual void VisitCallExpression(CallExpression callExpression)
-        {
+        protected virtual void VisitCallExpression(CallExpression callExpression) {
             VisitExpression(callExpression.Callee);
-            foreach (var arg in callExpression.Arguments)
-            {
+            foreach (var arg in callExpression.Arguments) {
                 VisitExpression(arg.As<Expression>());
             }
         }
 
-        protected virtual void VisitBinaryExpression(BinaryExpression binaryExpression)
-        {
+        protected virtual void VisitBinaryExpression(BinaryExpression binaryExpression) {
             VisitExpression(binaryExpression.Left.As<Expression>());
             VisitExpression(binaryExpression.Right.As<Expression>());
         }
 
-        protected virtual void VisitArrayExpression(ArrayExpression arrayExpression)
-        {
-            foreach (var expr in arrayExpression.Elements)
-            {
+        protected virtual void VisitArrayExpression(ArrayExpression arrayExpression) {
+            foreach (var expr in arrayExpression.Elements) {
                 VisitExpression(expr.As<Expression>());
             }
         }
 
-        protected virtual void VisitAssignmentExpression(AssignmentExpression assignmentExpression)
-        {
+        protected virtual void VisitAssignmentExpression(AssignmentExpression assignmentExpression) {
             VisitExpression(assignmentExpression.Left.As<Expression>());
             VisitExpression(assignmentExpression.Right.As<Expression>());
         }
 
-        protected virtual void VisitContinueStatement(ContinueStatement continueStatement)
-        {
+        protected virtual void VisitContinueStatement(ContinueStatement continueStatement) {
         }
 
-        protected virtual void VisitBreakStatement(BreakStatement breakStatement)
-        {
+        protected virtual void VisitBreakStatement(BreakStatement breakStatement) {
         }
 
-        protected virtual void VisitBlockStatement(BlockStatement blockStatement)
-        {
-            foreach (var statement in blockStatement.Body)
-            {
+        protected virtual void VisitBlockStatement(BlockStatement blockStatement) {
+            foreach (var statement in blockStatement.Body) {
                 VisitStatement(statement.As<Statement>());
             }
         }

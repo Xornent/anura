@@ -8,3 +8,9 @@
 obj/
 .vs/
 anura-resources/application/
+
+# the following features are not ready, and they will be updated
+# to the repository once it is completed.
+
+anura-core/io/compression
+anura-core/typography

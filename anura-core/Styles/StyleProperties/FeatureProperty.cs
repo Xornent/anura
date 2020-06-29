@@ -1,6 +1,8 @@
-namespace Anura.Styles {
-    internal sealed class FeatureProperty : Property {
-        internal FeatureProperty (MediaFeature feature) : base (feature.Name) {
+namespace Anura.Styles
+{
+    internal sealed class FeatureProperty : Property
+    {
+        internal FeatureProperty(MediaFeature feature) : base(feature.Name) {
             Feature = feature;
         }
 

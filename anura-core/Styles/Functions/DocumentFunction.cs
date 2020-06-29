@@ -1,19 +1,21 @@
 using System.IO;
 
-namespace Anura.Styles {
-    internal abstract class DocumentFunction : StylesheetNode, IDocumentFunction {
-        internal DocumentFunction (string name, string data) {
+namespace Anura.Styles
+{
+    internal abstract class DocumentFunction : StylesheetNode, IDocumentFunction
+    {
+        internal DocumentFunction(string name, string data) {
             Name = name;
             Data = data;
         }
 
-        public override void ToCss (TextWriter writer, IStyleFormatter formatter) {
-            writer.Write (Name.StylesheetFunction (Data.StylesheetString ()));
+        public override void ToCss(TextWriter writer, IStyleFormatter formatter) {
+            writer.Write(Name.StylesheetFunction(Data.StylesheetString()));
         }
 
         public string Name { get; }
         public string Data { get; }
-        public abstract bool Matches (Url url);
+        public abstract bool Matches(Url url);
 
     }
 }

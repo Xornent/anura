@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Anura.JavaScript.Native.Function;
+﻿using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Map;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Native.Set;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Anura.JavaScript.Native.Iterator
 {
@@ -12,8 +12,7 @@ namespace Anura.JavaScript.Native.Iterator
         private static readonly JsString _functionName = new JsString("iterator");
 
         private IteratorConstructor(Engine engine)
-            : base(engine, _functionName, strict: false)
-        {
+            : base(engine, _functionName, strict: false) {
         }
 
         private IteratorPrototype ArrayIteratorPrototypeObject { get; set; }
@@ -23,8 +22,7 @@ namespace Anura.JavaScript.Native.Iterator
         private IteratorPrototype SetIteratorPrototypeObject { get; set; }
         private IteratorPrototype StringIteratorPrototypeObject { get; set; }
 
-        public static IteratorConstructor CreateIteratorConstructor(Engine engine)
-        {
+        public static IteratorConstructor CreateIteratorConstructor(Engine engine) {
             var obj = new IteratorConstructor(engine);
             obj.ArrayIteratorPrototypeObject = IteratorPrototype.CreatePrototypeObject(engine, "Array Iterator", obj);
             obj.GenericIteratorPrototypeObject = IteratorPrototype.CreatePrototypeObject(engine, null, obj);
@@ -36,18 +34,15 @@ namespace Anura.JavaScript.Native.Iterator
         }
 
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             return Construct(arguments);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             return Construct(Enumerable.Empty<JsValue>());
         }
 
-        internal ObjectInstance Construct(IEnumerable<JsValue> enumerable)
-        {
+        internal ObjectInstance Construct(IEnumerable<JsValue> enumerable) {
             var instance = new IteratorInstance(Engine, enumerable)
             {
                 _prototype = GenericIteratorPrototypeObject
@@ -56,8 +51,7 @@ namespace Anura.JavaScript.Native.Iterator
             return instance;
         }
 
-        internal ObjectInstance Construct(List<JsValue> enumerable)
-        {
+        internal ObjectInstance Construct(List<JsValue> enumerable) {
             var instance = new IteratorInstance.ListIterator(Engine, enumerable)
             {
                 _prototype = GenericIteratorPrototypeObject
@@ -66,8 +60,7 @@ namespace Anura.JavaScript.Native.Iterator
             return instance;
         }
 
-        internal ObjectInstance Construct(ObjectInstance array)
-        {
+        internal ObjectInstance Construct(ObjectInstance array) {
             var instance = new IteratorInstance.ArrayLikeIterator(Engine, array)
             {
                 _prototype = GenericIteratorPrototypeObject
@@ -76,8 +69,7 @@ namespace Anura.JavaScript.Native.Iterator
             return instance;
         }
 
-        internal ObjectInstance Construct(MapInstance map)
-        {
+        internal ObjectInstance Construct(MapInstance map) {
             var instance = new IteratorInstance.MapIterator(Engine, map)
             {
                 _prototype = MapIteratorPrototypeObject
@@ -86,8 +78,7 @@ namespace Anura.JavaScript.Native.Iterator
             return instance;
         }
 
-        internal ObjectInstance Construct(SetInstance set)
-        {
+        internal ObjectInstance Construct(SetInstance set) {
             var instance = new IteratorInstance.SetIterator(Engine, set)
             {
                 _prototype = SetIteratorPrototypeObject
@@ -96,8 +87,7 @@ namespace Anura.JavaScript.Native.Iterator
             return instance;
         }
 
-        internal ObjectInstance ConstructEntryIterator(SetInstance set)
-        {
+        internal ObjectInstance ConstructEntryIterator(SetInstance set) {
             var instance = new IteratorInstance.SetEntryIterator(Engine, set)
             {
                 _prototype = GenericIteratorPrototypeObject
@@ -106,8 +96,7 @@ namespace Anura.JavaScript.Native.Iterator
             return instance;
         }
 
-        internal ObjectInstance ConstructArrayLikeKeyIterator(ObjectInstance array)
-        {
+        internal ObjectInstance ConstructArrayLikeKeyIterator(ObjectInstance array) {
             var instance = new IteratorInstance.ArrayLikeKeyIterator(Engine, array)
             {
                 _prototype = ArrayIteratorPrototypeObject
@@ -116,8 +105,7 @@ namespace Anura.JavaScript.Native.Iterator
             return instance;
         }
 
-        internal ObjectInstance ConstructArrayLikeValueIterator(ObjectInstance array)
-        {
+        internal ObjectInstance ConstructArrayLikeValueIterator(ObjectInstance array) {
             var instance = new IteratorInstance.ArrayLikeValueIterator(Engine, array)
             {
                 _prototype = ArrayIteratorPrototypeObject
@@ -125,9 +113,8 @@ namespace Anura.JavaScript.Native.Iterator
 
             return instance;
         }
-       
-        internal ObjectInstance CreateRegExpStringIterator(ObjectInstance iteratingRegExp, string iteratedString, bool global, bool unicode)
-        {
+
+        internal ObjectInstance CreateRegExpStringIterator(ObjectInstance iteratingRegExp, string iteratedString, bool global, bool unicode) {
             var instance = new IteratorInstance.RegExpStringIterator(Engine, iteratingRegExp, iteratedString, global, unicode)
             {
                 _prototype = RegExpStringIteratorPrototypeObject
@@ -136,8 +123,7 @@ namespace Anura.JavaScript.Native.Iterator
             return instance;
         }
 
-        public ObjectInstance Construct(string str)
-        {
+        public ObjectInstance Construct(string str) {
             var instance = new IteratorInstance.StringIterator(Engine, str)
             {
                 _prototype = StringIteratorPrototypeObject

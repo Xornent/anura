@@ -10,13 +10,11 @@ namespace Esprima
         private readonly NodeList<IFunctionDeclaration> _functionDeclarations;
         private readonly NodeList<VariableDeclaration> _variableDeclarations;
 
-        public HoistingScope() : this(default, default)
-        {
+        public HoistingScope() : this(default, default) {
         }
 
         public HoistingScope(in NodeList<IFunctionDeclaration> functionDeclarations,
-                             in NodeList<VariableDeclaration> variableDeclarations)
-        {
+                             in NodeList<VariableDeclaration> variableDeclarations) {
             _functionDeclarations = functionDeclarations;
             _variableDeclarations = variableDeclarations;
         }

@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class BoxDecorationBreak : Property {
-        private static readonly IValueConverter StyleConverter = Converters.BoxDecorationConverter.OrDefault (false);
+namespace Anura.Styles
+{
+    internal sealed class BoxDecorationBreak : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.BoxDecorationConverter.OrDefault(false);
 
-        internal BoxDecorationBreak () : base (PropertyNames.BoxDecorationBreak) { }
+        internal BoxDecorationBreak() : base(PropertyNames.BoxDecorationBreak) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

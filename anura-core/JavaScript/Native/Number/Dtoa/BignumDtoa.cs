@@ -1,6 +1,6 @@
+using Anura.JavaScript.Runtime;
 using System;
 using System.Diagnostics;
-using Anura.JavaScript.Runtime;
 
 namespace Anura.JavaScript.Native.Number.Dtoa
 {
@@ -11,9 +11,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             DtoaMode mode,
             int requested_digits,
             DtoaBuilder builder,
-            out int decimal_point)
-        {
-            var bits = (ulong) BitConverter.DoubleToInt64Bits(v);
+            out int decimal_point) {
+            var bits = (ulong)BitConverter.DoubleToInt64Bits(v);
             var significand = DoubleHelper.Significand(bits);
             var is_even = (significand & 1) == 0;
             var exponent = DoubleHelper.Exponent(bits);
@@ -25,8 +24,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             // The requested digits correspond to the digits after the point. If the
             // number is much too small, then there is no need in trying to get any
             // digits.
-            if (mode == DtoaMode.Fixed && -estimated_power - 1 > requested_digits)
-            {
+            if (mode == DtoaMode.Fixed && -estimated_power - 1 > requested_digits) {
                 // Set decimal-point to -requested_digits. This is what Gay does.
                 // Note that it should not have any effect anyways since the string is
                 // empty.
@@ -63,8 +61,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 delta_plus);
             // We now have v = (numerator / denominator) * 10^(decimal_point-1), and
             //  1 <= (numerator + delta_plus) / denominator < 10
-            switch (mode)
-            {
+            switch (mode) {
                 case DtoaMode.Shortest:
                     GenerateShortestDigits(
                         numerator,
@@ -116,24 +113,21 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             Bignum delta_minus,
             Bignum delta_plus,
             bool is_even,
-            DtoaBuilder buffer)
-        {
+            DtoaBuilder buffer) {
             // Small optimization: if delta_minus and delta_plus are the same just reuse
             // one of the two bignums.
-            if (Bignum.Equal(delta_minus, delta_plus))
-            {
+            if (Bignum.Equal(delta_minus, delta_plus)) {
                 delta_plus = delta_minus;
             }
 
             buffer.Reset();
-            while (true)
-            {
+            while (true) {
                 uint digit;
                 digit = numerator.DivideModuloIntBignum(denominator);
                 Debug.Assert(digit <= 9); // digit is a uint and therefore always positive.
                 // digit = numerator / denominator (integer division).
                 // numerator = numerator % denominator.
-                buffer.Append((char) (digit + '0'));
+                buffer.Append((char)(digit + '0'));
 
                 // Can we stop already?
                 // If the remainder of the division is less than the distance to the lower
@@ -142,24 +136,17 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 // Similarly we test if we can round up (using the upper boundary).
                 bool in_delta_room_minus;
                 bool in_delta_room_plus;
-                if (is_even)
-                {
+                if (is_even) {
                     in_delta_room_minus = Bignum.LessEqual(numerator, delta_minus);
-                }
-                else
-                {
+                } else {
                     in_delta_room_minus = Bignum.Less(numerator, delta_minus);
                 }
-                if (is_even)
-                {
+                if (is_even) {
                     in_delta_room_plus = Bignum.PlusCompare(numerator, delta_plus, denominator) >= 0;
-                }
-                else
-                {
+                } else {
                     in_delta_room_plus = Bignum.PlusCompare(numerator, delta_plus, denominator) > 0;
                 }
-                if (!in_delta_room_minus && !in_delta_room_plus)
-                {
+                if (!in_delta_room_minus && !in_delta_room_plus) {
                     // Prepare for next iteration.
                     numerator.Times10();
                     delta_minus.Times10();
@@ -167,18 +154,13 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                     // same value). So don't multiply delta_plus if they point to the same
                     // object.
                     if (delta_minus != delta_plus) delta_plus.Times10();
-                }
-                else if (in_delta_room_minus && in_delta_room_plus)
-                {
+                } else if (in_delta_room_minus && in_delta_room_plus) {
                     // Let's see if 2*numerator < denominator.
                     // If yes, then the next digit would be < 5 and we can round down.
                     int compare = Bignum.PlusCompare(numerator, numerator, denominator);
-                    if (compare < 0)
-                    {
+                    if (compare < 0) {
                         // Remaining digits are less than .5. -> Round down (== do nothing).
-                    }
-                    else if (compare > 0)
-                    {
+                    } else if (compare > 0) {
                         // Remaining digits are more than .5 of denominator. . Round up.
                         // Note that the last digit could not be a '9' as otherwise the whole
                         // loop would have stopped earlier.
@@ -186,34 +168,25 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                         // satisfied.
                         Debug.Assert(buffer[buffer.Length - 1] != '9');
                         buffer[buffer.Length - 1]++;
-                    }
-                    else
-                    {
+                    } else {
                         // Halfway case.
                         // TODO(floitsch): need a way to solve half-way cases.
                         //   For now let's round towards even (since this is what Gay seems to
                         //   do).
 
-                        if ((buffer[buffer.Length - 1] - '0') % 2 == 0)
-                        {
+                        if ((buffer[buffer.Length - 1] - '0') % 2 == 0) {
                             // Round down => Do nothing.
-                        }
-                        else
-                        {
+                        } else {
                             Debug.Assert(buffer[buffer.Length - 1] != '9');
                             buffer[buffer.Length - 1]++;
                         }
                     }
 
                     return;
-                }
-                else if (in_delta_room_minus)
-                {
+                } else if (in_delta_room_minus) {
                     // Round down (== do nothing).
                     return;
-                }
-                else
-                {
+                } else {
                     // in_delta_room_plus
                     // Round up.
                     // Note again that the last digit could not be '9' since this would have
@@ -226,7 +199,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 }
             }
         }
-        
+
         // Let v = numerator / denominator < 10.
         // Then we generate 'count' digits of d = x.xxxxx... (without the decimal point)
         // from left to right. Once 'count' digits have been produced we decide wether
@@ -234,40 +207,35 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         // as 9.999999 propagate a carry all the way, and change the
         // exponent (decimal_point), when rounding upwards.
         static void GenerateCountedDigits(
-            int count, 
+            int count,
             ref int decimal_point,
-            Bignum numerator, 
+            Bignum numerator,
             Bignum denominator,
-            DtoaBuilder buffer)
-        {
+            DtoaBuilder buffer) {
             Debug.Assert(count >= 0);
-            for (int i = 0; i < count - 1; ++i)
-            {
+            for (int i = 0; i < count - 1; ++i) {
                 uint d = numerator.DivideModuloIntBignum(denominator);
                 Debug.Assert(d <= 9);  // digit is a uint and therefore always positive.
                 // digit = numerator / denominator (integer division).
                 // numerator = numerator % denominator.
-                buffer.Append((char) (d + '0'));
+                buffer.Append((char)(d + '0'));
                 // Prepare for next iteration.
                 numerator.Times10();
             }
             // Generate the last digit.
             uint digit = numerator.DivideModuloIntBignum(denominator);
-            if (Bignum.PlusCompare(numerator, numerator, denominator) >= 0)
-            {
+            if (Bignum.PlusCompare(numerator, numerator, denominator) >= 0) {
                 digit++;
             }
-            buffer.Append((char) (digit + '0'));
+            buffer.Append((char)(digit + '0'));
             // Correct bad digits (in case we had a sequence of '9's). Propagate the
             // carry until we hat a non-'9' or til we reach the first digit.
-            for (int i = count - 1; i > 0; --i)
-            {
+            for (int i = count - 1; i > 0; --i) {
                 if (buffer[i] != '0' + 10) break;
                 buffer[i] = '0';
                 buffer[i - 1]++;
             }
-            if (buffer[0] == '0' + 10)
-            {
+            if (buffer[0] == '0' + 10) {
                 // Propagate a carry past the top place.
                 buffer[0] = '1';
                 decimal_point++;
@@ -285,13 +253,11 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             ref int decimal_point,
             Bignum numerator,
             Bignum denominator,
-            DtoaBuilder buffer)
-        {
+            DtoaBuilder buffer) {
             // Note that we have to look at more than just the requested_digits, since
             // a number could be rounded up. Example: v=0.5 with requested_digits=0.
             // Even though the power of v equals 0 we can't just stop here.
-            if (-(decimal_point) > requested_digits)
-            {
+            if (-(decimal_point) > requested_digits) {
                 // The number is definitively too small.
                 // Ex: 0.001 with requested_digits == 1.
                 // Set decimal-point to -requested_digits. This is what Gay does.
@@ -302,29 +268,23 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 return;
             }
 
-            if (-decimal_point == requested_digits)
-            {
+            if (-decimal_point == requested_digits) {
                 // We only need to verify if the number rounds down or up.
                 // Ex: 0.04 and 0.06 with requested_digits == 1.
                 Debug.Assert(decimal_point == -requested_digits);
                 // Initially the fraction lies in range (1, 10]. Multiply the denominator
                 // by 10 so that we can compare more easily.
                 denominator.Times10();
-                if (Bignum.PlusCompare(numerator, numerator, denominator) >= 0)
-                {
+                if (Bignum.PlusCompare(numerator, numerator, denominator) >= 0) {
                     // If the fraction is >= 0.5 then we have to include the rounded
                     // digit.
                     buffer[0] = '1';
                     decimal_point++;
-                }
-                else
-                {
+                } else {
                     // Note that we caught most of similar cases earlier.
                     buffer.Reset();
                 }
-            }
-            else
-            {
+            } else {
                 // The requested digits correspond to the digits after the point.
                 // The variable 'needed_digits' includes the digits before the point.
                 int needed_digits = (decimal_point) + requested_digits;
@@ -347,8 +307,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         //  EstimatePower(-52) => 0
         //
         // Note: e >= 0 => EstimatedPower(e) > 0. No similar claim can be made for e<0.
-        private static int EstimatePower(int exponent)
-        {
+        private static int EstimatePower(int exponent) {
             // This function estimates log10 of v where v = f*2^e (with e == exponent).
             // Note that 10^floor(log10(v)) <= v, but v <= 10^ceil(log10(v)).
             // Note that f is bounded by its container size. Let p = 53 (the double's
@@ -375,7 +334,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             // For doubles len(f) == 53 (don't forget the hidden bit).
             const int kSignificandSize = 53;
             double estimate = System.Math.Ceiling((exponent + kSignificandSize - 1) * k1Log10 - 1e-10);
-            return (int) estimate;
+            return (int)estimate;
         }
 
 
@@ -387,22 +346,20 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             Bignum numerator,
             Bignum denominator,
             Bignum delta_minus,
-            Bignum delta_plus)
-        {
+            Bignum delta_plus) {
             // A positive exponent implies a positive power.
             Debug.Assert(estimated_power >= 0);
             // Since the estimated_power is positive we simply multiply the denominator
             // by 10^estimated_power.
 
             // numerator = v.
-            var bits = (ulong) BitConverter.DoubleToInt64Bits(v);
+            var bits = (ulong)BitConverter.DoubleToInt64Bits(v);
             numerator.AssignUInt64(DoubleHelper.Significand(bits));
             numerator.ShiftLeft(DoubleHelper.Exponent(bits));
             // denominator = 10^estimated_power.
             denominator.AssignPowerUInt16(10, estimated_power);
 
-            if (need_boundary_deltas)
-            {
+            if (need_boundary_deltas) {
                 // Introduce a common denominator so that the deltas to the boundaries are
                 // integers.
                 denominator.ShiftLeft(1);
@@ -421,8 +378,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 // the distance is 1 ulp. This cannot be the case for exponent >= 0 (but we
                 // have to test it in the other function where exponent < 0).
                 ulong v_bits = bits;
-                if ((v_bits & DoubleHelper.KSignificandMask) == 0)
-                {
+                if ((v_bits & DoubleHelper.KSignificandMask) == 0) {
                     // The lower boundary is closer at half the distance of "normal" numbers.
                     // Increase the common denominator and adapt all but the delta_minus.
                     denominator.ShiftLeft(1); // *2
@@ -436,14 +392,13 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         // See comments for InitialScaledStartValues
         private static void InitialScaledStartValuesNegativeExponentPositivePower(
             double v,
-            int estimated_power, 
+            int estimated_power,
             bool need_boundary_deltas,
-            Bignum numerator, 
+            Bignum numerator,
             Bignum denominator,
-            Bignum delta_minus, 
-            Bignum delta_plus)
-        {
-            var bits = (ulong) BitConverter.DoubleToInt64Bits(v);
+            Bignum delta_minus,
+            Bignum delta_plus) {
+            var bits = (ulong)BitConverter.DoubleToInt64Bits(v);
             ulong significand = DoubleHelper.Significand(bits);
             int exponent = DoubleHelper.Exponent(bits);
             // v = f * 2^e with e < 0, and with estimated_power >= 0.
@@ -458,8 +413,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             denominator.AssignPowerUInt16(10, estimated_power);
             denominator.ShiftLeft(-exponent);
 
-            if (need_boundary_deltas)
-            {
+            if (need_boundary_deltas) {
                 // Introduce a common denominator so that the deltas to the boundaries are
                 // integers.
                 denominator.ShiftLeft(1);
@@ -479,8 +433,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 // (otherwise estimated_power would have been negative) this cannot happen
                 // here either.
                 ulong v_bits = bits;
-                if ((v_bits & DoubleHelper.KSignificandMask) == 0)
-                {
+                if ((v_bits & DoubleHelper.KSignificandMask) == 0) {
                     // The lower boundary is closer at half the distance of "normal" numbers.
                     // Increase the denominator and adapt all but the delta_minus.
                     denominator.ShiftLeft(1); // *2
@@ -499,11 +452,10 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             Bignum numerator,
             Bignum denominator,
             Bignum delta_minus,
-            Bignum delta_plus)
-        {
+            Bignum delta_plus) {
             const ulong kMinimalNormalizedExponent = 0x0010000000000000;
 
-            var bits = (ulong) BitConverter.DoubleToInt64Bits(v);
+            var bits = (ulong)BitConverter.DoubleToInt64Bits(v);
             ulong significand = DoubleHelper.Significand(bits);
             int exponent = DoubleHelper.Exponent(bits);
             // Instead of multiplying the denominator with 10^estimated_power we
@@ -513,8 +465,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             Bignum power_ten = numerator;
             power_ten.AssignPowerUInt16(10, -estimated_power);
 
-            if (need_boundary_deltas)
-            {
+            if (need_boundary_deltas) {
                 // Since power_ten == numerator we must make a copy of 10^estimated_power
                 // before we complete the computation of the numerator.
                 // delta_plus = delta_minus = 10^estimated_power
@@ -534,8 +485,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             denominator.AssignUInt16(1);
             denominator.ShiftLeft(-exponent);
 
-            if (need_boundary_deltas)
-            {
+            if (need_boundary_deltas) {
                 // Introduce a common denominator so that the deltas to the boundaries are
                 // integers.
                 numerator.ShiftLeft(1);
@@ -551,8 +501,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 if ((v_bits & DoubleHelper.KSignificandMask) == 0 &&
                     // The only exception where a significand == 0 has its boundaries at
                     // "normal" distances:
-                    (v_bits & DoubleHelper.KExponentMask) != kMinimalNormalizedExponent)
-                {
+                    (v_bits & DoubleHelper.KExponentMask) != kMinimalNormalizedExponent) {
                     numerator.ShiftLeft(1); // *2
                     denominator.ShiftLeft(1); // *2
                     delta_plus.ShiftLeft(1); // *2
@@ -604,11 +553,9 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             Bignum numerator,
             Bignum denominator,
             Bignum delta_minus,
-            Bignum delta_plus)
-        {
-            var bits = (ulong) BitConverter.DoubleToInt64Bits(v);
-            if (DoubleHelper.Exponent(bits) >= 0)
-            {
+            Bignum delta_plus) {
+            var bits = (ulong)BitConverter.DoubleToInt64Bits(v);
+            if (DoubleHelper.Exponent(bits) >= 0) {
                 InitialScaledStartValuesPositiveExponent(
                     v,
                     estimated_power,
@@ -617,9 +564,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                     denominator,
                     delta_minus,
                     delta_plus);
-            }
-            else if (estimated_power >= 0)
-            {
+            } else if (estimated_power >= 0) {
                 InitialScaledStartValuesNegativeExponentPositivePower(
                     v,
                     estimated_power,
@@ -628,9 +573,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                     denominator,
                     delta_minus,
                     delta_plus);
-            }
-            else
-            {
+            } else {
                 InitialScaledStartValuesNegativeExponentNegativePower(
                     v,
                     estimated_power,
@@ -661,30 +604,23 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             Bignum numerator,
             Bignum denominator,
             Bignum delta_minus,
-            Bignum delta_plus)
-        {
+            Bignum delta_plus) {
             bool in_range;
             if (is_even)
                 in_range = Bignum.PlusCompare(numerator, delta_plus, denominator) >= 0;
             else
                 in_range = Bignum.PlusCompare(numerator, delta_plus, denominator) > 0;
-            if (in_range)
-            {
+            if (in_range) {
                 // Since numerator + delta_plus >= denominator we already have
                 // 1 <= numerator/denominator < 10. Simply update the estimated_power.
                 decimal_point = estimated_power + 1;
-            }
-            else
-            {
+            } else {
                 decimal_point = estimated_power;
                 numerator.Times10();
-                if (Bignum.Equal(delta_minus, delta_plus))
-                {
+                if (Bignum.Equal(delta_minus, delta_plus)) {
                     delta_minus.Times10();
                     delta_plus.AssignBignum(delta_minus);
-                }
-                else
-                {
+                } else {
                     delta_minus.Times10();
                     delta_plus.Times10();
                 }

@@ -1,31 +1,29 @@
-using System;
-using System.Globalization;
-using System.Runtime.CompilerServices;
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima.Ast;
+using System;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript
 {
     public static class EsprimaExtensions
     {
-        public static JsValue GetKey(this Property property, Engine engine) => GetKey(property.Key, engine, property.Computed);
+        public static JsValue GetKey(this Property property, Engine engine) {
+            return GetKey(property.Key, engine, property.Computed);
+        }
 
-        private static JsValue GetKey<T>(this T expression, Engine engine, bool computed) where T : class, Expression
-        {
-            if (expression is Literal literal)
-            {
+        private static JsValue GetKey<T>(this T expression, Engine engine, bool computed) where T : class, Expression {
+            if (expression is Literal literal) {
                 return LiteralKeyToString(literal);
             }
 
-            if (!computed && expression is Identifier identifier)
-            {
+            if (!computed && expression is Identifier identifier) {
                 return identifier.Name;
             }
 
-            if (!TryGetComputedPropertyKey(expression, engine, out var propertyKey))
-            {
+            if (!TryGetComputedPropertyKey(expression, engine, out var propertyKey)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("Unable to extract correct key, node type: " + expression.Type);
             }
 
@@ -33,14 +31,12 @@ namespace Anura.JavaScript
         }
 
         private static bool TryGetComputedPropertyKey<T>(T expression, Engine engine, out JsValue propertyKey)
-            where T : class, Expression
-        {
+            where T : class, Expression {
             if (expression.Type == Nodes.Identifier
                 || expression.Type == Nodes.CallExpression
                 || expression.Type == Nodes.BinaryExpression
                 || expression.Type == Nodes.UpdateExpression
-                || expression is StaticMemberExpression)
-            {
+                || expression is StaticMemberExpression) {
                 propertyKey = TypeConverter.ToPropertyKey(JintExpression.Build(engine, expression).GetValue());
                 return true;
             }
@@ -50,27 +46,23 @@ namespace Anura.JavaScript
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsFunctionWithName<T>(this T node) where T : class, INode
-        {
+        internal static bool IsFunctionWithName<T>(this T node) where T : class, INode {
             var type = node.Type;
             return type == Nodes.FunctionExpression || type == Nodes.ArrowFunctionExpression || type == Nodes.ArrowParameterPlaceHolder;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static string LiteralKeyToString(Literal literal)
-        {
+        internal static string LiteralKeyToString(Literal literal) {
             // prevent conversion to scientific notation
-            if (literal.Value is double d)
-            {
+            if (literal.Value is double d) {
                 return DoubleToString(d);
             }
             return literal.Value as string ?? Convert.ToString(literal.Value, provider: null);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static string DoubleToString(double d)
-        {
-            return (d - (long) d) == 0 ? ((long) d).ToString() : d.ToString(CultureInfo.InvariantCulture);
+        internal static string DoubleToString(double d) {
+            return (d - (long)d) == 0 ? ((long)d).ToString() : d.ToString(CultureInfo.InvariantCulture);
         }
     }
 }

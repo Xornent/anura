@@ -1,6 +1,8 @@
-namespace Anura.Styles {
-    public sealed class CubicBezierTimingFunction : ITimingFunction {
-        public CubicBezierTimingFunction (float x1, float y1, float x2, float y2) {
+namespace Anura.Styles
+{
+    public sealed class CubicBezierTimingFunction : ITimingFunction
+    {
+        public CubicBezierTimingFunction(float x1, float y1, float x2, float y2) {
             X1 = x1;
             Y1 = y1;
             X2 = x2;

@@ -1,6 +1,6 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -13,40 +13,32 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
         private readonly JintStatement _body;
         private readonly JintExpression _test;
 
-        public JintWhileStatement(Engine engine, WhileStatement statement) : base(engine, statement)
-        {
+        public JintWhileStatement(Engine engine, WhileStatement statement) : base(engine, statement) {
             _labelSetName = _statement?.LabelSet?.Name;
             _body = Build(engine, statement.Body);
             _test = JintExpression.Build(engine, statement.Test);
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             var v = Undefined.Instance;
-            while (true)
-            {
+            while (true) {
                 var jsValue = _test.GetValue();
-                if (!TypeConverter.ToBoolean(jsValue))
-                {
+                if (!TypeConverter.ToBoolean(jsValue)) {
                     return new Completion(CompletionType.Normal, v, null, Location);
                 }
 
                 var completion = _body.Execute();
 
-                if (!ReferenceEquals(completion.Value, null))
-                {
+                if (!ReferenceEquals(completion.Value, null)) {
                     v = completion.Value;
                 }
 
-                if (completion.Type != CompletionType.Continue || completion.Identifier != _labelSetName)
-                {
-                    if (completion.Type == CompletionType.Break && (completion.Identifier == null || completion.Identifier == _labelSetName))
-                    {
+                if (completion.Type != CompletionType.Continue || completion.Identifier != _labelSetName) {
+                    if (completion.Type == CompletionType.Break && (completion.Identifier == null || completion.Identifier == _labelSetName)) {
                         return new Completion(CompletionType.Normal, v, null, Location);
                     }
 
-                    if (completion.Type != CompletionType.Normal)
-                    {
+                    if (completion.Type != CompletionType.Normal) {
                         return completion;
                     }
                 }

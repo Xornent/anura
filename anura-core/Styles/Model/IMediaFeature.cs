@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public interface IMediaFeature : IStylesheetNode {
+namespace Anura.Styles
+{
+    public interface IMediaFeature : IStylesheetNode
+    {
         string Name { get; }
         bool IsMinimum { get; }
         bool IsMaximum { get; }

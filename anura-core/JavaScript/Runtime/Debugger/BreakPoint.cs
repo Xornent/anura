@@ -2,15 +2,13 @@
 {
     public sealed class BreakPoint
     {
-        public BreakPoint(int line, int character)
-        {
+        public BreakPoint(int line, int character) {
             Line = line;
             Char = character;
         }
 
         public BreakPoint(int line, int character, string condition)
-            : this(line, character)
-        {
+            : this(line, character) {
             Condition = condition;
         }
 

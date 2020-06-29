@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public static class RuleNames {
+namespace Anura.Styles
+{
+    public static class RuleNames
+    {
         public static readonly string Supports = "supports";
         public static readonly string Charset = "charset";
         public static readonly string Document = "document";

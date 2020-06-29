@@ -1,6 +1,6 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -11,15 +11,13 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
     {
         private readonly JintExpression _argument;
 
-        public JintReturnStatement(Engine engine, ReturnStatement statement) : base(engine, statement)
-        {
+        public JintReturnStatement(Engine engine, ReturnStatement statement) : base(engine, statement) {
             _argument = _statement.Argument != null
                 ? JintExpression.Build(engine, _statement.Argument)
                 : null;
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             var jsValue = _argument?.GetValue() ?? Undefined.Instance;
             return new Completion(CompletionType.Return, jsValue, null, Location);
         }

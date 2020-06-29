@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Reflection;
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Descriptors.Specialized;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
 
 namespace Anura.JavaScript.Runtime.Interop
 {
@@ -15,14 +15,12 @@ namespace Anura.JavaScript.Runtime.Interop
         private static readonly JsString _name = new JsString("typereference");
 
         private TypeReference(Engine engine)
-            : base(engine, _name, strict: false, ObjectClass.TypeReference)
-        {
+            : base(engine, _name, strict: false, ObjectClass.TypeReference) {
         }
 
         public Type ReferenceType { get; set; }
 
-        public static TypeReference CreateTypeReference(Engine engine, Type type)
-        {
+        public static TypeReference CreateTypeReference(Engine engine, Type type) {
             var obj = new TypeReference(engine);
             obj.PreventExtensions();
             obj.ReferenceType = type;
@@ -37,16 +35,13 @@ namespace Anura.JavaScript.Runtime.Interop
             return obj;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             // direct calls on a TypeReference constructor object is equivalent to the new operator
             return Construct(arguments, thisObject);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
-            if (arguments.Length == 0 && ReferenceType.IsValueType)
-            {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
+            if (arguments.Length == 0 && ReferenceType.IsValueType) {
                 var instance = Activator.CreateInstance(ReferenceType);
                 var result = TypeConverter.ToObject(Engine, FromObject(Engine, instance));
 
@@ -55,24 +50,18 @@ namespace Anura.JavaScript.Runtime.Interop
 
             var constructors = ReferenceType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
 
-            foreach (var tuple in TypeConverter.FindBestMatch(_engine, constructors, (info, b) => arguments))
-            {
+            foreach (var tuple in TypeConverter.FindBestMatch(_engine, constructors, (info, b) => arguments)) {
                 var method = tuple.Item1;
 
                 var parameters = new object[arguments.Length];
                 var methodParameters = method.GetParameters();
-                try
-                {
-                    for (var i = 0; i < arguments.Length; i++)
-                    {
+                try {
+                    for (var i = 0; i < arguments.Length; i++) {
                         var parameterType = methodParameters[i].ParameterType;
 
-                        if (typeof(JsValue).IsAssignableFrom(parameterType))
-                        {
+                        if (typeof(JsValue).IsAssignableFrom(parameterType)) {
                             parameters[i] = arguments[i];
-                        }
-                        else
-                        {
+                        } else {
                             parameters[i] = Engine.ClrTypeConverter.Convert(
                                 arguments[i].ToObject(),
                                 parameterType,
@@ -80,16 +69,14 @@ namespace Anura.JavaScript.Runtime.Interop
                         }
                     }
 
-                    var constructor = (ConstructorInfo) method;
+                    var constructor = (ConstructorInfo)method;
                     var instance = constructor.Invoke(parameters);
                     var result = TypeConverter.ToObject(Engine, FromObject(Engine, instance));
 
                     // todo: cache method info
 
                     return result;
-                }
-                catch
-                {
+                } catch {
                     // ignore method
                 }
             }
@@ -97,10 +84,8 @@ namespace Anura.JavaScript.Runtime.Interop
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine, "No public methods with the specified arguments were found.");
         }
 
-        public override bool HasInstance(JsValue v)
-        {
-            if (v.IsObject())
-            {
+        public override bool HasInstance(JsValue v) {
+            if (v.IsObject()) {
                 var wrapper = v.AsObject() as IObjectWrapper;
                 if (wrapper != null)
                     return wrapper.Target.GetType() == ReferenceType;
@@ -109,27 +94,22 @@ namespace Anura.JavaScript.Runtime.Interop
             return base.HasInstance(v);
         }
 
-        public override bool DefineOwnProperty(JsValue property, PropertyDescriptor desc)
-        {
+        public override bool DefineOwnProperty(JsValue property, PropertyDescriptor desc) {
             return false;
         }
 
-        public override bool Delete(JsValue property)
-        {
+        public override bool Delete(JsValue property) {
             return false;
         }
 
-        public override bool Set(JsValue property, JsValue value, JsValue receiver)
-        {
-            if (!CanPut(property))
-            {
+        public override bool Set(JsValue property, JsValue value, JsValue receiver) {
+            if (!CanPut(property)) {
                 return false;
             }
 
             var ownDesc = GetOwnProperty(property);
 
-            if (ownDesc == null)
-            {
+            if (ownDesc == null) {
                 return false;
             }
 
@@ -137,49 +117,40 @@ namespace Anura.JavaScript.Runtime.Interop
             return true;
         }
 
-        public override PropertyDescriptor GetOwnProperty(JsValue property)
-        {
+        public override PropertyDescriptor GetOwnProperty(JsValue property) {
             // todo: cache members locally
             var name = property.ToString();
-            if (ReferenceType.IsEnum)
-            {
+            if (ReferenceType.IsEnum) {
                 Array enumValues = Enum.GetValues(ReferenceType);
                 Array enumNames = Enum.GetNames(ReferenceType);
 
-                for (int i = 0; i < enumValues.Length; i++)
-                {
-                    if (enumNames.GetValue(i) as string == name)
-                    {
-                        return new PropertyDescriptor((int) enumValues.GetValue(i), PropertyFlag.AllForbidden);
+                for (int i = 0; i < enumValues.Length; i++) {
+                    if (enumNames.GetValue(i) as string == name) {
+                        return new PropertyDescriptor((int)enumValues.GetValue(i), PropertyFlag.AllForbidden);
                     }
                 }
                 return PropertyDescriptor.Undefined;
             }
 
             var propertyInfo = ReferenceType.GetProperty(name, BindingFlags.Public | BindingFlags.Static);
-            if (propertyInfo != null)
-            {
+            if (propertyInfo != null) {
                 return new PropertyInfoDescriptor(Engine, propertyInfo, Type);
             }
 
             var fieldInfo = ReferenceType.GetField(name, BindingFlags.Public | BindingFlags.Static);
-            if (fieldInfo != null)
-            {
+            if (fieldInfo != null) {
                 return new FieldInfoDescriptor(Engine, fieldInfo, Type);
             }
 
             List<MethodInfo> methodInfo = null;
-            foreach (var mi in ReferenceType.GetMethods(BindingFlags.Public | BindingFlags.Static))
-            {
-                if (mi.Name == name)
-                {
+            foreach (var mi in ReferenceType.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
+                if (mi.Name == name) {
                     methodInfo = methodInfo ?? new List<MethodInfo>();
                     methodInfo.Add(mi);
                 }
             }
 
-            if (methodInfo == null || methodInfo.Count == 0)
-            {
+            if (methodInfo == null || methodInfo.Count == 0) {
                 return PropertyDescriptor.Undefined;
             }
 

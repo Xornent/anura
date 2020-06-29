@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public interface ITransform {
-        TransformMatrix ComputeMatrix ();
+namespace Anura.Styles
+{
+    public interface ITransform
+    {
+        TransformMatrix ComputeMatrix();
     }
 }

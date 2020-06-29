@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly BlockStatement Body;
 
         public CatchClause(IArrayPatternElement param, BlockStatement body) :
-            base(Nodes.CatchClause)
-        {
+            base(Nodes.CatchClause) {
             Param = param;
             Body = body;
         }

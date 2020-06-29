@@ -9,8 +9,7 @@ namespace Esprima.Ast
         public readonly ClassBody Body;
 
         public ClassDeclaration(Identifier id, Expression superClass, ClassBody body) :
-            base(Nodes.ClassDeclaration)
-        {
+            base(Nodes.ClassDeclaration) {
             Id = id;
             SuperClass = superClass;
             Body = body;

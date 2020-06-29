@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class BackgroundColorProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.CurrentColorConverter.OrDefault ();
+namespace Anura.Styles
+{
+    internal sealed class BackgroundColorProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.CurrentColorConverter.OrDefault();
 
-        internal BackgroundColorProperty () : base (PropertyNames.BackgroundColor, PropertyFlags.Hashless | PropertyFlags.Animatable) { }
+        internal BackgroundColorProperty() : base(PropertyNames.BackgroundColor, PropertyFlags.Hashless | PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

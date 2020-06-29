@@ -1,62 +1,67 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Anura.Styles {
-    internal sealed class OptionValueConverter : IValueConverter {
+namespace Anura.Styles
+{
+    internal sealed class OptionValueConverter : IValueConverter
+    {
         private readonly IValueConverter _converter;
 
-        public OptionValueConverter (IValueConverter converter) {
+        public OptionValueConverter(IValueConverter converter) {
             _converter = converter;
         }
 
-        public IPropertyValue Convert (IEnumerable<Token> value) {
-            return value.Any () ? _converter.Convert (value) : new OptionValue (value);
+        public IPropertyValue Convert(IEnumerable<Token> value) {
+            return value.Any() ? _converter.Convert(value) : new OptionValue(value);
         }
 
-        public IPropertyValue Construct (Property[] properties) {
-            return _converter.Construct (properties) ?? new OptionValue (Enumerable.Empty<Token> ());
+        public IPropertyValue Construct(Property[] properties) {
+            return _converter.Construct(properties) ?? new OptionValue(Enumerable.Empty<Token>());
         }
 
-        private sealed class OptionValue : IPropertyValue {
-            public OptionValue (IEnumerable<Token> tokens) {
-                Original = new TokenValue (tokens);
+        private sealed class OptionValue : IPropertyValue
+        {
+            public OptionValue(IEnumerable<Token> tokens) {
+                Original = new TokenValue(tokens);
             }
 
             public string CssText => string.Empty;
 
             public TokenValue Original { get; }
 
-            public TokenValue ExtractFor (string name) {
+            public TokenValue ExtractFor(string name) {
                 return null;
             }
         }
     }
 
-    internal sealed class OptionValueConverter<T> : IValueConverter {
+    internal sealed class OptionValueConverter<T> : IValueConverter
+    {
         private readonly IValueConverter _converter;
 
-        public OptionValueConverter (IValueConverter converter) {
+        public OptionValueConverter(IValueConverter converter) {
             _converter = converter;
         }
 
-        public IPropertyValue Convert (IEnumerable<Token> value) {
-            return value.Any () ? _converter.Convert (value) : new OptionValue (value);
+        public IPropertyValue Convert(IEnumerable<Token> value) {
+            return value.Any() ? _converter.Convert(value) : new OptionValue(value);
         }
 
-        public IPropertyValue Construct (Property[] properties) {
-            return _converter.Construct (properties) ?? new OptionValue (Enumerable.Empty<Token> ());
+        public IPropertyValue Construct(Property[] properties) {
+            return _converter.Construct(properties) ?? new OptionValue(Enumerable.Empty<Token>());
         }
 
-        private sealed class OptionValue : IPropertyValue {
-            public OptionValue (IEnumerable<Token> tokens) {
-                Original = new TokenValue (tokens);
+        private sealed class OptionValue : IPropertyValue
+        {
+            public OptionValue(IEnumerable<Token> tokens) {
+                Original = new TokenValue(tokens);
             }
 
             public string CssText => string.Empty;
 
             public TokenValue Original { get; }
 
-            public TokenValue ExtractFor (string name) {
+            public TokenValue ExtractFor(string name) {
                 return null;
             }
         }

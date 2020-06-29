@@ -1,6 +1,6 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -15,64 +15,49 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
         private readonly JintExpression _test;
         private readonly JintExpression _update;
 
-        public JintForStatement(Engine engine, ForStatement statement) : base(engine, statement)
-        {
+        public JintForStatement(Engine engine, ForStatement statement) : base(engine, statement) {
             _body = Build(engine, _statement.Body);
 
-            if (_statement.Init != null)
-            {
-                if (_statement.Init.Type == Nodes.VariableDeclaration)
-                {
-                    _initStatement = Build(engine, (Statement) _statement.Init);
-                }
-                else
-                {
-                    _initExpression = JintExpression.Build(engine, (Expression) statement.Init);
+            if (_statement.Init != null) {
+                if (_statement.Init.Type == Nodes.VariableDeclaration) {
+                    _initStatement = Build(engine, (Statement)_statement.Init);
+                } else {
+                    _initExpression = JintExpression.Build(engine, (Expression)statement.Init);
                 }
             }
 
-            if (_statement.Test != null)
-            {
+            if (_statement.Test != null) {
                 _test = JintExpression.Build(engine, statement.Test);
             }
 
-            if (_statement.Update != null)
-            {
+            if (_statement.Update != null) {
                 _update = JintExpression.Build(engine, statement.Update);
             }
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             _initStatement?.Execute();
             _initExpression?.GetValue();
 
             JsValue v = Undefined.Instance;
-            while (true)
-            {
-                if (_test != null)
-                {
-                    if (!TypeConverter.ToBoolean(_test.GetValue()))
-                    {
+            while (true) {
+                if (_test != null) {
+                    if (!TypeConverter.ToBoolean(_test.GetValue())) {
                         return new Completion(CompletionType.Normal, v, null, Location);
                     }
                 }
 
                 var stmt = _body.Execute();
-                if (!ReferenceEquals(stmt.Value, null))
-                {
+                if (!ReferenceEquals(stmt.Value, null)) {
                     v = stmt.Value;
                 }
 
-                if (stmt.Type == CompletionType.Break && (stmt.Identifier == null || stmt.Identifier == _statement?.LabelSet?.Name))
-                {
+                if (stmt.Type == CompletionType.Break && (stmt.Identifier == null || stmt.Identifier == _statement?.LabelSet?.Name)) {
                     return new Completion(CompletionType.Normal, stmt.Value, null, Location);
                 }
 
-                if (stmt.Type != CompletionType.Continue || ((stmt.Identifier != null) && stmt.Identifier != _statement?.LabelSet?.Name))
-                {
-                    if (stmt.Type != CompletionType.Normal)
-                    {
+                if (stmt.Type != CompletionType.Continue || ((stmt.Identifier != null) && stmt.Identifier != _statement?.LabelSet?.Name)) {
+                    if (stmt.Type != CompletionType.Normal) {
                         return stmt;
                     }
                 }

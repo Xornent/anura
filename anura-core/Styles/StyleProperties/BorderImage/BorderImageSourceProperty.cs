@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class BorderImageSourceProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.OptionalImageSourceConverter.OrDefault ();
+namespace Anura.Styles
+{
+    internal sealed class BorderImageSourceProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.OptionalImageSourceConverter.OrDefault();
 
-        internal BorderImageSourceProperty () : base (PropertyNames.BorderImageSource) { }
+        internal BorderImageSourceProperty() : base(PropertyNames.BorderImageSource) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class OverflowWrapProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class OverflowWrapProperty : Property
+    {
         private static readonly IValueConverter StyleConverter = Converters.OverflowWrapConverter;
 
-        public OverflowWrapProperty () : base (PropertyNames.OverflowWrap) { }
+        public OverflowWrapProperty() : base(PropertyNames.OverflowWrap) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

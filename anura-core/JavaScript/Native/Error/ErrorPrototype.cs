@@ -14,31 +14,25 @@ namespace Anura.JavaScript.Native.Error
         private ErrorConstructor _errorConstructor;
 
         private ErrorPrototype(Engine engine, JsString name)
-            : base(engine, name)
-        {
+            : base(engine, name) {
         }
 
-        public static ErrorPrototype CreatePrototypeObject(Engine engine, ErrorConstructor errorConstructor, JsString name)
-        {
+        public static ErrorPrototype CreatePrototypeObject(Engine engine, ErrorConstructor errorConstructor, JsString name) {
             var obj = new ErrorPrototype(engine, name)
             {
                 _errorConstructor = errorConstructor,
             };
 
-            if (name._value != "Error")
-            {
+            if (name._value != "Error") {
                 obj._prototype = engine.Error.PrototypeObject;
-            }
-            else
-            {
+            } else {
                 obj._prototype = engine.Object.PrototypeObject;
             }
 
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(3, checkExistingKeys: false)
             {
                 ["constructor"] = new PropertyDescriptor(_errorConstructor, PropertyFlag.NonEnumerable),
@@ -48,11 +42,9 @@ namespace Anura.JavaScript.Native.Error
             SetProperties(properties);
         }
 
-        public JsValue ToString(JsValue thisObject, JsValue[] arguments)
-        {
+        public JsValue ToString(JsValue thisObject, JsValue[] arguments) {
             var o = thisObject.TryCast<ObjectInstance>();
-            if (ReferenceEquals(o, null))
-            {
+            if (ReferenceEquals(o, null)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
@@ -60,20 +52,15 @@ namespace Anura.JavaScript.Native.Error
 
             var msgProp = o.Get("message", this);
             string msg;
-            if (msgProp.IsUndefined())
-            {
+            if (msgProp.IsUndefined()) {
                 msg = "";
-            }
-            else
-            {
+            } else {
                 msg = TypeConverter.ToString(msgProp);
             }
-            if (name == "")
-            {
+            if (name == "") {
                 return msg;
             }
-            if (msg == "")
-            {
+            if (msg == "") {
                 return name;
             }
             return name + ": " + msg;

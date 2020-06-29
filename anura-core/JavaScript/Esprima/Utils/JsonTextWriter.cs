@@ -46,10 +46,9 @@ namespace Esprima.Utils
         private string _memberName;
 
         public JsonTextWriter(TextWriter writer) :
-            this(writer, null) {}
+            this(writer, null) { }
 
-        public JsonTextWriter(TextWriter writer, string indent)
-        {
+        public JsonTextWriter(TextWriter writer, string indent) {
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
             _indent = indent;
             _counters = new Stack<int>(8);
@@ -58,59 +57,64 @@ namespace Esprima.Utils
 
         public int Depth => _structures.Count;
 
-        public override void StartObject() => StartStructured(StructureKind.Object);
-        public override void EndObject() => EndStructured();
+        public override void StartObject() {
+            StartStructured(StructureKind.Object);
+        }
 
-        public override void StartArray() => StartStructured(StructureKind.Array);
-        public override void EndArray() => EndStructured();
+        public override void EndObject() {
+            EndStructured();
+        }
 
-        public override void Member(string name)
-        {
-            if (name == null)
-            {
+        public override void StartArray() {
+            StartStructured(StructureKind.Array);
+        }
+
+        public override void EndArray() {
+            EndStructured();
+        }
+
+        public override void Member(string name) {
+            if (name == null) {
                 throw new ArgumentNullException(nameof(name));
             }
 
-            if (Depth == 0 || _structures.Top != StructureKind.Object)
-            {
+            if (Depth == 0 || _structures.Top != StructureKind.Object) {
                 throw new InvalidOperationException("Member must be within an object.");
             }
 
-            if (_memberName != null)
-            {
+            if (_memberName != null) {
                 throw new InvalidOperationException("Missing value for member: " + _memberName);
             }
 
             _memberName = name;
         }
 
-        public override void String(string str)
-        {
-            if (str == null)
-            {
+        public override void String(string str) {
+            if (str == null) {
                 Null();
-            }
-            else
-            {
+            } else {
                 Write(str, TokenKind.String);
             }
         }
 
-        public override void Null() => Write("null", TokenKind.Scalar);
+        public override void Null() {
+            Write("null", TokenKind.Scalar);
+        }
 
-        public override void Boolean(bool flag) =>
+        public override void Boolean(bool flag) {
             Write(flag ? "true" : "false", TokenKind.Scalar);
+        }
 
-        public void Number(int n) =>
+        public void Number(int n) {
             Write(n.ToString(CultureInfo.InvariantCulture), TokenKind.Scalar);
+        }
 
-        public override void Number(long n) =>
+        public override void Number(long n) {
             Write(n.ToString(CultureInfo.InvariantCulture), TokenKind.Scalar);
+        }
 
-        public override void Number(double n)
-        {
-            if (double.IsNaN(n) || double.IsInfinity(n))
-            {
+        public override void Number(double n) {
+            if (double.IsNaN(n) || double.IsInfinity(n)) {
                 throw new ArgumentOutOfRangeException(nameof(n), n, null);
             }
 
@@ -119,20 +123,16 @@ namespace Esprima.Utils
 
         private bool Pretty => !string.IsNullOrEmpty(_indent);
 
-        private void Eol()
-        {
-            if (!Pretty)
-            {
+        private void Eol() {
+            if (!Pretty) {
                 return;
             }
 
             _writer.WriteLine();
         }
 
-        private void Indent(int? depth = null)
-        {
-            if (!Pretty)
-            {
+        private void Indent(int? depth = null) {
+            if (!Pretty) {
                 return;
             }
 
@@ -141,27 +141,22 @@ namespace Esprima.Utils
                 _writer.Write(_indent);
         }
 
-        private void StartStructured(StructureKind kind)
-        {
+        private void StartStructured(StructureKind kind) {
             Write(kind == StructureKind.Array ? "[" : "{", TokenKind.Structure);
             _counters.Push(0);
             _structures.Push(kind);
         }
 
-        private void EndStructured()
-        {
-            if (Depth == 0)
-            {
+        private void EndStructured() {
+            if (Depth == 0) {
                 throw new InvalidOperationException("No JSON structure in effect.");
             }
 
-            if (_memberName != null)
-            {
+            if (_memberName != null) {
                 throw new InvalidOperationException("Missing value for member: " + _memberName);
             }
 
-            if (_counters.Top > 0)
-            {
+            if (_counters.Top > 0) {
                 Eol();
                 Indent(Depth - 1);
             }
@@ -172,26 +167,21 @@ namespace Esprima.Utils
 
         private enum TokenKind { Scalar, String, Structure }
 
-        private void Write(string token, TokenKind kind)
-        {
+        private void Write(string token, TokenKind kind) {
             Debug.Assert(kind == TokenKind.String || !string.IsNullOrEmpty(token));
 
-            if (Depth == 0 && kind == TokenKind.Scalar)
-            {
+            if (Depth == 0 && kind == TokenKind.Scalar) {
                 throw new InvalidOperationException("JSON text must start with an object or an array.");
             }
 
             var writer = _writer;
 
-            if (Depth > 0)
-            {
-                if (_structures.Top == StructureKind.Object && _memberName == null)
-                {
+            if (Depth > 0) {
+                if (_structures.Top == StructureKind.Object && _memberName == null) {
                     throw new InvalidOperationException("JSON object member name is undefined.");
                 }
 
-                if (_counters.Top > 0)
-                {
+                if (_counters.Top > 0) {
                     writer.Write(',');
                 }
 
@@ -201,55 +191,45 @@ namespace Esprima.Utils
             var name = _memberName;
             _memberName = null;
 
-            if (name != null)
-            {
+            if (name != null) {
                 Indent();
                 Enquote(name, writer);
                 writer.Write(Pretty ? ": " : ":");
             }
 
-            if (Depth > 0 && _structures.Top == StructureKind.Array)
-            {
+            if (Depth > 0 && _structures.Top == StructureKind.Array) {
                 Indent();
             }
 
-            if (kind == TokenKind.String)
-            {
+            if (kind == TokenKind.String) {
                 Enquote(token, writer);
-            }
-            else
-            {
+            } else {
                 writer.Write(token);
             }
 
-            if (Depth > 0)
-            {
+            if (Depth > 0) {
                 _counters.Top += 1;
             }
         }
 
-        private static void Enquote(string s, TextWriter writer)
-        {
+        private static void Enquote(string s, TextWriter writer) {
             Debug.Assert(writer != null);
 
             var length = (s ?? string.Empty).Length;
 
             writer.Write('"');
 
-            for (var index = 0; index < length; index++)
-            {
+            for (var index = 0; index < length; index++) {
                 Debug.Assert(s != null);
                 var ch = s[index];
 
-                switch (ch)
-                {
+                switch (ch) {
                     case '\\':
-                    case '"':
-                    {
-                        writer.Write('\\');
-                        writer.Write(ch);
-                        break;
-                    }
+                    case '"': {
+                            writer.Write('\\');
+                            writer.Write(ch);
+                            break;
+                        }
 
                     case '\b': writer.Write("\\b"); break;
                     case '\t': writer.Write("\\t"); break;
@@ -257,20 +237,16 @@ namespace Esprima.Utils
                     case '\f': writer.Write("\\f"); break;
                     case '\r': writer.Write("\\r"); break;
 
-                    default:
-                    {
-                        if (ch < ' ')
-                        {
-                            writer.Write("\\u");
-                            writer.Write(((int)ch).ToString("x4", CultureInfo.InvariantCulture));
-                        }
-                        else
-                        {
-                            writer.Write(ch);
-                        }
+                    default: {
+                            if (ch < ' ') {
+                                writer.Write("\\u");
+                                writer.Write(((int)ch).ToString("x4", CultureInfo.InvariantCulture));
+                            } else {
+                                writer.Write(ch);
+                            }
 
-                        break;
-                    }
+                            break;
+                        }
                 }
             }
 
@@ -282,8 +258,7 @@ namespace Esprima.Utils
         {
             private T[] _items;
 
-            public Stack(int capacity)
-            {
+            public Stack(int capacity) {
                 _items = new T[capacity];
                 Count = 0;
             }
@@ -292,12 +267,9 @@ namespace Esprima.Utils
 
             public int Count { get; private set; }
 
-            public ref T Top
-            {
-                get
-                {
-                    if (Count <= 0)
-                    {
+            public ref T Top {
+                get {
+                    if (Count <= 0) {
                         throw new InvalidOperationException();
                     }
 
@@ -305,19 +277,18 @@ namespace Esprima.Utils
                 }
             }
 
-            public IEnumerator<T> GetEnumerator()
-            {
+            public IEnumerator<T> GetEnumerator() {
                 for (var i = 0; i < Count; i++)
                     yield return _items[i];
             }
 
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() {
+                return GetEnumerator();
+            }
 
-            public void Push(T item)
-            {
+            public void Push(T item) {
                 var capacity = Capacity;
-                if (Count == capacity)
-                {
+                if (Count == capacity) {
                     SysArray.Resize(ref _items, Math.Max(capacity * 2, 4));
                 }
 
@@ -326,10 +297,8 @@ namespace Esprima.Utils
                 Count++;
             }
 
-            public T Pop()
-            {
-                if (Count == 0)
-                {
+            public T Pop() {
+                if (Count == 0) {
                     throw new InvalidOperationException();
                 }
 

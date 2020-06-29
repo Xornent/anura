@@ -1,5 +1,5 @@
-using System;
 using Anura.JavaScript.Native;
+using System;
 
 namespace Anura.JavaScript.Runtime.Descriptors.Specialized
 {
@@ -8,13 +8,11 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
         private readonly Func<JsValue> _resolver;
 
         internal LazyPropertyDescriptor(Func<JsValue> resolver, PropertyFlag flags)
-            : base(null, flags | PropertyFlag.CustomJsValue)
-        {
+            : base(null, flags | PropertyFlag.CustomJsValue) {
             _resolver = resolver;
         }
 
-        protected internal override JsValue CustomValue
-        {
+        protected internal override JsValue CustomValue {
             get => _value ??= _resolver();
             set => _value = value;
         }

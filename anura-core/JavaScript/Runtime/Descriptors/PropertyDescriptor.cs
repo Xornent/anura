@@ -1,9 +1,9 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime.Descriptors.Specialized;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Runtime.Descriptors
 {
@@ -15,49 +15,40 @@ namespace Anura.JavaScript.Runtime.Descriptors
         internal PropertyFlag _flags;
         internal JsValue _value;
 
-        protected PropertyDescriptor(PropertyFlag flags)
-        {
+        protected PropertyDescriptor(PropertyFlag flags) {
             _flags = flags;
         }
 
-        protected internal PropertyDescriptor(JsValue value, PropertyFlag flags) : this(flags)
-        {
-            if ((_flags & PropertyFlag.CustomJsValue) != 0)
-            {
+        protected internal PropertyDescriptor(JsValue value, PropertyFlag flags) : this(flags) {
+            if ((_flags & PropertyFlag.CustomJsValue) != 0) {
                 CustomValue = value;
             }
             _value = value;
         }
 
-        public PropertyDescriptor(JsValue value, bool? writable, bool? enumerable, bool? configurable)
-        {
-            if ((_flags & PropertyFlag.CustomJsValue) != 0)
-            {
+        public PropertyDescriptor(JsValue value, bool? writable, bool? enumerable, bool? configurable) {
+            if ((_flags & PropertyFlag.CustomJsValue) != 0) {
                 CustomValue = value;
             }
             _value = value;
 
-            if (writable != null)
-            {
+            if (writable != null) {
                 Writable = writable.Value;
                 WritableSet = true;
             }
 
-            if (enumerable != null)
-            {
+            if (enumerable != null) {
                 Enumerable = enumerable.Value;
                 EnumerableSet = true;
             }
 
-            if (configurable != null)
-            {
+            if (configurable != null) {
                 Configurable = configurable.Value;
                 ConfigurableSet = true;
             }
         }
 
-        public PropertyDescriptor(PropertyDescriptor descriptor)
-        {
+        public PropertyDescriptor(PropertyDescriptor descriptor) {
             Value = descriptor.Value;
 
             Enumerable = descriptor.Enumerable;
@@ -73,157 +64,118 @@ namespace Anura.JavaScript.Runtime.Descriptors
         public virtual JsValue Get => null;
         public virtual JsValue Set => null;
 
-        public bool Enumerable
-        {
+        public bool Enumerable {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (_flags & PropertyFlag.Enumerable) != 0;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
+            set {
                 _flags |= PropertyFlag.EnumerableSet;
-                if (value)
-                {
+                if (value) {
                     _flags |= PropertyFlag.Enumerable;
-                }
-                else
-                {
+                } else {
                     _flags &= ~(PropertyFlag.Enumerable);
                 }
             }
         }
 
-        public bool EnumerableSet
-        {
+        public bool EnumerableSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (_flags & (PropertyFlag.EnumerableSet | PropertyFlag.Enumerable)) != 0;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private set
-            {
-                if (value)
-                {
+            private set {
+                if (value) {
                     _flags |= PropertyFlag.EnumerableSet;
-                }
-                else
-                {
+                } else {
                     _flags &= ~(PropertyFlag.EnumerableSet);
                 }
             }
         }
 
-        public bool Writable
-        {
+        public bool Writable {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (_flags & PropertyFlag.Writable) != 0;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
+            set {
                 _flags |= PropertyFlag.WritableSet;
-                if (value)
-                {
+                if (value) {
                     _flags |= PropertyFlag.Writable;
-                }
-                else
-                {
+                } else {
                     _flags &= ~(PropertyFlag.Writable);
                 }
             }
         }
 
-        public bool WritableSet
-        {
+        public bool WritableSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (_flags & (PropertyFlag.WritableSet | PropertyFlag.Writable)) != 0;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private set
-            {
-                if (value)
-                {
+            private set {
+                if (value) {
                     _flags |= PropertyFlag.WritableSet;
-                }
-                else
-                {
+                } else {
                     _flags &= ~(PropertyFlag.WritableSet);
                 }
             }
         }
 
-        public bool Configurable
-        {
+        public bool Configurable {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (_flags & PropertyFlag.Configurable) != 0;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
+            set {
                 _flags |= PropertyFlag.ConfigurableSet;
-                if (value)
-                {
+                if (value) {
                     _flags |= PropertyFlag.Configurable;
-                }
-                else
-                {
+                } else {
                     _flags &= ~(PropertyFlag.Configurable);
                 }
             }
         }
 
-        public bool ConfigurableSet
-        {
+        public bool ConfigurableSet {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (_flags & (PropertyFlag.ConfigurableSet | PropertyFlag.Configurable)) != 0;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private set
-            {
-                if (value)
-                {
+            private set {
+                if (value) {
                     _flags |= PropertyFlag.ConfigurableSet;
-                }
-                else
-                {
+                } else {
                     _flags &= ~(PropertyFlag.ConfigurableSet);
                 }
             }
         }
 
-        public JsValue Value
-        {
+        public JsValue Value {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if ((_flags & PropertyFlag.CustomJsValue) != 0)
-                {
+            get {
+                if ((_flags & PropertyFlag.CustomJsValue) != 0) {
                     return CustomValue;
                 }
 
                 return _value;
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                if ((_flags & PropertyFlag.CustomJsValue) != 0)
-                {
+            set {
+                if ((_flags & PropertyFlag.CustomJsValue) != 0) {
                     CustomValue = value;
                 }
                 _value = value;
             }
         }
 
-        protected internal virtual JsValue CustomValue
-        {
+        protected internal virtual JsValue CustomValue {
             get => null;
             set => Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotImplementedException();
         }
 
-        internal PropertyFlag Flags
-        {
+        internal PropertyFlag Flags {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _flags; }
+            get => _flags;
         }
 
-        public static PropertyDescriptor ToPropertyDescriptor(Engine engine, JsValue o)
-        {
+        public static PropertyDescriptor ToPropertyDescriptor(Engine engine, JsValue o) {
             var obj = o.TryCast<ObjectInstance>();
-            if (ReferenceEquals(obj, null))
-            {
+            if (ReferenceEquals(obj, null)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine);
             }
 
@@ -233,8 +185,7 @@ namespace Anura.JavaScript.Runtime.Descriptors
             var hasSetProperty = setProperty != Undefined;
 
             if ((obj.HasProperty(CommonProperties.Value) || obj.HasProperty(CommonProperties.Writable)) &&
-                (hasGetProperty || hasSetProperty))
-            {
+                (hasGetProperty || hasSetProperty)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine);
             }
 
@@ -243,58 +194,48 @@ namespace Anura.JavaScript.Runtime.Descriptors
                 : new PropertyDescriptor(PropertyFlag.None);
 
             var enumerableProperty = obj.GetProperty(CommonProperties.Enumerable);
-            if (enumerableProperty != Undefined)
-            {
+            if (enumerableProperty != Undefined) {
                 desc.Enumerable = TypeConverter.ToBoolean(obj.UnwrapJsValue(enumerableProperty));
                 desc.EnumerableSet = true;
             }
 
             var configurableProperty = obj.GetProperty(CommonProperties.Configurable);
-            if (configurableProperty != Undefined)
-            {
+            if (configurableProperty != Undefined) {
                 desc.Configurable = TypeConverter.ToBoolean(obj.UnwrapJsValue(configurableProperty));
                 desc.ConfigurableSet = true;
             }
 
             var valueProperty = obj.GetProperty(CommonProperties.Value);
-            if (valueProperty != Undefined)
-            {
+            if (valueProperty != Undefined) {
                 desc.Value = obj.UnwrapJsValue(valueProperty);
             }
 
             var writableProperty = obj.GetProperty(CommonProperties.Writable);
-            if (writableProperty != Undefined)
-            {
+            if (writableProperty != Undefined) {
                 desc.Writable = TypeConverter.ToBoolean(obj.UnwrapJsValue(writableProperty));
                 desc.WritableSet = true;
             }
 
-            if (hasGetProperty)
-            {
+            if (hasGetProperty) {
                 var getter = obj.UnwrapJsValue(getProperty);
-                if (!getter.IsUndefined() && getter.TryCast<ICallable>() == null)
-                {
+                if (!getter.IsUndefined() && getter.TryCast<ICallable>() == null) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine);
                 }
 
-                ((GetSetPropertyDescriptor) desc).SetGet(getter);
+                ((GetSetPropertyDescriptor)desc).SetGet(getter);
             }
 
-            if (hasSetProperty)
-            {
+            if (hasSetProperty) {
                 var setter = obj.UnwrapJsValue(setProperty);
-                if (!setter.IsUndefined() && setter.TryCast<ICallable>() == null)
-                {
+                if (!setter.IsUndefined() && setter.TryCast<ICallable>() == null) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine);
                 }
 
-                ((GetSetPropertyDescriptor) desc).SetSet(setter);
+                ((GetSetPropertyDescriptor)desc).SetSet(setter);
             }
 
-            if (!ReferenceEquals(desc.Get, null))
-            {
-                if (!ReferenceEquals(desc.Value, null) || desc.WritableSet)
-                {
+            if (!ReferenceEquals(desc.Get, null)) {
+                if (!ReferenceEquals(desc.Value, null) || desc.WritableSet) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine);
                 }
             }
@@ -302,23 +243,18 @@ namespace Anura.JavaScript.Runtime.Descriptors
             return desc;
         }
 
-        public static JsValue FromPropertyDescriptor(Engine engine, PropertyDescriptor desc)
-        {
-            if (ReferenceEquals(desc, Undefined))
-            {
+        public static JsValue FromPropertyDescriptor(Engine engine, PropertyDescriptor desc) {
+            if (ReferenceEquals(desc, Undefined)) {
                 return Native.Undefined.Instance;
             }
 
             var obj = engine.Object.Construct(Arguments.Empty);
             var properties = new PropertyDictionary(4, checkExistingKeys: false);
 
-            if (desc.IsDataDescriptor())
-            {
-                properties["value"] =  new PropertyDescriptor(desc.Value ?? Native.Undefined.Instance, PropertyFlag.ConfigurableEnumerableWritable);
+            if (desc.IsDataDescriptor()) {
+                properties["value"] = new PropertyDescriptor(desc.Value ?? Native.Undefined.Instance, PropertyFlag.ConfigurableEnumerableWritable);
                 properties["writable"] = new PropertyDescriptor(desc.Writable, PropertyFlag.ConfigurableEnumerableWritable);
-            }
-            else
-            {
+            } else {
                 properties["get"] = new PropertyDescriptor(desc.Get ?? Native.Undefined.Instance, PropertyFlag.ConfigurableEnumerableWritable);
                 properties["set"] = new PropertyDescriptor(desc.Set ?? Native.Undefined.Instance, PropertyFlag.ConfigurableEnumerableWritable);
             }
@@ -331,14 +267,12 @@ namespace Anura.JavaScript.Runtime.Descriptors
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsAccessorDescriptor()
-        {
+        public bool IsAccessorDescriptor() {
             return !ReferenceEquals(Get, null) || !ReferenceEquals(Set, null);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsDataDescriptor()
-        {
+        public bool IsDataDescriptor() {
             return (_flags & (PropertyFlag.WritableSet | PropertyFlag.Writable)) != 0
                    || (_flags & PropertyFlag.CustomJsValue) != 0 && !ReferenceEquals(CustomValue, null)
                    || !ReferenceEquals(_value, null);
@@ -349,38 +283,32 @@ namespace Anura.JavaScript.Runtime.Descriptors
         /// </summary>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsGenericDescriptor()
-        {
+        public bool IsGenericDescriptor() {
             return !IsDataDescriptor() && !IsAccessorDescriptor();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool TryGetValue(ObjectInstance thisArg, out JsValue value)
-        {
+        internal bool TryGetValue(ObjectInstance thisArg, out JsValue value) {
             value = JsValue.Undefined;
 
             // IsDataDescriptor logic inlined
-            if ((_flags & (PropertyFlag.WritableSet | PropertyFlag.Writable)) != 0)
-            {
+            if ((_flags & (PropertyFlag.WritableSet | PropertyFlag.Writable)) != 0) {
                 var val = (_flags & PropertyFlag.CustomJsValue) != 0
                     ? CustomValue
                     : _value;
 
-                if (!ReferenceEquals(val, null))
-                {
+                if (!ReferenceEquals(val, null)) {
                     value = val;
                     return true;
                 }
             }
 
-            if (this == Undefined)
-            {
+            if (this == Undefined) {
                 return false;
             }
 
             var getter = Get;
-            if (!ReferenceEquals(getter, null) && !getter.IsUndefined())
-            {
+            if (!ReferenceEquals(getter, null) && !getter.IsUndefined()) {
                 // if getter is not undefined it must be ICallable
                 var callable = getter.TryCast<ICallable>();
                 value = callable.Call(thisArg, Arguments.Empty);
@@ -391,12 +319,10 @@ namespace Anura.JavaScript.Runtime.Descriptors
 
         private sealed class UndefinedPropertyDescriptor : PropertyDescriptor
         {
-            public UndefinedPropertyDescriptor() : base(PropertyFlag.None | PropertyFlag.CustomJsValue)
-            {
+            public UndefinedPropertyDescriptor() : base(PropertyFlag.None | PropertyFlag.CustomJsValue) {
             }
 
-            protected internal override JsValue CustomValue
-            {
+            protected internal override JsValue CustomValue {
                 set => Anura.JavaScript.Runtime.ExceptionHelper.ThrowInvalidOperationException("making changes to undefined property's descriptor is not allowed");
             }
         }
@@ -411,25 +337,21 @@ namespace Anura.JavaScript.Runtime.Descriptors
             public static readonly AllForbiddenDescriptor BooleanFalse = new AllForbiddenDescriptor(JsBoolean.False);
             public static readonly AllForbiddenDescriptor BooleanTrue = new AllForbiddenDescriptor(JsBoolean.True);
 
-            static AllForbiddenDescriptor()
-            {
+            static AllForbiddenDescriptor() {
                 _cache = new PropertyDescriptor[10];
-                for (int i = 0; i < _cache.Length; ++i)
-                {
+                for (int i = 0; i < _cache.Length; ++i) {
                     _cache[i] = new AllForbiddenDescriptor(JsNumber.Create(i));
                 }
             }
 
             private AllForbiddenDescriptor(JsValue value)
-                : base(PropertyFlag.AllForbidden)
-            {
+                : base(PropertyFlag.AllForbidden) {
                 _value = value;
             }
 
-            public static PropertyDescriptor ForNumber(int number)
-            {
+            public static PropertyDescriptor ForNumber(int number) {
                 var temp = _cache;
-                return (uint) number < temp.Length
+                return (uint)number < temp.Length
                     ? temp[number]
                     : new PropertyDescriptor(number, PropertyFlag.AllForbidden);
             }

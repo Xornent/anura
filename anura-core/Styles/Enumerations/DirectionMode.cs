@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum DirectionMode : byte {
+namespace Anura.Styles
+{
+    public enum DirectionMode : byte
+    {
         Ltr,
         Rtl
     }

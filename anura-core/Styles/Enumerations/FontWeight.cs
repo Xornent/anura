@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum FontWeight : byte {
+namespace Anura.Styles
+{
+    public enum FontWeight : byte
+    {
         Normal,
         Bold,
         Bolder,

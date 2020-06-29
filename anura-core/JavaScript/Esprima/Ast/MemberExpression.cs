@@ -13,8 +13,7 @@ namespace Esprima.Ast
         public readonly bool Computed;
 
         protected MemberExpression(Expression obj, Expression property, bool computed) :
-            base(Nodes.MemberExpression)
-        {
+            base(Nodes.MemberExpression) {
             Object = obj;
             Property = property;
             Computed = computed;

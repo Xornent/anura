@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly bool Delegate;
 
         public YieldExpression(Expression argument, bool delgate) :
-            base(Nodes.YieldExpression)
-        {
+            base(Nodes.YieldExpression) {
             Argument = argument;
             Delegate = delgate;
         }

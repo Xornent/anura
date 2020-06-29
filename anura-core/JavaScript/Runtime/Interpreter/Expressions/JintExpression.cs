@@ -1,10 +1,10 @@
-using System.Runtime.CompilerServices;
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Iterator;
 using Anura.JavaScript.Native.Number;
 using Anura.JavaScript.Runtime.Environments;
+using Esprima.Ast;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -16,8 +16,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         protected readonly Engine _engine;
         protected internal readonly INode _expression;
 
-        protected JintExpression(Engine engine, INode expression)
-        {
+        protected JintExpression(Engine engine, INode expression) {
             _engine = engine;
             _expression = expression;
         }
@@ -27,17 +26,14 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         /// By default uses the Engine for resolving.
         /// </summary>
         /// <seealso cref="JintLiteralExpression"/>
-        public virtual JsValue GetValue()
-        {
+        public virtual JsValue GetValue() {
             return _engine.GetValue(Evaluate(), true);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public object Evaluate()
-        {
+        public object Evaluate() {
             _engine._lastSyntaxNode = _expression;
-            if (!_initialized)
-            {
+            if (!_initialized) {
                 Initialize();
                 _initialized = true;
             }
@@ -47,47 +43,43 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         /// <summary>
         /// Opportunity to build one-time structures and caching based on lexical context.
         /// </summary>
-        protected virtual void Initialize()
-        {
+        protected virtual void Initialize() {
         }
 
         protected abstract object EvaluateInternal();
 
-        protected internal static JintExpression Build(Engine engine, Expression expression)
-        {
-            switch (expression.Type)
-            {
+        protected internal static JintExpression Build(Engine engine, Expression expression) {
+            switch (expression.Type) {
                 case Nodes.AssignmentExpression:
-                    return JintAssignmentExpression.Build(engine, (AssignmentExpression) expression);
+                    return JintAssignmentExpression.Build(engine, (AssignmentExpression)expression);
 
                 case Nodes.ArrayExpression:
-                    return new JintArrayExpression(engine, (ArrayExpression) expression);
+                    return new JintArrayExpression(engine, (ArrayExpression)expression);
 
                 case Nodes.ArrowFunctionExpression:
-                    return new JintArrowFunctionExpression(engine, (IFunction) expression);
+                    return new JintArrowFunctionExpression(engine, (IFunction)expression);
 
                 case Nodes.BinaryExpression:
-                    return JintBinaryExpression.Build(engine, (BinaryExpression) expression);
+                    return JintBinaryExpression.Build(engine, (BinaryExpression)expression);
 
                 case Nodes.CallExpression:
-                    return new JintCallExpression(engine, (CallExpression) expression);
+                    return new JintCallExpression(engine, (CallExpression)expression);
 
                 case Nodes.ConditionalExpression:
-                    return new JintConditionalExpression(engine, (ConditionalExpression) expression);
+                    return new JintConditionalExpression(engine, (ConditionalExpression)expression);
 
                 case Nodes.FunctionExpression:
-                    return new JintFunctionExpression(engine, (IFunction) expression);
+                    return new JintFunctionExpression(engine, (IFunction)expression);
 
                 case Nodes.Identifier:
-                    return new JintIdentifierExpression(engine, (Identifier) expression);
+                    return new JintIdentifierExpression(engine, (Identifier)expression);
 
                 case Nodes.Literal:
-                    return JintLiteralExpression.Build(engine, (Literal) expression);
+                    return JintLiteralExpression.Build(engine, (Literal)expression);
 
                 case Nodes.LogicalExpression:
-                    var binaryExpression = (BinaryExpression) expression;
-                    switch (binaryExpression.Operator)
-                    {
+                    var binaryExpression = (BinaryExpression)expression;
+                    switch (binaryExpression.Operator) {
                         case BinaryOperator.LogicalAnd:
                             return new JintLogicalAndExpression(engine, binaryExpression);
                         case BinaryOperator.LogicalOr:
@@ -97,34 +89,34 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                     }
 
                 case Nodes.MemberExpression:
-                    return new JintMemberExpression(engine, (MemberExpression) expression);
+                    return new JintMemberExpression(engine, (MemberExpression)expression);
 
                 case Nodes.NewExpression:
-                    return new JintNewExpression(engine, (NewExpression) expression);
+                    return new JintNewExpression(engine, (NewExpression)expression);
 
                 case Nodes.ObjectExpression:
-                    return new JintObjectExpression(engine, (ObjectExpression) expression);
+                    return new JintObjectExpression(engine, (ObjectExpression)expression);
 
                 case Nodes.SequenceExpression:
-                    return new JintSequenceExpression(engine, (SequenceExpression) expression);
+                    return new JintSequenceExpression(engine, (SequenceExpression)expression);
 
                 case Nodes.ThisExpression:
-                    return new JintThisExpression(engine, (ThisExpression) expression);
+                    return new JintThisExpression(engine, (ThisExpression)expression);
 
                 case Nodes.UpdateExpression:
-                    return new JintUpdateExpression(engine, (UpdateExpression) expression);
+                    return new JintUpdateExpression(engine, (UpdateExpression)expression);
 
                 case Nodes.UnaryExpression:
-                    return JintUnaryExpression.Build(engine, (UnaryExpression) expression);
+                    return JintUnaryExpression.Build(engine, (UnaryExpression)expression);
 
                 case Nodes.SpreadElement:
-                    return new JintSpreadExpression(engine, (SpreadElement) expression);
+                    return new JintSpreadExpression(engine, (SpreadElement)expression);
 
                 case Nodes.TemplateLiteral:
-                    return new JintTemplateLiteralExpression(engine, (TemplateLiteral) expression);
+                    return new JintTemplateLiteralExpression(engine, (TemplateLiteral)expression);
 
                 case Nodes.TaggedTemplateExpression:
-                    return new JintTaggedTemplateExpression(engine, (TaggedTemplateExpression) expression);
+                    return new JintTaggedTemplateExpression(engine, (TaggedTemplateExpression)expression);
 
                 default:
                     return Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException<JintExpression>(nameof(expression), $"unsupported language element '{expression.Type}'");
@@ -132,76 +124,60 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected static JsValue Divide(JsValue lval, JsValue rval)
-        {
+        protected static JsValue Divide(JsValue lval, JsValue rval) {
             return AreIntegerOperands(lval, rval)
                 ? DivideInteger(lval, rval)
                 : DivideComplex(lval, rval);
         }
 
-        private static JsValue DivideInteger(JsValue lval, JsValue rval)
-        {
+        private static JsValue DivideInteger(JsValue lval, JsValue rval) {
             var lN = lval.AsInteger();
             var rN = rval.AsInteger();
 
-            if (lN == 0 && rN == 0)
-            {
+            if (lN == 0 && rN == 0) {
                 return JsNumber.DoubleNaN;
             }
 
-            if (rN == 0)
-            {
+            if (rN == 0) {
                 return lN > 0 ? double.PositiveInfinity : double.NegativeInfinity;
             }
 
-            if (lN % rN == 0)
-            {
+            if (lN % rN == 0) {
                 return lN / rN;
             }
 
-            return (double) lN / rN;
+            return (double)lN / rN;
         }
 
-        private static JsValue DivideComplex(JsValue lval, JsValue rval)
-        {
-            if (lval.IsUndefined() || rval.IsUndefined())
-            {
+        private static JsValue DivideComplex(JsValue lval, JsValue rval) {
+            if (lval.IsUndefined() || rval.IsUndefined()) {
                 return Undefined.Instance;
-            }
-            else
-            {
+            } else {
                 var lN = TypeConverter.ToNumber(lval);
                 var rN = TypeConverter.ToNumber(rval);
 
-                if (double.IsNaN(rN) || double.IsNaN(lN))
-                {
+                if (double.IsNaN(rN) || double.IsNaN(lN)) {
                     return JsNumber.DoubleNaN;
                 }
 
-                if (double.IsInfinity(lN) && double.IsInfinity(rN))
-                {
+                if (double.IsInfinity(lN) && double.IsInfinity(rN)) {
                     return JsNumber.DoubleNaN;
                 }
 
-                if (double.IsInfinity(lN) && rN == 0)
-                {
-                    if (NumberInstance.IsNegativeZero(rN))
-                    {
+                if (double.IsInfinity(lN) && rN == 0) {
+                    if (NumberInstance.IsNegativeZero(rN)) {
                         return -lN;
                     }
 
                     return lN;
                 }
 
-                if (lN == 0 && rN == 0)
-                {
+                if (lN == 0 && rN == 0) {
                     return JsNumber.DoubleNaN;
                 }
 
-                if (rN == 0)
-                {
-                    if (NumberInstance.IsNegativeZero(rN))
-                    {
+                if (rN == 0) {
+                    if (NumberInstance.IsNegativeZero(rN)) {
                         return lN > 0 ? -double.PositiveInfinity : -double.NegativeInfinity;
                     }
 
@@ -213,54 +189,44 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         }
 
-        protected static bool Equal(JsValue x, JsValue y)
-        {
+        protected static bool Equal(JsValue x, JsValue y) {
             return x.Type == y.Type
                 ? JintBinaryExpression.StrictlyEqual(x, y)
                 : EqualUnlikely(x, y);
         }
 
-        private static bool EqualUnlikely(JsValue x, JsValue y)
-        {
-            if (x._type == InternalTypes.Null && y._type == InternalTypes.Undefined)
-            {
+        private static bool EqualUnlikely(JsValue x, JsValue y) {
+            if (x._type == InternalTypes.Null && y._type == InternalTypes.Undefined) {
                 return true;
             }
 
-            if (x._type == InternalTypes.Undefined && y._type == InternalTypes.Null)
-            {
+            if (x._type == InternalTypes.Undefined && y._type == InternalTypes.Null) {
                 return true;
             }
 
-            if (x.IsNumber() && y.IsString())
-            {
+            if (x.IsNumber() && y.IsString()) {
                 return Equal(x, TypeConverter.ToNumber(y));
             }
 
-            if (x.IsString() && y.IsNumber())
-            {
+            if (x.IsString() && y.IsNumber()) {
                 return Equal(TypeConverter.ToNumber(x), y);
             }
 
-            if (x.IsBoolean())
-            {
+            if (x.IsBoolean()) {
                 return Equal(TypeConverter.ToNumber(x), y);
             }
 
-            if (y.IsBoolean())
-            {
+            if (y.IsBoolean()) {
                 return Equal(x, TypeConverter.ToNumber(y));
             }
 
             const InternalTypes stringOrNumber = InternalTypes.String | InternalTypes.Integer | InternalTypes.Number;
 
-            if (y.IsObject() && (x._type & stringOrNumber) != 0)
-            {
+            if (y.IsObject() && (x._type & stringOrNumber) != 0) {
                 return Equal(x, TypeConverter.ToPrimitive(y));
             }
 
-            if (x.IsObject() && ((y._type & stringOrNumber) != 0))
-            {
+            if (x.IsObject() && ((y._type & stringOrNumber) != 0)) {
                 return Equal(TypeConverter.ToPrimitive(x), y);
             }
 
@@ -268,21 +234,18 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected static JsValue Compare(JsValue x, JsValue y, bool leftFirst = true) =>
-            x._type == y._type && x._type == InternalTypes.Integer
-                ? CompareInteger(x, y, leftFirst)
-                : CompareComplex(x, y, leftFirst);
+        protected static JsValue Compare(JsValue x, JsValue y, bool leftFirst = true) {
+            return x._type == y._type && x._type == InternalTypes.Integer
+? CompareInteger(x, y, leftFirst)
+: CompareComplex(x, y, leftFirst);
+        }
 
-        private static JsValue CompareInteger(JsValue x, JsValue y, bool leftFirst)
-        {
+        private static JsValue CompareInteger(JsValue x, JsValue y, bool leftFirst) {
             int nx, ny;
-            if (leftFirst)
-            {
+            if (leftFirst) {
                 nx = x.AsInteger();
                 ny = y.AsInteger();
-            }
-            else
-            {
+            } else {
                 ny = y.AsInteger();
                 nx = x.AsInteger();
             }
@@ -290,16 +253,12 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             return nx < ny;
         }
 
-        private static  JsValue CompareComplex(JsValue x, JsValue y, bool leftFirst)
-        {
+        private static JsValue CompareComplex(JsValue x, JsValue y, bool leftFirst) {
             JsValue px, py;
-            if (leftFirst)
-            {
+            if (leftFirst) {
                 px = TypeConverter.ToPrimitive(x, Types.Number);
                 py = TypeConverter.ToPrimitive(y, Types.Number);
-            }
-            else
-            {
+            } else {
                 py = TypeConverter.ToPrimitive(y, Types.Number);
                 px = TypeConverter.ToPrimitive(x, Types.Number);
             }
@@ -307,38 +266,31 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             var typea = px.Type;
             var typeb = py.Type;
 
-            if (typea != Types.String || typeb != Types.String)
-            {
+            if (typea != Types.String || typeb != Types.String) {
                 var nx = TypeConverter.ToNumber(px);
                 var ny = TypeConverter.ToNumber(py);
 
-                if (double.IsNaN(nx) || double.IsNaN(ny))
-                {
+                if (double.IsNaN(nx) || double.IsNaN(ny)) {
                     return Undefined.Instance;
                 }
 
-                if (nx == ny)
-                {
+                if (nx == ny) {
                     return false;
                 }
 
-                if (double.IsPositiveInfinity(nx))
-                {
+                if (double.IsPositiveInfinity(nx)) {
                     return false;
                 }
 
-                if (double.IsPositiveInfinity(ny))
-                {
+                if (double.IsPositiveInfinity(ny)) {
                     return true;
                 }
 
-                if (double.IsNegativeInfinity(ny))
-                {
+                if (double.IsNegativeInfinity(ny)) {
                     return false;
                 }
 
-                if (double.IsNegativeInfinity(nx))
-                {
+                if (double.IsNegativeInfinity(nx)) {
                     return true;
                 }
 
@@ -349,43 +301,31 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected static void BuildArguments(JintExpression[] jintExpressions, JsValue[] targetArray)
-        {
-            for (var i = 0; i < jintExpressions.Length; i++)
-            {
+        protected static void BuildArguments(JintExpression[] jintExpressions, JsValue[] targetArray) {
+            for (var i = 0; i < jintExpressions.Length; i++) {
                 targetArray[i] = jintExpressions[i].GetValue().Clone();
             }
         }
 
-        protected JsValue[] BuildArgumentsWithSpreads(JintExpression[] jintExpressions)
-        {
+        protected JsValue[] BuildArgumentsWithSpreads(JintExpression[] jintExpressions) {
             var args = new System.Collections.Generic.List<JsValue>(jintExpressions.Length);
-            for (var i = 0; i < jintExpressions.Length; i++)
-            {
+            for (var i = 0; i < jintExpressions.Length; i++) {
                 var jintExpression = jintExpressions[i];
-                if (jintExpression is JintSpreadExpression jse)
-                {
+                if (jintExpression is JintSpreadExpression jse) {
                     jse.GetValueAndCheckIterator(out var objectInstance, out var iterator);
                     // optimize for array
-                    if (objectInstance is ArrayInstance ai)
-                    {
+                    if (objectInstance is ArrayInstance ai) {
                         var length = ai.GetLength();
-                        for (uint j = 0; j < length; ++j)
-                        {
-                            if (ai.TryGetValue(j, out var value))
-                            {
+                        for (uint j = 0; j < length; ++j) {
+                            if (ai.TryGetValue(j, out var value)) {
                                 args.Add(value);
                             }
                         }
-                    }
-                    else
-                    {
+                    } else {
                         var protocol = new ArraySpreadProtocol(_engine, args, iterator);
                         protocol.Execute();
                     }
-                }
-                else
-                {
+                } else {
                     args.Add(jintExpression.GetValue().Clone());
                 }
             }
@@ -400,13 +340,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             public ArraySpreadProtocol(
                 Engine engine,
                 System.Collections.Generic.List<JsValue> instance,
-                IIterator iterator) : base(engine, iterator, 0)
-            {
+                IIterator iterator) : base(engine, iterator, 0) {
                 _instance = instance;
             }
 
-            protected override void ProcessItem(JsValue[] args, JsValue currentValue)
-            {
+            protected override void ProcessItem(JsValue[] args, JsValue currentValue) {
                 var jsValue = ExtractValueFromIteratorInstance(currentValue);
                 _instance.Add(jsValue);
             }
@@ -416,8 +354,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         protected bool TryGetIdentifierEnvironmentWithBindingValue(
             string expressionName,
             out EnvironmentRecord record,
-            out JsValue value)
-        {
+            out JsValue value) {
             var env = _engine.ExecutionContext.LexicalEnvironment;
             var strict = StrictModeScope.IsStrictModeCode;
             return LexicalEnvironment.TryGetIdentifierEnvironmentWithBindingValue(
@@ -433,8 +370,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             bool strict,
             in Key expressionName,
             out EnvironmentRecord record,
-            out JsValue value)
-        {
+            out JsValue value) {
             var env = _engine.ExecutionContext.LexicalEnvironment;
             return LexicalEnvironment.TryGetIdentifierEnvironmentWithBindingValue(
                 env,
@@ -443,10 +379,9 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                 out record,
                 out value);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected static bool AreIntegerOperands(JsValue left, JsValue right)
-        {
+        protected static bool AreIntegerOperands(JsValue left, JsValue right) {
             return left._type == right._type && left._type == InternalTypes.Integer;
         }
     }

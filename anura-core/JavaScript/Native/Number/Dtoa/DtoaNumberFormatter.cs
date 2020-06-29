@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using Anura.JavaScript.Runtime;
+﻿using Anura.JavaScript.Runtime;
+using System.Diagnostics;
 
 namespace Anura.JavaScript.Native.Number.Dtoa
 {
@@ -11,8 +11,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             DtoaMode mode,
             int requested_digits,
             out bool negative,
-            out int point)
-        {
+            out int point) {
             Debug.Assert(!double.IsNaN(v));
             Debug.Assert(!double.IsInfinity(v));
             Debug.Assert(mode == DtoaMode.Shortest || requested_digits >= 0);
@@ -21,21 +20,18 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             negative = false;
             buffer.Reset();
 
-            if (v < 0)
-            {
+            if (v < 0) {
                 negative = true;
                 v = -v;
-            } 
+            }
 
-            if (v == 0)
-            {
+            if (v == 0) {
                 buffer[0] = '0';
                 point = 1;
                 return;
             }
 
-            if (mode == DtoaMode.Precision && requested_digits == 0)
-            {
+            if (mode == DtoaMode.Precision && requested_digits == 0) {
                 return;
             }
 
@@ -56,14 +52,13 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                     return;
             }
 
-            if (fast_worked)
-            {
+            if (fast_worked) {
                 return;
             }
 
             // If the fast dtoa didn't succeed use the slower bignum version.
             buffer.Reset();
             BignumDtoa.NumberToString(v, mode, requested_digits, buffer, out point);
-       }
+        }
     }
 }

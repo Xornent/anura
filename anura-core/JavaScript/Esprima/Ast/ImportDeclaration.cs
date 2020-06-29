@@ -11,8 +11,7 @@ namespace Esprima.Ast
         public ImportDeclaration(
             in NodeList<ImportDeclarationSpecifier> specifiers,
             Literal source) :
-            base(Nodes.ImportDeclaration)
-        {
+            base(Nodes.ImportDeclaration) {
             _specifiers = specifiers;
             Source = source;
         }

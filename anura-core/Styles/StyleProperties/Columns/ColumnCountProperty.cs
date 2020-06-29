@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class ColumnCountProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.OptionalIntegerConverter.OrDefault ();
+namespace Anura.Styles
+{
+    internal sealed class ColumnCountProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.OptionalIntegerConverter.OrDefault();
 
-        internal ColumnCountProperty () : base (PropertyNames.ColumnCount, PropertyFlags.Animatable) { }
+        internal ColumnCountProperty() : base(PropertyNames.ColumnCount, PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

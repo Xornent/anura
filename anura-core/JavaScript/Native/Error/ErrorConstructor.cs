@@ -10,12 +10,10 @@ namespace Anura.JavaScript.Native.Error
         private JsString _name;
         private static readonly JsString _functionName = new JsString("Error");
 
-        public ErrorConstructor(Engine engine) : base(engine, _functionName, strict: false)
-        {
+        public ErrorConstructor(Engine engine) : base(engine, _functionName, strict: false) {
         }
 
-        public static ErrorConstructor CreateErrorConstructor(Engine engine, JsString name)
-        {
+        public static ErrorConstructor CreateErrorConstructor(Engine engine, JsString name) {
             var obj = new ErrorConstructor(engine)
             {
                 _name = name,
@@ -33,24 +31,20 @@ namespace Anura.JavaScript.Native.Error
             return obj;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             return Construct(arguments, thisObject);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments)
-        {
+        public ObjectInstance Construct(JsValue[] arguments) {
             return Construct(arguments, this);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             var instance = new ErrorInstance(Engine, _name);
             instance._prototype = PrototypeObject;
 
             var jsValue = arguments.At(0);
-            if (!jsValue.IsUndefined())
-            {
+            if (!jsValue.IsUndefined()) {
                 var msg = TypeConverter.ToString(jsValue);
                 var msgDesc = new PropertyDescriptor(msg, true, false, true);
                 instance.DefinePropertyOrThrow("message", msgDesc);
@@ -61,8 +55,7 @@ namespace Anura.JavaScript.Native.Error
 
         public ErrorPrototype PrototypeObject { get; private set; }
 
-        protected override ObjectInstance GetPrototypeOf()
-        {
+        protected override ObjectInstance GetPrototypeOf() {
             return _name._value != "Error" ? _engine.Error : _prototype;
         }
     }

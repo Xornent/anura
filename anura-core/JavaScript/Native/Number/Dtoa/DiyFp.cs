@@ -33,18 +33,17 @@ using System.Diagnostics;
 namespace Anura.JavaScript.Native.Number.Dtoa
 {
 
-// This "Do It Yourself Floating Point" class implements a floating-point number
-// with a uint64 significand and an int exponent. Normalized DiyFp numbers will
-// have the most significant bit of the significand set.
-// Multiplication and Subtraction do not normalize their results.
-// DiyFp are not designed to contain special doubles (NaN and Infinity).
+    // This "Do It Yourself Floating Point" class implements a floating-point number
+    // with a uint64 significand and an int exponent. Normalized DiyFp numbers will
+    // have the most significant bit of the significand set.
+    // Multiplication and Subtraction do not normalize their results.
+    // DiyFp are not designed to contain special doubles (NaN and Infinity).
     internal readonly struct DiyFp
     {
         internal const int KSignificandSize = 64;
         private const ulong KUint64MSB = 0x8000000000000000L;
 
-        internal DiyFp(ulong f, int e)
-        {
+        internal DiyFp(ulong f, int e) {
             F = f;
             E = e;
         }
@@ -55,8 +54,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         // Returns a - b.
         // The exponents of both numbers must be the same and this must be bigger
         // than other. The result will not be normalized.
-        internal static DiyFp Minus(in DiyFp a, in DiyFp b)
-        {
+        internal static DiyFp Minus(in DiyFp a, in DiyFp b) {
             Debug.Assert(a.E == b.E);
 
             return new DiyFp(a.F - b.F, a.E);
@@ -65,8 +63,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         // this = this * other.
 
         // returns a * b;
-        internal static DiyFp Times(in DiyFp a, in DiyFp b)
-        {
+        internal static DiyFp Times(in DiyFp a, in DiyFp b) {
             // Simply "emulates" a 128 bit multiplication.
             // However: the resulting number only contains 64 bits. The least
             // significant 64 bits are only used for rounding the most significant 64
@@ -76,10 +73,10 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             ulong b1 = a.F & kM32;
             ulong c = b.F >> 32;
             ulong d = b.F & kM32;
-            ulong ac = a1*c;
-            ulong bc = b1*c;
-            ulong ad = a1*d;
-            ulong bd = b1*d;
+            ulong ac = a1 * c;
+            ulong bc = b1 * c;
+            ulong ad = a1 * d;
+            ulong bd = b1 * d;
             ulong tmp = (bd >> 32) + (ad & kM32) + (bc & kM32);
             // By adding 1U << 31 to tmp we round the final result.
             // Halfway cases will be round up.
@@ -88,18 +85,15 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             return new DiyFp(resultF, a.E + b.E + 64);
         }
 
-        internal static DiyFp Normalize(ulong f, int e)
-        {
+        internal static DiyFp Normalize(ulong f, int e) {
             // This method is mainly called for normalizing boundaries. In general
             // boundaries need to be shifted by 10 bits. We thus optimize for this case.
-            const ulong k10MsBits = (ulong) 0x3FF << 54;
-            while ((f & k10MsBits) == 0)
-            {
+            const ulong k10MsBits = (ulong)0x3FF << 54;
+            while ((f & k10MsBits) == 0) {
                 f <<= 10;
                 e -= 10;
             }
-            while ((f & KUint64MSB) == 0)
-            {
+            while ((f & KUint64MSB) == 0) {
                 f <<= 1;
                 e--;
             }
@@ -107,8 +101,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             return new DiyFp(f, e);
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return "[DiyFp f:" + F + ", e:" + E + "]";
         }
     }

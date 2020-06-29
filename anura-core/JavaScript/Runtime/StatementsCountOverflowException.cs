@@ -1,9 +1,8 @@
 ﻿namespace Anura.JavaScript.Runtime
 {
-    public class StatementsCountOverflowException : JintException 
+    public class StatementsCountOverflowException : JintException
     {
-        public StatementsCountOverflowException() : base("The maximum number of statements executed have been reached.")
-        {
+        public StatementsCountOverflowException() : base("The maximum number of statements executed have been reached.") {
         }
     }
 }

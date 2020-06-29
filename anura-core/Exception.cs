@@ -6,17 +6,23 @@ namespace Anura
     public class AnuraException : Exception
     {
         public AnuraException() { }
-        public AnuraException(bool isWarning) {
+        public AnuraException(bool isWarning)
+        {
             Warning = isWarning;
         }
+
         public AnuraException(string message) : base(message) { }
-        public AnuraException(string message, bool isWarning) : base(message) {
-            this.Warning = isWarning;
+        public AnuraException(string message, bool isWarning) : base(message)
+        {
+            Warning = isWarning;
         }
+
         public AnuraException(string message, Exception inner) : base(message, inner) { }
-        public AnuraException(string message, Exception inner, bool isWarning) : base(message, inner) {
-            this.Warning = isWarning;
+        public AnuraException(string message, Exception inner, bool isWarning) : base(message, inner)
+        {
+            Warning = isWarning;
         }
+        
         protected AnuraException(
             System.Runtime.Serialization.SerializationInfo info,
             System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
@@ -41,7 +47,7 @@ namespace Anura
         public class AssertionException : AnuraException
         {
             public AssertionException() { }
-            public AssertionException(string message) : base("∂œ—‘¥ÌŒÛ") { }
+            public AssertionException(string message) : base("¬∂√è√ë√î¬¥√≠√é√≥") { }
             public AssertionException(string message, Exception inner) : base(message, inner) { }
             protected AssertionException(
               System.Runtime.Serialization.SerializationInfo info,

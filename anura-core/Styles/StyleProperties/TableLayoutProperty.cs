@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class TableLayoutProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.TableLayoutConverter.OrDefault (false);
+namespace Anura.Styles
+{
+    internal sealed class TableLayoutProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.TableLayoutConverter.OrDefault(false);
 
-        internal TableLayoutProperty () : base (PropertyNames.TableLayout) { }
+        internal TableLayoutProperty() : base(PropertyNames.TableLayout) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

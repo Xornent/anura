@@ -9,8 +9,7 @@ namespace Anura.JavaScript.Runtime
         public string CallExpressionReference { get; private set; }
 
         public RecursionDepthOverflowException(JintCallStack currentStack, string currentExpressionReference)
-            : base("The recursion is forbidden by script host.")
-        {
+            : base("The recursion is forbidden by script host.") {
             CallExpressionReference = currentExpressionReference;
 
             CallChain = currentStack.ToString();

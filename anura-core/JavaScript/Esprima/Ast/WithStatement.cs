@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly Statement Body;
 
         public WithStatement(Expression obj, Statement body) :
-            base(Nodes.WithStatement)
-        {
+            base(Nodes.WithStatement) {
             Object = obj;
             Body = body;
         }

@@ -7,8 +7,7 @@ namespace Esprima.Ast
         private readonly NodeList<ObjectExpressionProperty> _properties;
 
         public ObjectExpression(in NodeList<ObjectExpressionProperty> properties) :
-            base(Nodes.ObjectExpression)
-        {
+            base(Nodes.ObjectExpression) {
             _properties = properties;
         }
 

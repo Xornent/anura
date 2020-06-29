@@ -1,18 +1,20 @@
 using System.IO;
 
-namespace Anura.Styles {
-    internal sealed class ListSelector : Selectors, ISelector {
+namespace Anura.Styles
+{
+    internal sealed class ListSelector : Selectors, ISelector
+    {
         public bool IsInvalid { get; internal set; }
 
-        public override void ToCss (TextWriter writer, IStyleFormatter formatter) {
+        public override void ToCss(TextWriter writer, IStyleFormatter formatter) {
             if (_selectors.Count <= 0) {
                 return;
             }
-            writer.Write (_selectors[0].Text);
+            writer.Write(_selectors[0].Text);
 
             for (var i = 1; i < _selectors.Count; i++) {
-                writer.Write (Symbols.Comma);
-                writer.Write (_selectors[i].Text);
+                writer.Write(Symbols.Comma);
+                writer.Write(_selectors[i].Text);
             }
         }
     }

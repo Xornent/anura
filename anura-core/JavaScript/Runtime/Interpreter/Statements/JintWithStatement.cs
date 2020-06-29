@@ -1,6 +1,6 @@
-using Esprima.Ast;
 using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -12,14 +12,12 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
         private readonly JintStatement _body;
         private readonly JintExpression _object;
 
-        public JintWithStatement(Engine engine, WithStatement statement) : base(engine, statement)
-        {
+        public JintWithStatement(Engine engine, WithStatement statement) : base(engine, statement) {
             _body = Build(engine, statement.Body);
             _object = JintExpression.Build(engine, _statement.Object);
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             var jsValue = _object.GetValue();
             var obj = TypeConverter.ToObject(_engine, jsValue);
             var oldEnv = _engine.ExecutionContext.LexicalEnvironment;
@@ -27,16 +25,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
             _engine.UpdateLexicalEnvironment(newEnv);
 
             Completion c;
-            try
-            {
+            try {
                 c = _body.Execute();
-            }
-            catch (JavaScriptException e)
-            {
+            } catch (JavaScriptException e) {
                 c = new Completion(CompletionType.Throw, e.Error, null, _statement.Location);
-            }
-            finally
-            {
+            } finally {
                 _engine.UpdateLexicalEnvironment(oldEnv);
             }
 

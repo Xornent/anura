@@ -1,6 +1,6 @@
-using System;
-using Esprima.Ast;
 using Anura.JavaScript.Native;
+using Esprima.Ast;
+using System;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -10,50 +10,39 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private JintExpression[] _jintArguments = Array.Empty<JintExpression>();
         private bool _hasSpreads;
 
-        public JintNewExpression(Engine engine, NewExpression expression) : base(engine, expression)
-        {
+        public JintNewExpression(Engine engine, NewExpression expression) : base(engine, expression) {
             _initialized = false;
         }
 
-        protected override void Initialize()
-        {
-            var expression = (NewExpression) _expression;
+        protected override void Initialize() {
+            var expression = (NewExpression)_expression;
             _calleeExpression = Build(_engine, expression.Callee);
 
-            if (expression.Arguments.Count <= 0)
-            {
+            if (expression.Arguments.Count <= 0) {
                 return;
             }
 
             _jintArguments = new JintExpression[expression.Arguments.Count];
-            for (var i = 0; i < _jintArguments.Length; i++)
-            {
-                _jintArguments[i] = Build(_engine, (Expression) expression.Arguments[i]);
+            for (var i = 0; i < _jintArguments.Length; i++) {
+                _jintArguments[i] = Build(_engine, (Expression)expression.Arguments[i]);
                 _hasSpreads |= _jintArguments[i] is JintSpreadExpression;
             }
         }
 
-        protected override object EvaluateInternal()
-        {
+        protected override object EvaluateInternal() {
             JsValue[] arguments;
-            if (_jintArguments.Length == 0)
-            {
+            if (_jintArguments.Length == 0) {
                 arguments = Array.Empty<JsValue>();
-            }
-            else if (_hasSpreads)
-            {
+            } else if (_hasSpreads) {
                 arguments = BuildArgumentsWithSpreads(_jintArguments);
-            }
-            else
-            {
+            } else {
                 arguments = _engine._jsValueArrayPool.RentArray(_jintArguments.Length);
                 BuildArguments(_jintArguments, arguments);
             }
 
             // todo: optimize by defining a common abstract class or interface
             var jsValue = _calleeExpression.GetValue();
-            if (!(jsValue is IConstructor callee))
-            {
+            if (!(jsValue is IConstructor callee)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<object>(_engine, "The object can't be used as constructor.");
             }
 

@@ -14,8 +14,7 @@ namespace Esprima.Ast
             bool strict,
             bool async,
             HoistingScope hoistingScope) :
-            base(Nodes.FunctionDeclaration)
-        {
+            base(Nodes.FunctionDeclaration) {
             Id = id;
             _parameters = parameters;
             Body = body;

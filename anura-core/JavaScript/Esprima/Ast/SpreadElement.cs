@@ -11,8 +11,7 @@ namespace Esprima.Ast
         public readonly Expression Argument;
 
         public SpreadElement(Expression argument) :
-            base(Nodes.SpreadElement)
-        {
+            base(Nodes.SpreadElement) {
             Argument = argument;
         }
 

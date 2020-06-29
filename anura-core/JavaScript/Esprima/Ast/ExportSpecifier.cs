@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly Identifier Local;
 
         public ExportSpecifier(Identifier local, Identifier exported) :
-            base(Nodes.ExportSpecifier)
-        {
+            base(Nodes.ExportSpecifier) {
             Exported = exported;
             Local = local;
         }

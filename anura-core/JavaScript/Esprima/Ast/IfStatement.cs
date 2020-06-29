@@ -9,8 +9,7 @@ namespace Esprima.Ast
         public readonly Statement Alternate;
 
         public IfStatement(Expression test, Statement consequent, Statement alternate) :
-            base(Nodes.IfStatement)
-        {
+            base(Nodes.IfStatement) {
             Test = test;
             Consequent = consequent;
             Alternate = alternate;

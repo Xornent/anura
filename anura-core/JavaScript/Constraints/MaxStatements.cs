@@ -7,21 +7,17 @@ namespace Anura.JavaScript.Constraints
         private readonly int _maxStatements;
         private int _statementsCount;
 
-        public MaxStatements(int maxStatements)
-        {
+        public MaxStatements(int maxStatements) {
             _maxStatements = maxStatements;
         }
 
-        public void Check()
-        {
-            if (_maxStatements > 0 && _statementsCount++ > _maxStatements)
-            { 
+        public void Check() {
+            if (_maxStatements > 0 && _statementsCount++ > _maxStatements) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowStatementsCountOverflowException();
             }
         }
 
-        public void Reset()
-        {
+        public void Reset() {
             _statementsCount = 0;
         }
     }

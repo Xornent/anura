@@ -2,12 +2,10 @@
 {
     public class MemoryLimitExceededException : JintException
     {
-        public MemoryLimitExceededException() : base()
-        {
+        public MemoryLimitExceededException() : base() {
         }
 
-        public MemoryLimitExceededException(string message) : base(message)
-        {
+        public MemoryLimitExceededException(string message) : base(message) {
         }
     }
 }

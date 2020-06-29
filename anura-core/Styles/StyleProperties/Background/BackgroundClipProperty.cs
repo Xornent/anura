@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class BackgroundClipProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class BackgroundClipProperty : Property
+    {
         private static readonly IValueConverter ListConverter =
-            Converters.BoxModelConverter.FromList ().OrDefault (BoxModel.BorderBox);
+            Converters.BoxModelConverter.FromList().OrDefault(BoxModel.BorderBox);
 
-        internal BackgroundClipProperty () : base (PropertyNames.BackgroundClip) { }
+        internal BackgroundClipProperty() : base(PropertyNames.BackgroundClip) { }
 
         internal override IValueConverter Converter => ListConverter;
     }

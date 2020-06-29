@@ -1,5 +1,5 @@
-using Esprima.Ast;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -7,13 +7,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
     {
         private readonly JintExpression _expression;
 
-        public JintExpressionStatement(Engine engine, ExpressionStatement statement) : base(engine, statement)
-        {
+        public JintExpressionStatement(Engine engine, ExpressionStatement statement) : base(engine, statement) {
             _expression = JintExpression.Build(engine, statement.Expression);
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             var value = _expression.GetValue();
             return new Completion(CompletionType.Normal, value, null, Location);
         }

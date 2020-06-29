@@ -1,10 +1,12 @@
-namespace Anura.Styles {
-    internal sealed class ScanMediaFeature : MediaFeature {
+namespace Anura.Styles
+{
+    internal sealed class ScanMediaFeature : MediaFeature
+    {
 
-        private static readonly IValueConverter TheConverter = Converters.Toggle (Keywords.Interlace,
+        private static readonly IValueConverter TheConverter = Converters.Toggle(Keywords.Interlace,
             Keywords.Progressive);
 
-        public ScanMediaFeature () : base (FeatureNames.Scan) { }
+        public ScanMediaFeature() : base(FeatureNames.Scan) { }
 
         internal override IValueConverter Converter => TheConverter;
     }

@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class TopProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class TopProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.AutoLengthOrPercentConverter.OrDefault (Keywords.Auto);
+            Converters.AutoLengthOrPercentConverter.OrDefault(Keywords.Auto);
 
-        internal TopProperty () : base (PropertyNames.Top, PropertyFlags.Unitless | PropertyFlags.Animatable) { }
+        internal TopProperty() : base(PropertyNames.Top, PropertyFlags.Unitless | PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

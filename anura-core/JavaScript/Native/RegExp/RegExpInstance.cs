@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using Anura.JavaScript.Native.Object;
+﻿using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Anura.JavaScript.Native.RegExp
 {
@@ -16,24 +16,19 @@ namespace Anura.JavaScript.Native.RegExp
         private PropertyDescriptor _prototypeDescriptor;
 
         public RegExpInstance(Engine engine)
-            : base(engine, ObjectClass.RegExp)
-        {
+            : base(engine, ObjectClass.RegExp) {
             Source = regExpForMatchingAllCharacters;
         }
 
         public Regex Value { get; set; }
         public string Source { get; set; }
 
-        public string Flags
-        {
+        public string Flags {
             get => _flags;
-            set
-            {
+            set {
                 _flags = value;
-                foreach (var c in _flags)
-                {
-                    switch (c)
-                    {
+                foreach (var c in _flags) {
+                    switch (c) {
                         case 'i':
                             IgnoreCase = true;
                             break;
@@ -64,20 +59,16 @@ namespace Anura.JavaScript.Native.RegExp
         public bool Sticky { get; private set; }
         public bool FullUnicode { get; private set; }
 
-        public override PropertyDescriptor GetOwnProperty(JsValue property)
-        {
-            if (property == PropertyLastIndex)
-            {
+        public override PropertyDescriptor GetOwnProperty(JsValue property) {
+            if (property == PropertyLastIndex) {
                 return _prototypeDescriptor ?? PropertyDescriptor.Undefined;
             }
 
             return base.GetOwnProperty(property);
         }
 
-        protected internal override void SetOwnProperty(JsValue property, PropertyDescriptor desc)
-        {
-            if (property == PropertyLastIndex)
-            {
+        protected internal override void SetOwnProperty(JsValue property, PropertyDescriptor desc) {
+            if (property == PropertyLastIndex) {
                 _prototypeDescriptor = desc;
                 return;
             }
@@ -85,24 +76,19 @@ namespace Anura.JavaScript.Native.RegExp
             base.SetOwnProperty(property, desc);
         }
 
-        public override IEnumerable<KeyValuePair<JsValue, PropertyDescriptor>> GetOwnProperties()
-        {
-            if (_prototypeDescriptor != null)
-            {
+        public override IEnumerable<KeyValuePair<JsValue, PropertyDescriptor>> GetOwnProperties() {
+            if (_prototypeDescriptor != null) {
                 yield return new KeyValuePair<JsValue, PropertyDescriptor>(PropertyLastIndex, _prototypeDescriptor);
             }
 
-            foreach (var entry in base.GetOwnProperties())
-            {
+            foreach (var entry in base.GetOwnProperties()) {
                 yield return entry;
             }
         }
 
-        public override List<JsValue> GetOwnPropertyKeys(Types types)
-        {
+        public override List<JsValue> GetOwnPropertyKeys(Types types) {
             var keys = new List<JsValue>();
-            if (_prototypeDescriptor != null)
-            {
+            if (_prototypeDescriptor != null) {
                 keys.Add(PropertyLastIndex);
             }
 
@@ -110,10 +96,8 @@ namespace Anura.JavaScript.Native.RegExp
             return keys;
         }
 
-        public override bool HasOwnProperty(JsValue property)
-        {
-            if (property == PropertyLastIndex)
-            {
+        public override bool HasOwnProperty(JsValue property) {
+            if (property == PropertyLastIndex) {
                 return _prototypeDescriptor != null;
             }
 

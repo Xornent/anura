@@ -1,9 +1,9 @@
-using System;
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime.Interop;
+using Esprima.Ast;
+using System;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -13,18 +13,15 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private readonly JintExpression _right;
         private readonly BinaryOperator _operatorType;
 
-        private JintBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-        {
+        private JintBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             _left = Build(engine, expression.Left);
             _right = Build(engine, expression.Right);
             _operatorType = expression.Operator;
         }
 
-        internal static JintExpression Build(Engine engine, BinaryExpression expression)
-        {
+        internal static JintExpression Build(Engine engine, BinaryExpression expression) {
             JintBinaryExpression result;
-            switch (expression.Operator)
-            {
+            switch (expression.Operator) {
                 case BinaryOperator.StrictlyEqual:
                     result = new StrictlyEqualBinaryExpression(engine, expression);
                     break;
@@ -68,19 +65,19 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                 case BinaryOperator.RightShift:
                 case BinaryOperator.UnsignedRightShift:
                     result = new BitwiseBinaryExpression(engine, expression);
-                    break;                
+                    break;
                 case BinaryOperator.InstanceOf:
                     result = new InstanceOfBinaryExpression(engine, expression);
-                    break;                
+                    break;
                 case BinaryOperator.Exponentiation:
                     result = new ExponentiationBinaryExpression(engine, expression);
-                    break;                
+                    break;
                 case BinaryOperator.Modulo:
                     result = new ModuloBinaryExpression(engine, expression);
-                    break;                
+                    break;
                 case BinaryOperator.In:
                     result = new InBinaryExpression(engine, expression);
-                    break;                
+                    break;
                 default:
                     result = Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException<JintBinaryExpression>(nameof(_operatorType), "cannot handle operator");
                     break;
@@ -89,13 +86,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             if (expression.Operator != BinaryOperator.InstanceOf
                 && expression.Operator != BinaryOperator.In
                 && expression.Left is Literal leftLiteral
-                && expression.Right is Literal rightLiteral)
-            {
+                && expression.Right is Literal rightLiteral) {
                 var lval = JintLiteralExpression.ConvertToJsValue(leftLiteral);
                 var rval = JintLiteralExpression.ConvertToJsValue(rightLiteral);
 
-                if (!(lval is null) && !(rval is null))
-                {
+                if (!(lval is null) && !(rval is null)) {
                     // we have fixed result
                     return new JintConstantExpression(engine, expression, result.GetValue());
                 }
@@ -104,67 +99,55 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             return result;
         }
 
-        public override JsValue GetValue()
-        {
+        public override JsValue GetValue() {
             // need to notify correct node when taking shortcut
             _engine._lastSyntaxNode = _expression;
 
             // we always create a JsValue
-            return (JsValue) EvaluateInternal();
+            return (JsValue)EvaluateInternal();
         }
 
-        public static bool StrictlyEqual(JsValue x, JsValue y)
-        {
+        public static bool StrictlyEqual(JsValue x, JsValue y) {
             var typeX = x._type & ~InternalTypes.InternalFlags;
             var typeY = y._type & ~InternalTypes.InternalFlags;
 
-            if (typeX != typeY)
-            {
-                if (typeX == InternalTypes.Integer)
-                {
+            if (typeX != typeY) {
+                if (typeX == InternalTypes.Integer) {
                     typeX = InternalTypes.Number;
                 }
 
-                if (typeY == InternalTypes.Integer)
-                {
+                if (typeY == InternalTypes.Integer) {
                     typeY = InternalTypes.Number;
                 }
 
-                if (typeX != typeY)
-                {
+                if (typeX != typeY) {
                     return false;
                 }
             }
 
-            if (typeX == InternalTypes.Undefined || typeX == InternalTypes.Null)
-            {
+            if (typeX == InternalTypes.Undefined || typeX == InternalTypes.Null) {
                 return true;
             }
 
-            if (typeX == InternalTypes.Integer)
-            {
+            if (typeX == InternalTypes.Integer) {
                 return x.AsInteger() == y.AsInteger();
             }
 
-            if (typeX == InternalTypes.Number)
-            {
-                var nx = ((JsNumber) x)._value;
-                var ny = ((JsNumber) y)._value;
+            if (typeX == InternalTypes.Number) {
+                var nx = ((JsNumber)x)._value;
+                var ny = ((JsNumber)y)._value;
                 return !double.IsNaN(nx) && !double.IsNaN(ny) && nx == ny;
             }
 
-            if ((typeX & InternalTypes.String) != 0)
-            {
+            if ((typeX & InternalTypes.String) != 0) {
                 return x.AsStringWithoutTypeCheck() == y.AsStringWithoutTypeCheck();
             }
 
-            if (typeX == InternalTypes.Boolean)
-            {
-                return ((JsBoolean) x)._value == ((JsBoolean) y)._value;
+            if (typeX == InternalTypes.Boolean) {
+                return ((JsBoolean)x)._value == ((JsBoolean)y)._value;
             }
 
-            if ((typeX & InternalTypes.Object) != 0 && x.AsObject() is IObjectWrapper xw)
-            {
+            if ((typeX & InternalTypes.Object) != 0 && x.AsObject() is IObjectWrapper xw) {
                 var yw = y.AsObject() as IObjectWrapper;
                 if (yw == null)
                     return false;
@@ -176,12 +159,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class StrictlyEqualBinaryExpression : JintBinaryExpression
         {
-            public StrictlyEqualBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public StrictlyEqualBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
                 var equal = StrictlyEqual(left, right);
@@ -191,12 +172,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class StrictlyNotEqualBinaryExpression : JintBinaryExpression
         {
-            public StrictlyNotEqualBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public StrictlyNotEqualBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
                 return StrictlyEqual(left, right)
@@ -207,12 +186,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class LessBinaryExpression : JintBinaryExpression
         {
-            public LessBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public LessBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
                 var value = Compare(left, right);
@@ -225,12 +202,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class GreaterBinaryExpression : JintBinaryExpression
         {
-            public GreaterBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public GreaterBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
                 var value = Compare(right, left, false);
@@ -240,41 +215,36 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                     : value;
             }
         }
-        
+
         private sealed class PlusBinaryExpression : JintBinaryExpression
         {
-            public PlusBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public PlusBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
-                
-                if (AreIntegerOperands(left, right))
-                {
+
+                if (AreIntegerOperands(left, right)) {
                     return JsNumber.Create(left.AsInteger() + right.AsInteger());
                 }
 
                 var lprim = TypeConverter.ToPrimitive(left);
                 var rprim = TypeConverter.ToPrimitive(right);
                 return lprim.IsString() || rprim.IsString()
-                    ? (JsValue) JsString.Create(TypeConverter.ToString(lprim) + TypeConverter.ToString(rprim))
+                    ? (JsValue)JsString.Create(TypeConverter.ToString(lprim) + TypeConverter.ToString(rprim))
                     : JsNumber.Create(TypeConverter.ToNumber(lprim) + TypeConverter.ToNumber(rprim));
             }
         }
         private sealed class MinusBinaryExpression : JintBinaryExpression
         {
-            public MinusBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public MinusBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
-                
+
                 return AreIntegerOperands(left, right)
                     ? JsNumber.Create(left.AsInteger() - right.AsInteger())
                     : JsNumber.Create(TypeConverter.ToNumber(left) - TypeConverter.ToNumber(right));
@@ -283,22 +253,18 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class TimesBinaryExpression : JintBinaryExpression
         {
-            public TimesBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public TimesBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
-                
-                if (AreIntegerOperands(left, right))
-                {
-                    return JsNumber.Create((long) left.AsInteger() * right.AsInteger());
+
+                if (AreIntegerOperands(left, right)) {
+                    return JsNumber.Create((long)left.AsInteger() * right.AsInteger());
                 }
 
-                if (left.IsUndefined() || right.IsUndefined())
-                {
+                if (left.IsUndefined() || right.IsUndefined()) {
                     return Undefined.Instance;
                 }
 
@@ -308,12 +274,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class DivideBinaryExpression : JintBinaryExpression
         {
-            public DivideBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public DivideBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
 
@@ -325,13 +289,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         {
             private readonly bool _invert;
 
-            public EqualBinaryExpression(Engine engine, BinaryExpression expression, bool invert = false) : base(engine, expression)
-            {
+            public EqualBinaryExpression(Engine engine, BinaryExpression expression, bool invert = false) : base(engine, expression) {
                 _invert = invert;
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
 
@@ -345,21 +307,19 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         {
             private readonly bool _leftFirst;
 
-            public CompareBinaryExpression(Engine engine, BinaryExpression expression, bool leftFirst) : base(engine, expression)
-            {
+            public CompareBinaryExpression(Engine engine, BinaryExpression expression, bool leftFirst) : base(engine, expression) {
                 _leftFirst = leftFirst;
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var leftValue = _left.GetValue();
                 var rightValue = _right.GetValue();
-                
+
                 var left = _leftFirst ? leftValue : rightValue;
                 var right = _leftFirst ? rightValue : leftValue;
 
                 var value = Compare(left, right, _leftFirst);
-                return value.IsUndefined() || ((JsBoolean) value)._value
+                return value.IsUndefined() || ((JsBoolean)value)._value
                     ? JsBoolean.False
                     : JsBoolean.True;
             }
@@ -367,17 +327,14 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class InstanceOfBinaryExpression : JintBinaryExpression
         {
-            public InstanceOfBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public InstanceOfBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
 
-                if (!(right is FunctionInstance f))
-                {
+                if (!(right is FunctionInstance f)) {
                     return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "instanceof can only be used with a function object");
                 }
 
@@ -387,12 +344,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class ExponentiationBinaryExpression : JintBinaryExpression
         {
-            public ExponentiationBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public ExponentiationBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
 
@@ -401,17 +356,14 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         }
         private sealed class InBinaryExpression : JintBinaryExpression
         {
-            public InBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public InBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
 
-                if (!(right is ObjectInstance oi))
-                {
+                if (!(right is ObjectInstance oi)) {
                     return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "in can only be used with an object");
                 }
 
@@ -421,54 +373,46 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
         private sealed class ModuloBinaryExpression : JintBinaryExpression
         {
-            public ModuloBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public ModuloBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
 
-                if (AreIntegerOperands(left, right))
-                {
+                if (AreIntegerOperands(left, right)) {
                     var leftInteger = left.AsInteger();
                     var rightInteger = right.AsInteger();
-                    if (leftInteger > 0 && rightInteger != 0)
-                    {
+                    if (leftInteger > 0 && rightInteger != 0) {
                         return JsNumber.Create(leftInteger % rightInteger);
                     }
                 }
 
-                if (left.IsUndefined() || right.IsUndefined())
-                {
+                if (left.IsUndefined() || right.IsUndefined()) {
                     return Undefined.Instance;
                 }
 
-                return JsNumber.Create(TypeConverter.ToNumber(left) % TypeConverter.ToNumber(right));            }
+                return JsNumber.Create(TypeConverter.ToNumber(left) % TypeConverter.ToNumber(right));
+            }
         }
 
         private sealed class BitwiseBinaryExpression : JintBinaryExpression
         {
             private readonly BinaryOperator _operator;
 
-            public BitwiseBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression)
-            {
+            public BitwiseBinaryExpression(Engine engine, BinaryExpression expression) : base(engine, expression) {
                 _operator = expression.Operator;
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 var left = _left.GetValue();
                 var right = _right.GetValue();
 
-                if (AreIntegerOperands(left, right))
-                {
+                if (AreIntegerOperands(left, right)) {
                     int leftValue = left.AsInteger();
                     int rightValue = right.AsInteger();
-                    
-                    switch (_operator)
-                    {
+
+                    switch (_operator) {
                         case BinaryOperator.BitwiseAnd:
                             return JsNumber.Create(leftValue & rightValue);
 
@@ -481,27 +425,25 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                                 JsNumber.Create(leftValue ^ rightValue);
 
                         case BinaryOperator.LeftShift:
-                            return JsNumber.Create(leftValue << (int) ((uint) rightValue & 0x1F));
+                            return JsNumber.Create(leftValue << (int)((uint)rightValue & 0x1F));
 
                         case BinaryOperator.RightShift:
-                            return JsNumber.Create(leftValue >> (int) ((uint) rightValue & 0x1F));
+                            return JsNumber.Create(leftValue >> (int)((uint)rightValue & 0x1F));
 
                         case BinaryOperator.UnsignedRightShift:
-                            return JsNumber.Create((uint) leftValue >> (int) ((uint) rightValue & 0x1F));
+                            return JsNumber.Create((uint)leftValue >> (int)((uint)rightValue & 0x1F));
                         default:
                             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException<object>(nameof(_operator),
                                 "unknown shift operator");
                     }
-  
+
                 }
-                
+
                 return EvaluateNonInteger(left, right);
             }
 
-            private object EvaluateNonInteger(JsValue left, JsValue right)
-            {
-                switch (_operator)
-                {
+            private object EvaluateNonInteger(JsValue left, JsValue right) {
+                switch (_operator) {
                     case BinaryOperator.BitwiseAnd:
                         return JsNumber.Create(TypeConverter.ToInt32(left) & TypeConverter.ToInt32(right));
 
@@ -515,15 +457,15 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
                     case BinaryOperator.LeftShift:
                         return JsNumber.Create(TypeConverter.ToInt32(left) <<
-                                               (int) (TypeConverter.ToUint32(right) & 0x1F));
+                                               (int)(TypeConverter.ToUint32(right) & 0x1F));
 
                     case BinaryOperator.RightShift:
                         return JsNumber.Create(TypeConverter.ToInt32(left) >>
-                                               (int) (TypeConverter.ToUint32(right) & 0x1F));
+                                               (int)(TypeConverter.ToUint32(right) & 0x1F));
 
                     case BinaryOperator.UnsignedRightShift:
-                        return JsNumber.Create((uint) TypeConverter.ToInt32(left) >>
-                                               (int) (TypeConverter.ToUint32(right) & 0x1F));
+                        return JsNumber.Create((uint)TypeConverter.ToInt32(left) >>
+                                               (int)(TypeConverter.ToUint32(right) & 0x1F));
                     default:
                         return Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException<object>(nameof(_operator),
                             "unknown shift operator");

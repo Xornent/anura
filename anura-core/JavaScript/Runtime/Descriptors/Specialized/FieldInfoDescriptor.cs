@@ -1,6 +1,6 @@
-﻿using System.Globalization;
+﻿using Anura.JavaScript.Native;
+using System.Globalization;
 using System.Reflection;
-using Anura.JavaScript.Native;
 
 namespace Anura.JavaScript.Runtime.Descriptors.Specialized
 {
@@ -10,8 +10,7 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
         private readonly FieldInfo _fieldInfo;
         private readonly object _item;
 
-        public FieldInfoDescriptor(Engine engine, FieldInfo fieldInfo, object item) : base(PropertyFlag.CustomJsValue)
-        {
+        public FieldInfoDescriptor(Engine engine, FieldInfo fieldInfo, object item) : base(PropertyFlag.CustomJsValue) {
             _engine = engine;
             _fieldInfo = fieldInfo;
             _item = item;
@@ -19,23 +18,17 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
             Writable = !fieldInfo.Attributes.HasFlag(FieldAttributes.InitOnly) && engine.Options._IsClrWriteAllowed; // don't write to fields marked as readonly
         }
 
-        protected internal override JsValue CustomValue
-        {
+        protected internal override JsValue CustomValue {
             get => JsValue.FromObject(_engine, _fieldInfo.GetValue(_item));
-            set
-            {
+            set {
                 var currentValue = value;
                 object obj;
-                if (_fieldInfo.FieldType == typeof (JsValue))
-                {
+                if (_fieldInfo.FieldType == typeof(JsValue)) {
                     obj = currentValue;
-                }
-                else
-                {
+                } else {
                     // attempt to convert the JsValue to the target type
                     obj = currentValue.ToObject();
-                    if (obj.GetType() != _fieldInfo.FieldType)
-                    {
+                    if (obj.GetType() != _fieldInfo.FieldType) {
                         obj = _engine.ClrTypeConverter.Convert(obj, _fieldInfo.FieldType, CultureInfo.InvariantCulture);
                     }
                 }

@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly bool Tail;
 
         public TemplateElement(TemplateElementValue value, bool tail) :
-            base(Nodes.TemplateElement)
-        {
+            base(Nodes.TemplateElement) {
             Value = value;
             Tail = tail;
         }

@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum AnimationFillStyle : byte {
+namespace Anura.Styles
+{
+    public enum AnimationFillStyle : byte
+    {
         None,
         Forwards,
         Backwards,

@@ -1,6 +1,6 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Runtime.References;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -16,41 +16,33 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private JintExpression _propertyExpression;
         private JsValue _determinedProperty;
 
-        public JintMemberExpression(Engine engine, MemberExpression expression) : base(engine, expression)
-        {
+        public JintMemberExpression(Engine engine, MemberExpression expression) : base(engine, expression) {
             _initialized = false;
         }
 
-        protected override void Initialize()
-        {
-            var expression = (MemberExpression) _expression;
+        protected override void Initialize() {
+            var expression = (MemberExpression)_expression;
             _objectExpression = Build(_engine, expression.Object);
             _objectIdentifierExpression = _objectExpression as JintIdentifierExpression;
             _objectThisExpression = _objectExpression as JintThisExpression;
 
-            if (!expression.Computed)
-            {
-                _determinedProperty = ((Identifier) expression.Property).Name;
-            }
-            else if (expression.Property.Type == Nodes.Literal)
-            {
-                _determinedProperty = JintLiteralExpression.ConvertToJsValue((Literal) expression.Property);
+            if (!expression.Computed) {
+                _determinedProperty = ((Identifier)expression.Property).Name;
+            } else if (expression.Property.Type == Nodes.Literal) {
+                _determinedProperty = JintLiteralExpression.ConvertToJsValue((Literal)expression.Property);
             }
 
-            if (_determinedProperty is null)
-            {
+            if (_determinedProperty is null) {
                 _propertyExpression = Build(_engine, expression.Property);
             }
         }
 
-        protected override object EvaluateInternal()
-        {
+        protected override object EvaluateInternal() {
             string baseReferenceName = null;
             JsValue baseValue = null;
             var isStrictModeCode = StrictModeScope.IsStrictModeCode;
 
-            if (_objectIdentifierExpression != null)
-            {
+            if (_objectIdentifierExpression != null) {
                 baseReferenceName = _objectIdentifierExpression.ExpressionName;
                 var strict = isStrictModeCode;
                 TryGetIdentifierEnvironmentWithBindingValue(
@@ -58,31 +50,25 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                     _objectIdentifierExpression.ExpressionName,
                     out _,
                     out baseValue);
-            }
-            else if (_objectThisExpression != null)
-            {
+            } else if (_objectThisExpression != null) {
                 baseValue = _objectThisExpression.GetValue();
             }
 
-            if (baseValue is null)
-            {
+            if (baseValue is null) {
                 // fast checks failed
                 var baseReference = _objectExpression.Evaluate();
-                if (baseReference is Reference reference)
-                {
+                if (baseReference is Reference reference) {
                     baseReferenceName = reference.GetReferencedName().ToString();
                     baseValue = _engine.GetValue(reference, false);
                     _engine._referencePool.Return(reference);
-                }
-                else
-                {
+                } else {
                     baseValue = _engine.GetValue(baseReference, false);
                 }
             }
 
             var property = _determinedProperty ?? _propertyExpression.GetValue();
-            TypeConverter.CheckObjectCoercible(_engine, baseValue, (MemberExpression) _expression, baseReferenceName);
-            return _engine._referencePool.Rent(baseValue,  TypeConverter.ToPropertyKey(property), isStrictModeCode);
+            TypeConverter.CheckObjectCoercible(_engine, baseValue, (MemberExpression)_expression, baseReferenceName);
+            return _engine._referencePool.Rent(baseValue, TypeConverter.ToPropertyKey(property), isStrictModeCode);
         }
     }
 }

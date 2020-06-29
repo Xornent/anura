@@ -10,8 +10,7 @@ namespace Esprima.Ast
         public readonly Expression Callee;
 
         public CallExpression(Expression callee, in NodeList<ArgumentListElement> args) :
-            base(Nodes.CallExpression)
-        {
+            base(Nodes.CallExpression) {
             Callee = callee;
             _arguments = args;
         }

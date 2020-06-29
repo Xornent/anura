@@ -9,8 +9,7 @@ namespace Esprima.Ast
         public readonly ClassBody Body;
 
         public ClassExpression(Identifier id, Expression superClass, ClassBody body) :
-            base(Nodes.ClassExpression)
-        {
+            base(Nodes.ClassExpression) {
             Id = id;
             SuperClass = superClass;
             Body = body;

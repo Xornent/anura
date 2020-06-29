@@ -1,6 +1,6 @@
+using Esprima.Utils;
 using System;
 using System.Collections.Generic;
-using Esprima.Utils;
 
 namespace Esprima.Ast
 {
@@ -44,18 +44,15 @@ namespace Esprima.Ast
         public readonly Expression Right;
 
         public AssignmentExpression(string op, INode left, Expression right) :
-            base(Nodes.AssignmentExpression)
-        {
+            base(Nodes.AssignmentExpression) {
             Operator = AssignmentExpression.ParseAssignmentOperator(op);
             Left = left;
             Right = right;
         }
 
 
-        public static AssignmentOperator ParseAssignmentOperator(string op)
-        {
-            switch (op)
-            {
+        public static AssignmentOperator ParseAssignmentOperator(string op) {
+            switch (op) {
                 case "=":
                     return AssignmentOperator.Assign;
                 case "+=":

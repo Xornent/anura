@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum FontSize : byte {
+namespace Anura.Styles
+{
+    public enum FontSize : byte
+    {
         Custom,
         Tiny,
         Little,

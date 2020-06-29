@@ -1,13 +1,16 @@
-namespace Anura.Styles {
-    public class RenderDevice {
-        public enum Kind : byte {
+namespace Anura.Styles
+{
+    public class RenderDevice
+    {
+        public enum Kind : byte
+        {
             Screen,
             Printer,
             Speech,
             Other
         }
 
-        public RenderDevice (int width, int height) {
+        public RenderDevice(int width, int height) {
             DeviceWidth = width;
             DeviceHeight = height;
             ViewPortWidth = width;

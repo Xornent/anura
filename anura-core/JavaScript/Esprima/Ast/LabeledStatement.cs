@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly Statement Body;
 
         public LabeledStatement(Identifier label, Statement body) :
-            base(Nodes.LabeledStatement)
-        {
+            base(Nodes.LabeledStatement) {
             Label = label;
             Body = body;
             body.LabelSet = label;

@@ -7,8 +7,7 @@ namespace Esprima.Ast
         private readonly NodeList<ArrayExpressionElement> _elements;
 
         public ArrayExpression(in NodeList<ArrayExpressionElement> elements) :
-            base(Nodes.ArrayExpression)
-        {
+            base(Nodes.ArrayExpression) {
             _elements = elements;
         }
 

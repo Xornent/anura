@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Anura.JavaScript.Native;
+using Anura.JavaScript.Native.Object;
+using Anura.JavaScript.Runtime.Interop;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using Anura.JavaScript.Native;
-using Anura.JavaScript.Native.Object;
-using Anura.JavaScript.Runtime.Interop;
 
 namespace Anura.JavaScript
 {
@@ -31,8 +31,7 @@ namespace Anura.JavaScript
         /// When called, doesn't initialize the global scope.
         /// Can be useful in lightweight scripts for performance reason.
         /// </summary>
-        public Options DiscardGlobal(bool discard = true)
-        {
+        public Options DiscardGlobal(bool discard = true) {
             _discardGlobal = discard;
             return this;
         }
@@ -40,8 +39,7 @@ namespace Anura.JavaScript
         /// <summary>
         /// Run the script in strict mode.
         /// </summary>
-        public Options Strict(bool strict = true)
-        {
+        public Options Strict(bool strict = true) {
             _strict = strict;
             return this;
         }
@@ -53,8 +51,7 @@ namespace Anura.JavaScript
         /// Because the <code>debugger</code> statement can start the
         /// Visual Studio debugger, is it disabled by default
         /// </remarks>
-        public Options AllowDebuggerStatement(bool allowDebuggerStatement = true)
-        {
+        public Options AllowDebuggerStatement(bool allowDebuggerStatement = true) {
             _allowDebuggerStatement = allowDebuggerStatement;
             return this;
         }
@@ -62,8 +59,7 @@ namespace Anura.JavaScript
         /// <summary>
         /// Allow to run the script in debug mode.
         /// </summary>
-        public Options DebugMode(bool debugMode = true)
-        {
+        public Options DebugMode(bool debugMode = true) {
             IsDebugMode = debugMode;
             return this;
         }
@@ -71,8 +67,7 @@ namespace Anura.JavaScript
         /// <summary>
         /// Adds a <see cref="IObjectConverter"/> instance to convert CLR types to <see cref="JsValue"/>
         /// </summary>
-        public Options AddObjectConverter(IObjectConverter objectConverter)
-        {
+        public Options AddObjectConverter(IObjectConverter objectConverter) {
             _objectConverters.Add(objectConverter);
             return this;
         }
@@ -82,8 +77,7 @@ namespace Anura.JavaScript
         /// ObjectInstance using class ObjectWrapper. This function can be used to
         /// register a handler for a customized handling.
         /// </summary>
-        public Options SetWrapObjectHandler(Func<Engine, object, ObjectInstance> wrapObjectHandler)
-        {
+        public Options SetWrapObjectHandler(Func<Engine, object, ObjectInstance> wrapObjectHandler) {
             _wrapObjectHandler = wrapObjectHandler;
             return this;
         }
@@ -91,16 +85,14 @@ namespace Anura.JavaScript
         /// <summary>
         /// Allows scripts to call CLR types directly like <example>System.IO.File</example>
         /// </summary>
-        public Options AllowClr(params Assembly[] assemblies)
-        {
+        public Options AllowClr(params Assembly[] assemblies) {
             _allowClr = true;
             _lookupAssemblies.AddRange(assemblies);
             _lookupAssemblies = _lookupAssemblies.Distinct().ToList();
             return this;
         }
 
-        public Options AllowClrWrite(bool allow = true)
-        {
+        public Options AllowClrWrite(bool allow = true) {
             _allowClrWrite = allow;
             return this;
         }
@@ -110,8 +102,7 @@ namespace Anura.JavaScript
         /// can be used in at try/catch statement. By default these exceptions are bubbled
         /// to the CLR host and interrupt the script execution.
         /// </summary>
-        public Options CatchClrExceptions()
-        {
+        public Options CatchClrExceptions() {
             CatchClrExceptions(_ => true);
             return this;
         }
@@ -121,29 +112,24 @@ namespace Anura.JavaScript
         /// can be used in at try/catch statement. By default these exceptions are bubbled
         /// to the CLR host and interrupt the script execution.
         /// </summary>
-        public Options CatchClrExceptions(Predicate<Exception> handler)
-        {
+        public Options CatchClrExceptions(Predicate<Exception> handler) {
             _clrExceptionsHandler = handler;
             return this;
         }
 
-        public Options Constraint(IConstraint constraint)
-        {
-            if (constraint != null)
-            {
+        public Options Constraint(IConstraint constraint) {
+            if (constraint != null) {
                 _constraints.Add(constraint);
             }
             return this;
         }
 
-        public Options WithoutConstraint(Predicate<IConstraint> predicate)
-        {
+        public Options WithoutConstraint(Predicate<IConstraint> predicate) {
             _constraints.RemoveAll(predicate);
             return this;
         }
 
-        public Options RegexTimeoutInterval(TimeSpan regexTimeoutInterval)
-        {
+        public Options RegexTimeoutInterval(TimeSpan regexTimeoutInterval) {
             _regexTimeoutInterval = regexTimeoutInterval;
             return this;
         }
@@ -157,26 +143,22 @@ namespace Anura.JavaScript
         /// b) In case max depth is equal to n it means that in one scope function can be called no more than n times.
         /// </param>
         /// <returns>Options instance for fluent syntax</returns>
-        public Options LimitRecursion(int maxRecursionDepth = 0)
-        {
+        public Options LimitRecursion(int maxRecursionDepth = 0) {
             _maxRecursionDepth = maxRecursionDepth;
             return this;
         }
 
-        public Options Culture(CultureInfo cultureInfo)
-        {
+        public Options Culture(CultureInfo cultureInfo) {
             _culture = cultureInfo;
             return this;
         }
 
-        public Options LocalTimeZone(TimeZoneInfo timeZoneInfo)
-        {
+        public Options LocalTimeZone(TimeZoneInfo timeZoneInfo) {
             _localTimeZone = timeZoneInfo;
             return this;
         }
 
-        public Options SetReferencesResolver(IReferenceResolver resolver)
-        {
+        public Options SetReferencesResolver(IReferenceResolver resolver) {
             _referenceResolver = resolver;
             return this;
         }
@@ -211,6 +193,6 @@ namespace Anura.JavaScript
 
         internal TimeZoneInfo _LocalTimeZone => _localTimeZone;
 
-        internal IReferenceResolver  ReferenceResolver => _referenceResolver;
+        internal IReferenceResolver ReferenceResolver => _referenceResolver;
     }
 }

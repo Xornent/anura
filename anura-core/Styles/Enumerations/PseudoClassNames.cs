@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public static class PseudoClassNames {
+namespace Anura.Styles
+{
+    public static class PseudoClassNames
+    {
         public static readonly string Root = "root";
         public static readonly string Scope = "scope";
         public static readonly string OnlyType = "only-of-type";

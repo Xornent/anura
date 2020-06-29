@@ -1,7 +1,7 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Anura.JavaScript.Runtime.Interpreter.Expressions;
 using Esprima;
 using Esprima.Ast;
-using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -9,8 +9,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
     {
         protected readonly T _statement;
 
-        protected JintStatement(Engine engine, T statement) : base(engine, statement)
-        {
+        protected JintStatement(Engine engine, T statement) : base(engine, statement) {
             _statement = statement;
         }
     }
@@ -23,20 +22,17 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
         // require sub-classes to set to false explicitly to skip virtual call
         protected bool _initialized = true;
 
-        protected JintStatement(Engine engine, Statement statement)
-        {
+        protected JintStatement(Engine engine, Statement statement) {
             _engine = engine;
             _statement = statement;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Completion Execute()
-        {
+        public Completion Execute() {
             _engine._lastSyntaxNode = _statement;
             _engine.RunBeforeExecuteStatementChecks(_statement);
 
-            if (!_initialized)
-            {
+            if (!_initialized) {
                 Initialize();
                 _initialized = true;
             }
@@ -51,74 +47,71 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
         /// <summary>
         /// Opportunity to build one-time structures and caching based on lexical context.
         /// </summary>
-        protected virtual void Initialize()
-        {
+        protected virtual void Initialize() {
         }
 
-        protected internal static JintStatement Build(Engine engine, Statement statement)
-        {
-            switch (statement.Type)
-            {
+        protected internal static JintStatement Build(Engine engine, Statement statement) {
+            switch (statement.Type) {
                 case Nodes.BlockStatement:
-                    var statementListItems = ((BlockStatement) statement).Body;
+                    var statementListItems = ((BlockStatement)statement).Body;
                     return new JintBlockStatement(engine, new JintStatementList(engine, statement, statementListItems));
 
                 case Nodes.ReturnStatement:
-                    return new JintReturnStatement(engine, (ReturnStatement) statement);
+                    return new JintReturnStatement(engine, (ReturnStatement)statement);
 
                 case Nodes.VariableDeclaration:
-                    return new JintVariableDeclaration(engine, (VariableDeclaration) statement);
+                    return new JintVariableDeclaration(engine, (VariableDeclaration)statement);
 
                 case Nodes.BreakStatement:
-                    return new JintBreakStatement(engine, (BreakStatement) statement);
+                    return new JintBreakStatement(engine, (BreakStatement)statement);
 
                 case Nodes.ContinueStatement:
-                    return new JintContinueStatement(engine, (ContinueStatement) statement);
+                    return new JintContinueStatement(engine, (ContinueStatement)statement);
 
                 case Nodes.DoWhileStatement:
-                    return new JintDoWhileStatement(engine, (DoWhileStatement) statement);
+                    return new JintDoWhileStatement(engine, (DoWhileStatement)statement);
 
                 case Nodes.EmptyStatement:
-                    return new JintEmptyStatement(engine, (EmptyStatement) statement);
+                    return new JintEmptyStatement(engine, (EmptyStatement)statement);
 
                 case Nodes.ExpressionStatement:
-                    return new JintExpressionStatement(engine, (ExpressionStatement) statement);
+                    return new JintExpressionStatement(engine, (ExpressionStatement)statement);
 
                 case Nodes.ForStatement:
-                    return new JintForStatement(engine, (ForStatement) statement);
+                    return new JintForStatement(engine, (ForStatement)statement);
 
                 case Nodes.ForInStatement:
-                    return new JintForInStatement(engine, (ForInStatement) statement);
+                    return new JintForInStatement(engine, (ForInStatement)statement);
 
                 case Nodes.ForOfStatement:
-                    return new JintForOfStatement(engine, (ForOfStatement) statement);
+                    return new JintForOfStatement(engine, (ForOfStatement)statement);
 
                 case Nodes.IfStatement:
-                    return new JintIfStatement(engine, (IfStatement) statement);
+                    return new JintIfStatement(engine, (IfStatement)statement);
 
                 case Nodes.LabeledStatement:
-                    return new JintLabeledStatement(engine, (LabeledStatement) statement);
+                    return new JintLabeledStatement(engine, (LabeledStatement)statement);
 
                 case Nodes.SwitchStatement:
-                    return new JintSwitchStatement(engine, (SwitchStatement) statement);
+                    return new JintSwitchStatement(engine, (SwitchStatement)statement);
 
                 case Nodes.FunctionDeclaration:
-                    return new JintFunctionDeclarationStatement(engine, (FunctionDeclaration) statement);
+                    return new JintFunctionDeclarationStatement(engine, (FunctionDeclaration)statement);
 
                 case Nodes.ThrowStatement:
-                    return new JintThrowStatement(engine, (ThrowStatement) statement);
+                    return new JintThrowStatement(engine, (ThrowStatement)statement);
 
                 case Nodes.TryStatement:
-                    return new JintTryStatement(engine, (TryStatement) statement);
+                    return new JintTryStatement(engine, (TryStatement)statement);
 
                 case Nodes.WhileStatement:
-                    return new JintWhileStatement(engine, (WhileStatement) statement);
+                    return new JintWhileStatement(engine, (WhileStatement)statement);
 
                 case Nodes.WithStatement:
-                    return new JintWithStatement(engine, (WithStatement) statement);
+                    return new JintWithStatement(engine, (WithStatement)statement);
 
                 case Nodes.DebuggerStatement:
-                    return new JintDebuggerStatement(engine, (DebuggerStatement) statement);
+                    return new JintDebuggerStatement(engine, (DebuggerStatement)statement);
 
                 case Nodes.Program:
                     return new JintScript(engine, statement as Script ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException<Script>("modules not supported"));
@@ -128,13 +121,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
             }
         }
 
-        internal static Completion? FastResolve(IStatementListItem statement)
-        {
-            if (statement is ReturnStatement rs && rs.Argument is Literal l)
-            {
+        internal static Completion? FastResolve(IStatementListItem statement) {
+            if (statement is ReturnStatement rs && rs.Argument is Literal l) {
                 var jsValue = JintLiteralExpression.ConvertToJsValue(l);
-                if (jsValue != null)
-                {
+                if (jsValue != null) {
                     return new Completion(CompletionType.Return, jsValue, null, rs.Location);
                 }
             }

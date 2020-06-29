@@ -1,22 +1,20 @@
-﻿using System.Collections.Generic;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Iterator;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
+using System.Collections.Generic;
 
 namespace Anura.JavaScript.Native.Object
 {
     public sealed class ObjectConstructor : FunctionInstance, IConstructor
     {
         private ObjectConstructor(Engine engine)
-            : base(engine, "Object", null, null, false)
-        {
+            : base(engine, "Object", null, null, false) {
         }
 
-        public static ObjectConstructor CreateObjectConstructor(Engine engine)
-        {
+        public static ObjectConstructor CreateObjectConstructor(Engine engine) {
             var obj = new ObjectConstructor(engine);
 
             obj.PrototypeObject = ObjectPrototype.CreatePrototypeObject(engine, obj);
@@ -27,8 +25,7 @@ namespace Anura.JavaScript.Native.Object
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             _prototype = Engine.Function.PrototypeObject;
 
             const PropertyFlag propertyFlags = PropertyFlag.Configurable | PropertyFlag.Writable;
@@ -60,29 +57,23 @@ namespace Anura.JavaScript.Native.Object
             SetProperties(properties);
         }
 
-        private JsValue Assign(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Assign(JsValue thisObject, JsValue[] arguments) {
             var to = TypeConverter.ToObject(_engine, arguments.At(0));
-            if (arguments.Length < 2)
-            {
+            if (arguments.Length < 2) {
                 return to;
             }
 
-            for (var i = 1; i < arguments.Length; i++)
-            {
+            for (var i = 1; i < arguments.Length; i++) {
                 var nextSource = arguments[i];
-                if (nextSource.IsNullOrUndefined())
-                {
+                if (nextSource.IsNullOrUndefined()) {
                     continue;
                 }
 
                 var from = TypeConverter.ToObject(_engine, nextSource);
                 var keys = from.GetOwnPropertyKeys();
-                foreach (var nextKey in keys)
-                {
+                foreach (var nextKey in keys) {
                     var desc = from.GetOwnProperty(nextKey);
-                    if (desc != PropertyDescriptor.Undefined && desc.Enumerable)
-                    {
+                    if (desc != PropertyDescriptor.Undefined && desc.Enumerable) {
                         var propValue = from.Get(nextKey);
                         to.Set(nextKey, propValue, throwOnError: true);
                     }
@@ -91,15 +82,13 @@ namespace Anura.JavaScript.Native.Object
             return to;
         }
 
-        private JsValue Entries(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Entries(JsValue thisObject, JsValue[] arguments) {
             var obj = TypeConverter.ToObject(_engine, arguments.At(0));
             var nameList = obj.EnumerableOwnPropertyNames(EnumerableOwnPropertyNamesKind.KeyValue);
             return nameList;
         }
 
-        private JsValue FromEntries(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue FromEntries(JsValue thisObject, JsValue[] arguments) {
             var iterable = arguments.At(0);
             TypeConverter.CheckObjectCoercible(_engine, iterable);
 
@@ -113,8 +102,7 @@ namespace Anura.JavaScript.Native.Object
             return obj;
         }
 
-        private static JsValue Is(JsValue thisObject, JsValue[] arguments)
-        {
+        private static JsValue Is(JsValue thisObject, JsValue[] arguments) {
             return SameValue(arguments.At(0), arguments.At(1));
         }
 
@@ -126,15 +114,12 @@ namespace Anura.JavaScript.Native.Object
         /// <param name="thisObject"></param>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
-            if (arguments.Length == 0)
-            {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
+            if (arguments.Length == 0) {
                 return Construct(arguments);
             }
 
-            if(arguments[0].IsNullOrUndefined())
-            {
+            if (arguments[0].IsNullOrUndefined()) {
                 return Construct(arguments);
             }
 
@@ -144,24 +129,19 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1
         /// </summary>
-        public ObjectInstance Construct(JsValue[] arguments)
-        {
+        public ObjectInstance Construct(JsValue[] arguments) {
             return Construct(arguments, this);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
-            if (arguments.Length > 0)
-            {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
+            if (arguments.Length > 0) {
                 var value = arguments[0];
-                if (value is ObjectInstance oi)
-                {
+                if (value is ObjectInstance oi) {
                     return oi;
                 }
 
                 var type = value.Type;
-                if (type == Types.String || type == Types.Number || type == Types.Boolean)
-                {
+                if (type == Types.String || type == Types.Number || type == Types.Boolean) {
                     return TypeConverter.ToObject(_engine, value);
                 }
             }
@@ -174,49 +154,42 @@ namespace Anura.JavaScript.Native.Object
             return obj;
         }
 
-        internal ObjectInstance Construct(int propertyCount)
-        {
+        internal ObjectInstance Construct(int propertyCount) {
             var obj = new ObjectInstance(_engine)
             {
                 _prototype = Engine.Object.PrototypeObject,
             };
 
-            obj.SetProperties(propertyCount > 0  ? new PropertyDictionary(propertyCount, checkExistingKeys: true) : null);
+            obj.SetProperties(propertyCount > 0 ? new PropertyDictionary(propertyCount, checkExistingKeys: true) : null);
 
             return obj;
         }
 
-        public JsValue GetPrototypeOf(JsValue thisObject, JsValue[] arguments)
-        {
+        public JsValue GetPrototypeOf(JsValue thisObject, JsValue[] arguments) {
             var obj = TypeConverter.ToObject(_engine, arguments.At(0));
             return obj.Prototype ?? Null;
         }
 
-        private JsValue SetPrototypeOf(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue SetPrototypeOf(JsValue thisObject, JsValue[] arguments) {
             var oArg = arguments.At(0);
             TypeConverter.CheckObjectCoercible(_engine, oArg);
 
             var prototype = arguments.At(1);
-            if (!prototype.IsObject() && !prototype.IsNull())
-            {
+            if (!prototype.IsObject() && !prototype.IsNull()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, $"Object prototype may only be an Object or null: {prototype}");
             }
 
-            if (!(oArg is ObjectInstance o))
-            {
+            if (!(oArg is ObjectInstance o)) {
                 return oArg;
             }
 
-            if (!o.SetPrototypeOf(prototype))
-            {
+            if (!o.SetPrototypeOf(prototype)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
             return o;
         }
 
-        internal JsValue GetOwnPropertyDescriptor(JsValue thisObject, JsValue[] arguments)
-        {
+        internal JsValue GetOwnPropertyDescriptor(JsValue thisObject, JsValue[] arguments) {
             var o = TypeConverter.ToObject(_engine, arguments.At(0));
 
             var p = arguments.At(1);
@@ -226,42 +199,35 @@ namespace Anura.JavaScript.Native.Object
             return PropertyDescriptor.FromPropertyDescriptor(Engine, desc);
         }
 
-        private JsValue GetOwnPropertyDescriptors(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue GetOwnPropertyDescriptors(JsValue thisObject, JsValue[] arguments) {
             var o = TypeConverter.ToObject(_engine, arguments.At(0));
             var ownKeys = o.GetOwnPropertyKeys();
             var descriptors = _engine.Object.Construct(0);
-            foreach (var key in ownKeys)
-            {
+            foreach (var key in ownKeys) {
                 var desc = o.GetOwnProperty(key);
                 var descriptor = PropertyDescriptor.FromPropertyDescriptor(Engine, desc);
-                if (descriptor != Undefined)
-                {
+                if (descriptor != Undefined) {
                     descriptors.CreateDataProperty(key, descriptor);
                 }
             }
             return descriptors;
         }
 
-        public JsValue GetOwnPropertyNames(JsValue thisObject, JsValue[] arguments)
-        {
+        public JsValue GetOwnPropertyNames(JsValue thisObject, JsValue[] arguments) {
             var o = TypeConverter.ToObject(_engine, arguments.At(0));
             var names = o.GetOwnPropertyKeys(Types.String);
             return _engine.Array.Construct(names.ToArray());
         }
 
-        private JsValue GetOwnPropertySymbols(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue GetOwnPropertySymbols(JsValue thisObject, JsValue[] arguments) {
             var o = TypeConverter.ToObject(_engine, arguments.At(0));
             var keys = o.GetOwnPropertyKeys(Types.Symbol);
             return _engine.Array.Construct(keys.ToArray());
         }
 
-        private JsValue Create(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Create(JsValue thisObject, JsValue[] arguments) {
             var prototype = arguments.At(0);
-            if (!prototype.IsObject() && !prototype.IsNull())
-            {
+            if (!prototype.IsObject() && !prototype.IsNull()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Object prototype may only be an Object or null: " + prototype);
             }
 
@@ -269,8 +235,7 @@ namespace Anura.JavaScript.Native.Object
             obj._prototype = prototype.IsNull() ? null : prototype.AsObject();
 
             var properties = arguments.At(1);
-            if (!properties.IsUndefined())
-            {
+            if (!properties.IsUndefined()) {
                 var jsValues = _engine._jsValueArrayPool.RentArray(2);
                 jsValues[0] = obj;
                 jsValues[1] = properties;
@@ -281,8 +246,7 @@ namespace Anura.JavaScript.Native.Object
             return obj;
         }
 
-        private JsValue DefineProperty(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue DefineProperty(JsValue thisObject, JsValue[] arguments) {
             var o = arguments.As<ObjectInstance>(0, _engine);
             var p = arguments.At(1);
             var name = TypeConverter.ToPropertyKey(p);
@@ -294,16 +258,13 @@ namespace Anura.JavaScript.Native.Object
             return o;
         }
 
-        private JsValue DefineProperties(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue DefineProperties(JsValue thisObject, JsValue[] arguments) {
             var o = arguments.As<ObjectInstance>(0, _engine);
             var properties = arguments.At(1);
             var props = TypeConverter.ToObject(Engine, properties);
             var descriptors = new List<KeyValuePair<JsValue, PropertyDescriptor>>();
-            foreach (var p in props.GetOwnProperties())
-            {
-                if (!p.Value.Enumerable)
-                {
+            foreach (var p in props.GetOwnProperties()) {
+                if (!p.Value.Enumerable) {
                     continue;
                 }
 
@@ -311,27 +272,22 @@ namespace Anura.JavaScript.Native.Object
                 var desc = PropertyDescriptor.ToPropertyDescriptor(Engine, descObj);
                 descriptors.Add(new KeyValuePair<JsValue, PropertyDescriptor>(p.Key, desc));
             }
-            foreach (var pair in descriptors)
-            {
+            foreach (var pair in descriptors) {
                 o.DefinePropertyOrThrow(pair.Key, pair.Value);
             }
 
             return o;
         }
 
-        private JsValue Seal(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is ObjectInstance o))
-            {
+        private JsValue Seal(JsValue thisObject, JsValue[] arguments) {
+            if (!(arguments.At(0) is ObjectInstance o)) {
                 return arguments.At(0);
             }
 
             var properties = new List<KeyValuePair<JsValue, PropertyDescriptor>>(o.GetOwnProperties());
-            foreach (var prop in properties)
-            {
+            foreach (var prop in properties) {
                 var propertyDescriptor = prop.Value;
-                if (propertyDescriptor.Configurable)
-                {
+                if (propertyDescriptor.Configurable) {
                     propertyDescriptor.Configurable = false;
                     FastSetProperty(prop.Key, propertyDescriptor);
                 }
@@ -344,27 +300,21 @@ namespace Anura.JavaScript.Native.Object
             return o;
         }
 
-        private static JsValue Freeze(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is ObjectInstance o))
-            {
+        private static JsValue Freeze(JsValue thisObject, JsValue[] arguments) {
+            if (!(arguments.At(0) is ObjectInstance o)) {
                 return arguments.At(0);
             }
 
-            foreach (var p in o.GetOwnProperties())
-            {
+            foreach (var p in o.GetOwnProperties()) {
                 var desc = o.GetOwnProperty(p.Key);
-                if (desc.IsDataDescriptor())
-                {
-                    if (desc.Writable)
-                    {
+                if (desc.IsDataDescriptor()) {
+                    if (desc.Writable) {
                         var mutable = desc;
                         mutable.Writable = false;
                         desc = mutable;
                     }
                 }
-                if (desc.Configurable)
-                {
+                if (desc.Configurable) {
                     var mutable = desc;
                     mutable.Configurable = false;
                     desc = mutable;
@@ -377,10 +327,8 @@ namespace Anura.JavaScript.Native.Object
             return o;
         }
 
-        private static JsValue PreventExtensions(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is ObjectInstance o))
-            {
+        private static JsValue PreventExtensions(JsValue thisObject, JsValue[] arguments) {
+            if (!(arguments.At(0) is ObjectInstance o)) {
                 return arguments.At(0);
             }
 
@@ -388,78 +336,62 @@ namespace Anura.JavaScript.Native.Object
             return o;
         }
 
-        private static JsValue IsSealed(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is ObjectInstance o))
-            {
+        private static JsValue IsSealed(JsValue thisObject, JsValue[] arguments) {
+            if (!(arguments.At(0) is ObjectInstance o)) {
                 return arguments.At(0);
             }
 
-            foreach (var prop in o.GetOwnProperties())
-            {
-                if (prop.Value.Configurable)
-                {
+            foreach (var prop in o.GetOwnProperties()) {
+                if (prop.Value.Configurable) {
                     return false;
                 }
             }
 
-            if (o.Extensible == false)
-            {
+            if (o.Extensible == false) {
                 return true;
             }
 
             return false;
         }
 
-        private static JsValue IsFrozen(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is ObjectInstance o))
-            {
+        private static JsValue IsFrozen(JsValue thisObject, JsValue[] arguments) {
+            if (!(arguments.At(0) is ObjectInstance o)) {
                 return arguments.At(0);
             }
 
-            foreach (var pair in o.GetOwnProperties())
-            {
+            foreach (var pair in o.GetOwnProperties()) {
                 var desc = pair.Value;
-                if (desc.IsDataDescriptor())
-                {
-                    if (desc.Writable)
-                    {
+                if (desc.IsDataDescriptor()) {
+                    if (desc.Writable) {
                         return false;
                     }
                 }
-                if (desc.Configurable)
-                {
+                if (desc.Configurable) {
                     return false;
                 }
             }
 
-            if (o.Extensible == false)
-            {
+            if (o.Extensible == false) {
                 return true;
             }
 
             return false;
         }
 
-        private static JsValue IsExtensible(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is ObjectInstance o))
-            {
+        private static JsValue IsExtensible(JsValue thisObject, JsValue[] arguments) {
+            if (!(arguments.At(0) is ObjectInstance o)) {
                 return arguments.At(0);
             }
 
             return o.Extensible;
         }
 
-        private JsValue Keys(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Keys(JsValue thisObject, JsValue[] arguments) {
             var o = TypeConverter.ToObject(_engine, arguments.At(0));
             return o.EnumerableOwnPropertyNames(EnumerableOwnPropertyNamesKind.Key);
         }
 
-        private JsValue Values(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Values(JsValue thisObject, JsValue[] arguments) {
             var o = TypeConverter.ToObject(_engine, arguments.At(0));
             return o.EnumerableOwnPropertyNames(EnumerableOwnPropertyNamesKind.Value);
         }
@@ -468,13 +400,11 @@ namespace Anura.JavaScript.Native.Object
         {
             internal static readonly CreateDataPropertyOnObject Instance = new CreateDataPropertyOnObject();
 
-            private CreateDataPropertyOnObject()
-            {
+            private CreateDataPropertyOnObject() {
             }
 
-            public JsValue Call(JsValue thisObject, JsValue[] arguments)
-            {
-                var o = (ObjectInstance) thisObject;
+            public JsValue Call(JsValue thisObject, JsValue[] arguments) {
+                var o = (ObjectInstance)thisObject;
                 var key = arguments.At(0);
                 var value = arguments.At(1);
                 var propertyKey = TypeConverter.ToPropertyKey(key);

@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly TemplateLiteral Quasi;
 
         public TaggedTemplateExpression(Expression tag, TemplateLiteral quasi) :
-            base(Nodes.TaggedTemplateExpression)
-        {
+            base(Nodes.TaggedTemplateExpression) {
             Tag = tag;
             Quasi = quasi;
         }

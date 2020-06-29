@@ -1,6 +1,6 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Pooling;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -9,22 +9,18 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         internal readonly TemplateLiteral _templateLiteralExpression;
         internal JintExpression[] _expressions;
 
-        public JintTemplateLiteralExpression(Engine engine, TemplateLiteral expression) : base(engine, expression)
-        {
+        public JintTemplateLiteralExpression(Engine engine, TemplateLiteral expression) : base(engine, expression) {
             _templateLiteralExpression = expression;
             _initialized = false;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             DoInitialize();
         }
 
-        internal void DoInitialize()
-        {
+        internal void DoInitialize() {
             _expressions = new JintExpression[_templateLiteralExpression.Expressions.Count];
-            for (var i = 0; i < _templateLiteralExpression.Expressions.Count; i++)
-            {
+            for (var i = 0; i < _templateLiteralExpression.Expressions.Count; i++) {
                 var exp = _templateLiteralExpression.Expressions[i];
                 _expressions[i] = Build(_engine, exp);
             }
@@ -32,16 +28,12 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             _initialized = true;
         }
 
-        private JsString BuildString()
-        {
-            using (var sb = StringBuilderPool.Rent())
-            {
-                for (var i = 0; i < _templateLiteralExpression.Quasis.Count; i++)
-                {
+        private JsString BuildString() {
+            using (var sb = StringBuilderPool.Rent()) {
+                for (var i = 0; i < _templateLiteralExpression.Quasis.Count; i++) {
                     var quasi = _templateLiteralExpression.Quasis[i];
                     sb.Builder.Append(quasi.Value.Cooked);
-                    if (i < _expressions.Length)
-                    {
+                    if (i < _expressions.Length) {
                         sb.Builder.Append(_expressions[i].GetValue());
                     }
                 }
@@ -50,8 +42,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             }
         }
 
-        protected override object EvaluateInternal()
-        {
+        protected override object EvaluateInternal() {
             return BuildString();
         }
     }

@@ -14,7 +14,8 @@ namespace Esprima.Ast
 
         protected static IEnumerable<INode> ZeroChildNodes = Enumerable.Empty<INode>();
 
-        protected Node(Nodes type) =>
+        protected Node(Nodes type) {
             Type = type;
+        }
     }
 }

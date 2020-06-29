@@ -1,5 +1,5 @@
-﻿using Esprima.Ast;
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime
 {
@@ -7,8 +7,7 @@ namespace Anura.JavaScript.Runtime
     {
         private readonly string _shortDescription;
 
-        public CallStackElement(CallExpression callExpression, JsValue function, string shortDescription)
-        {
+        public CallStackElement(CallExpression callExpression, JsValue function, string shortDescription) {
             _shortDescription = shortDescription;
             CallExpression = callExpression;
             Function = function;
@@ -18,8 +17,7 @@ namespace Anura.JavaScript.Runtime
 
         public JsValue Function { get; }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return _shortDescription;
         }
     }

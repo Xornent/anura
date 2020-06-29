@@ -1,23 +1,25 @@
 using System;
 
-namespace Anura.Styles {
-    public struct Percent : IEquatable<Percent>, IComparable<Percent>, IFormattable {
+namespace Anura.Styles
+{
+    public struct Percent : IEquatable<Percent>, IComparable<Percent>, IFormattable
+    {
         /// <summary>
         ///     Gets a zero percent value.
         /// </summary>
-        public static readonly Percent Zero = new Percent (0f);
+        public static readonly Percent Zero = new Percent(0f);
 
         /// <summary>
         ///     Gets a fifty percent value.
         /// </summary>
-        public static readonly Percent Fifty = new Percent (50f);
+        public static readonly Percent Fifty = new Percent(50f);
 
         /// <summary>
         ///     Gets a hundred percent value.
         /// </summary>
-        public static readonly Percent Hundred = new Percent (100f);
+        public static readonly Percent Hundred = new Percent(100f);
 
-        public Percent (float value) {
+        public Percent(float value) {
             Value = value;
         }
 
@@ -27,28 +29,28 @@ namespace Anura.Styles {
         /// <summary>
         ///     Compares the magnitude of two percents.
         /// </summary>
-        public static bool operator >= (Percent a, Percent b) {
+        public static bool operator >=(Percent a, Percent b) {
             return a.Value >= b.Value;
         }
 
         /// <summary>
         ///     Compares the magnitude of two percents.
         /// </summary>
-        public static bool operator > (Percent a, Percent b) {
+        public static bool operator >(Percent a, Percent b) {
             return a.Value > b.Value;
         }
 
         /// <summary>
         ///     Compares the magnitude of two percents.
         /// </summary>
-        public static bool operator <= (Percent a, Percent b) {
+        public static bool operator <=(Percent a, Percent b) {
             return a.Value <= b.Value;
         }
 
         /// <summary>
         ///     Compares the magnitude of two percents.
         /// </summary>
-        public static bool operator < (Percent a, Percent b) {
+        public static bool operator <(Percent a, Percent b) {
             return a.Value < b.Value;
         }
 
@@ -57,8 +59,8 @@ namespace Anura.Styles {
         /// </summary>
         /// <param name="other">The percentage to compare to.</param>
         /// <returns>The result of the comparison.</returns>
-        public int CompareTo (Percent other) {
-            return Value.CompareTo (other.Value);
+        public int CompareTo(Percent other) {
+            return Value.CompareTo(other.Value);
         }
 
         /// <summary>
@@ -66,22 +68,22 @@ namespace Anura.Styles {
         /// </summary>
         /// <param name="other">The other percent value.</param>
         /// <returns>True if both have the same value.</returns>
-        public bool Equals (Percent other) {
+        public bool Equals(Percent other) {
             return Value == other.Value;
         }
 
         /// <summary>
         ///     Checks for equality of two percents.
         /// </summary>
-        public static bool operator == (Percent a, Percent b) {
-            return a.Equals (b);
+        public static bool operator ==(Percent a, Percent b) {
+            return a.Equals(b);
         }
 
         /// <summary>
         ///     Checks for inequality of two percents.
         /// </summary>
-        public static bool operator != (Percent a, Percent b) {
-            return !a.Equals (b);
+        public static bool operator !=(Percent a, Percent b) {
+            return !a.Equals(b);
         }
 
         /// <summary>
@@ -89,26 +91,26 @@ namespace Anura.Styles {
         /// </summary>
         /// <param name="obj">The object to test with.</param>
         /// <returns>True if the two objects are equal, otherwise false.</returns>
-        public override bool Equals (object obj) {
+        public override bool Equals(object obj) {
             var other = obj as Percent?;
 
             if (other != null) {
-                return Equals (other.Value);
+                return Equals(other.Value);
             }
 
             return false;
         }
 
-        public override int GetHashCode () {
-            return Value.GetHashCode ();
+        public override int GetHashCode() {
+            return Value.GetHashCode();
         }
 
-        public override string ToString () {
+        public override string ToString() {
             return Value + "%";
         }
 
-        public string ToString (string format, IFormatProvider formatProvider) {
-            return Value.ToString (format, formatProvider) + "%";
+        public string ToString(string format, IFormatProvider formatProvider) {
+            return Value.ToString(format, formatProvider) + "%";
         }
     }
 }

@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class TextShadowProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.MultipleShadowConverter.OrDefault ();
+namespace Anura.Styles
+{
+    internal sealed class TextShadowProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.MultipleShadowConverter.OrDefault();
 
-        internal TextShadowProperty () : base (PropertyNames.TextShadow, PropertyFlags.Inherited | PropertyFlags.Animatable) { }
+        internal TextShadowProperty() : base(PropertyNames.TextShadow, PropertyFlags.Inherited | PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

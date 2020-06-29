@@ -7,8 +7,7 @@ namespace Esprima.Ast
         private readonly NodeList<INode> _properties;
 
         public ObjectPattern(in NodeList<INode> properties) :
-            base(Nodes.ObjectPattern)
-        {
+            base(Nodes.ObjectPattern) {
             _properties = properties;
         }
 

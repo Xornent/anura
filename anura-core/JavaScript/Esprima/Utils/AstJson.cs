@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Esprima.Ast;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -7,7 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Esprima.Ast;
 
 namespace Esprima.Utils
 {
@@ -27,66 +27,68 @@ namespace Esprima.Utils
             public bool IncludingRange { get; private set; }
             public LocationMembersPlacement LocationMembersPlacement { get; private set; }
 
-            public Options() {}
+            public Options() { }
 
-            private Options(Options options)
-            {
+            private Options(Options options) {
                 IncludingLineColumn = options.IncludingLineColumn;
                 IncludingRange = options.IncludingRange;
                 LocationMembersPlacement = options.LocationMembersPlacement;
             }
 
-            public Options WithIncludingLineColumn(bool value) =>
-                value == IncludingLineColumn ? this : new Options(this) { IncludingLineColumn = value };
+            public Options WithIncludingLineColumn(bool value) {
+                return value == IncludingLineColumn ? this : new Options(this) { IncludingLineColumn = value };
+            }
 
-            public Options WithIncludingRange(bool value) =>
-                value == IncludingRange ? this : new Options(this) { IncludingRange = value };
+            public Options WithIncludingRange(bool value) {
+                return value == IncludingRange ? this : new Options(this) { IncludingRange = value };
+            }
 
-            public Options WithLocationMembersPlacement(LocationMembersPlacement value) =>
-                value == LocationMembersPlacement ? this : new Options(this) { LocationMembersPlacement = value };
+            public Options WithLocationMembersPlacement(LocationMembersPlacement value) {
+                return value == LocationMembersPlacement ? this : new Options(this) { LocationMembersPlacement = value };
+            }
         }
 
-        public static string ToJsonString(this INode node) =>
-            ToJsonString(node, indent: null);
+        public static string ToJsonString(this INode node) {
+            return ToJsonString(node, indent: null);
+        }
 
-        public static string ToJsonString(this INode node, string indent) =>
-            ToJsonString(node, Options.Default, indent);
+        public static string ToJsonString(this INode node, string indent) {
+            return ToJsonString(node, Options.Default, indent);
+        }
 
-        public static string ToJsonString(this INode node, Options options) =>
-            ToJsonString(node, options, null);
+        public static string ToJsonString(this INode node, Options options) {
+            return ToJsonString(node, options, null);
+        }
 
-        public static string ToJsonString(this INode node, Options options, string indent)
-        {
-            using (var writer = new StringWriter())
-            {
+        public static string ToJsonString(this INode node, Options options, string indent) {
+            using (var writer = new StringWriter()) {
                 WriteJson(node, writer, options, indent);
                 return writer.ToString();
             }
         }
 
-        public static void WriteJson(this INode node, TextWriter writer) =>
+        public static void WriteJson(this INode node, TextWriter writer) {
             WriteJson(node, writer, indent: null);
+        }
 
-        public static void WriteJson(this INode node, TextWriter writer, string indent) =>
+        public static void WriteJson(this INode node, TextWriter writer, string indent) {
             WriteJson(node, writer, Options.Default, indent);
+        }
 
-        public static void WriteJson(this INode node, TextWriter writer, Options options) =>
+        public static void WriteJson(this INode node, TextWriter writer, Options options) {
             WriteJson(node, writer, options, null);
+        }
 
-        public static void WriteJson(this INode node, TextWriter writer, Options options, string indent)
-        {
-            if (node == null)
-            {
+        public static void WriteJson(this INode node, TextWriter writer, Options options, string indent) {
+            if (node == null) {
                 throw new ArgumentNullException(nameof(node));
             }
 
-            if (writer == null)
-            {
+            if (writer == null) {
                 throw new ArgumentNullException(nameof(writer));
             }
 
-            if (options == null)
-            {
+            if (options == null) {
                 throw new ArgumentNullException(nameof(options));
             }
 
@@ -97,20 +99,16 @@ namespace Esprima.Utils
             visitor.Visit(node);
         }
 
-        public static void WriteJson(this INode node, JsonWriter writer, Options options)
-        {
-            if (node == null)
-            {
+        public static void WriteJson(this INode node, JsonWriter writer, Options options) {
+            if (node == null) {
                 throw new ArgumentNullException(nameof(node));
             }
 
-            if (writer == null)
-            {
+            if (writer == null) {
                 throw new ArgumentNullException(nameof(writer));
             }
 
-            if (options == null)
-            {
+            if (options == null) {
                 throw new ArgumentNullException(nameof(options));
             }
 
@@ -128,39 +126,32 @@ namespace Esprima.Utils
 
             public Visitor(JsonWriter writer,
                            bool includeLineColumn, bool includeRange,
-                           LocationMembersPlacement locationMembersPlacement)
-            {
+                           LocationMembersPlacement locationMembersPlacement) {
                 _writer = writer ?? throw new ArgumentNullException(nameof(writer));
                 _stack = new ObservableStack<INode>();
 
-                _stack.Pushed += node =>
-                {
+                _stack.Pushed += node => {
                     _writer.StartObject();
 
                     if ((includeLineColumn || includeRange)
-                        && locationMembersPlacement == LocationMembersPlacement.Start)
-                    {
+                        && locationMembersPlacement == LocationMembersPlacement.Start) {
                         WriteLocationInfo(node);
                     }
 
                     Member("type", node.Type.ToString());
                 };
 
-                _stack.Popped += node =>
-                {
+                _stack.Popped += node => {
                     if ((includeLineColumn || includeRange)
-                        && locationMembersPlacement == LocationMembersPlacement.End)
-                    {
+                        && locationMembersPlacement == LocationMembersPlacement.End) {
                         WriteLocationInfo(node);
                     }
 
                     _writer.EndObject();
                 };
 
-                void WriteLocationInfo(INode node)
-                {
-                    if (includeRange)
-                    {
+                void WriteLocationInfo(INode node) {
+                    if (includeRange) {
                         writer.Member("range");
                         writer.StartArray();
                         writer.Number(node.Range.Start);
@@ -168,8 +159,7 @@ namespace Esprima.Utils
                         writer.EndArray();
                     }
 
-                    if (includeLineColumn)
-                    {
+                    if (includeLineColumn) {
                         writer.Member("loc");
                         writer.StartObject();
                         writer.Member("start");
@@ -179,8 +169,7 @@ namespace Esprima.Utils
                         writer.EndObject();
                     }
 
-                    void Write(Position position)
-                    {
+                    void Write(Position position) {
                         writer.StartObject();
                         Member("line", position.Line);
                         Member("column", position.Column);
@@ -189,61 +178,57 @@ namespace Esprima.Utils
                 }
             }
 
-            private IDisposable StartNodeObject(INode node) =>
-                _stack.Push(node);
-
-            private void EmptyNodeObject(INode node)
-            {
-                using (StartNodeObject(node)) {}
+            private IDisposable StartNodeObject(INode node) {
+                return _stack.Push(node);
             }
 
-            private void Member(string name) =>
-                _writer.Member(name);
+            private void EmptyNodeObject(INode node) {
+                using (StartNodeObject(node)) { }
+            }
 
-            private void Member(string name, INode node)
-            {
+            private void Member(string name) {
+                _writer.Member(name);
+            }
+
+            private void Member(string name, INode node) {
                 Member(name);
                 Visit(node);
             }
 
-            private void Member(string name, string value)
-            {
+            private void Member(string name, string value) {
                 Member(name);
                 _writer.String(value);
             }
 
-            private void Member(string name, bool value)
-            {
+            private void Member(string name, bool value) {
                 Member(name);
                 _writer.Boolean(value);
             }
 
-            private void Member(string name, int value)
-            {
+            private void Member(string name, int value) {
                 Member(name);
                 _writer.Number(value);
             }
 
             private static readonly ConditionalWeakTable<Type, IDictionary> EnumMap = new ConditionalWeakTable<Type, IDictionary>();
 
-            private void Member<T>(string name, T value) where T : Enum
-            {
+            private void Member<T>(string name, T value) where T : Enum {
                 var map = (Dictionary<T, string>)
                     EnumMap.GetValue(value.GetType(),
                         t => t.GetRuntimeFields()
                               .Where(f => f.IsStatic)
-                              .ToDictionary(f => (T) f.GetValue(null),
+                              .ToDictionary(f => (T)f.GetValue(null),
                                             f => f.GetCustomAttribute<EnumMemberAttribute>() is EnumMemberAttribute a
                                                ? a.Value : f.Name.ToLowerInvariant()));
                 Member(name, map[value]);
             }
 
-            private void Member<T>(string name, in NodeList<T> nodes) where T : class, INode =>
+            private void Member<T>(string name, in NodeList<T> nodes) where T : class, INode {
                 Member(name, nodes, node => node);
+            }
 
             private void Member<T>(string name, in NodeList<T> list, Func<T, INode> nodeSelector)
-                where T : class, INode
-            {
+                where T : class, INode {
                 Member(name);
                 _writer.StartArray();
                 foreach (var item in list)
@@ -258,57 +243,46 @@ namespace Esprima.Utils
                 public event Action<T> Pushed;
                 public event Action<T> Popped;
 
-                public IDisposable Push(T item)
-                {
+                public IDisposable Push(T item) {
                     _stack.Push(item);
                     Pushed?.Invoke(item);
                     return this;
                 }
 
-                public void Dispose()
-                {
+                public void Dispose() {
                     var item = _stack.Pop();
                     Popped?.Invoke(item);
                 }
             }
 
-            public override void Visit(INode node)
-            {
-                if (node != null)
-                {
+            public override void Visit(INode node) {
+                if (node != null) {
                     base.Visit(node);
-                }
-                else
-                {
+                } else {
                     _writer.Null();
                 }
             }
 
-            protected override void VisitProgram(Program program)
-            {
-                using (StartNodeObject(program))
-                {
-                    Member("body", program.Body, e => (INode) e);
+            protected override void VisitProgram(Program program) {
+                using (StartNodeObject(program)) {
+                    Member("body", program.Body, e => e);
                     Member("sourceType", program.SourceType);
                 }
             }
 
-            protected override void VisitUnknownNode(INode node) =>
+            protected override void VisitUnknownNode(INode node) {
                 throw new NotSupportedException("Unknown node type: " + node.Type);
+            }
 
-            protected override void VisitCatchClause(CatchClause catchClause)
-            {
-                using (StartNodeObject(catchClause))
-                {
+            protected override void VisitCatchClause(CatchClause catchClause) {
+                using (StartNodeObject(catchClause)) {
                     Member("param", catchClause.Param);
                     Member("body", catchClause.Body);
                 }
             }
 
-            protected override void VisitFunctionDeclaration(FunctionDeclaration functionDeclaration)
-            {
-                using (StartNodeObject(functionDeclaration))
-                {
+            protected override void VisitFunctionDeclaration(FunctionDeclaration functionDeclaration) {
+                using (StartNodeObject(functionDeclaration)) {
                     Member("id", functionDeclaration.Id);
                     Member("params", functionDeclaration.Params);
                     Member("body", functionDeclaration.Body);
@@ -318,114 +292,92 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitWithStatement(WithStatement withStatement)
-            {
-                using (StartNodeObject(withStatement))
-                {
+            protected override void VisitWithStatement(WithStatement withStatement) {
+                using (StartNodeObject(withStatement)) {
                     Member("object", withStatement.Object);
                     Member("body", withStatement.Body);
                 }
             }
 
-            protected override void VisitWhileStatement(WhileStatement whileStatement)
-            {
-                using (StartNodeObject(whileStatement))
-                {
+            protected override void VisitWhileStatement(WhileStatement whileStatement) {
+                using (StartNodeObject(whileStatement)) {
                     Member("test", whileStatement.Test);
                     Member("body", whileStatement.Body);
                 }
             }
 
-            protected override void VisitVariableDeclaration(VariableDeclaration variableDeclaration)
-            {
-                using (StartNodeObject(variableDeclaration))
-                {
+            protected override void VisitVariableDeclaration(VariableDeclaration variableDeclaration) {
+                using (StartNodeObject(variableDeclaration)) {
                     Member("declarations", variableDeclaration.Declarations);
                     Member("kind", variableDeclaration.Kind);
                 }
             }
 
-            protected override void VisitTryStatement(TryStatement tryStatement)
-            {
-                using (StartNodeObject(tryStatement))
-                {
+            protected override void VisitTryStatement(TryStatement tryStatement) {
+                using (StartNodeObject(tryStatement)) {
                     Member("block", tryStatement.Block);
                     Member("handler", tryStatement.Handler);
                     Member("finalizer", tryStatement.Finalizer);
                 }
             }
 
-            protected override void VisitThrowStatement(ThrowStatement throwStatement)
-            {
-                using (StartNodeObject(throwStatement))
-                {
+            protected override void VisitThrowStatement(ThrowStatement throwStatement) {
+                using (StartNodeObject(throwStatement)) {
                     Member("argument", throwStatement.Argument);
                 }
             }
 
-            protected override void VisitAwaitExpression(AwaitExpression awaitExpression)
-            {
-                using (StartNodeObject(awaitExpression))
-                {
+            protected override void VisitAwaitExpression(AwaitExpression awaitExpression) {
+                using (StartNodeObject(awaitExpression)) {
                     Member("argument", awaitExpression.Argument);
                 }
             }
 
-            protected override void VisitSwitchStatement(SwitchStatement switchStatement)
-            {
-                using (StartNodeObject(switchStatement))
-                {
+            protected override void VisitSwitchStatement(SwitchStatement switchStatement) {
+                using (StartNodeObject(switchStatement)) {
                     Member("discriminant", switchStatement.Discriminant);
                     Member("cases", switchStatement.Cases);
                 }
             }
 
-            protected override void VisitSwitchCase(SwitchCase switchCase)
-            {
-                using (StartNodeObject(switchCase))
-                {
+            protected override void VisitSwitchCase(SwitchCase switchCase) {
+                using (StartNodeObject(switchCase)) {
                     Member("test", switchCase.Test);
-                    Member("consequent", switchCase.Consequent, e => (INode) e);
+                    Member("consequent", switchCase.Consequent, e => e);
                 }
             }
 
-            protected override void VisitReturnStatement(ReturnStatement returnStatement)
-            {
+            protected override void VisitReturnStatement(ReturnStatement returnStatement) {
                 using (StartNodeObject(returnStatement))
                     Member("argument", returnStatement.Argument);
             }
 
-            protected override void VisitLabeledStatement(LabeledStatement labeledStatement)
-            {
-                using (StartNodeObject(labeledStatement))
-                {
+            protected override void VisitLabeledStatement(LabeledStatement labeledStatement) {
+                using (StartNodeObject(labeledStatement)) {
                     Member("label", labeledStatement.Label);
                     Member("body", labeledStatement.Body);
                 }
             }
 
-            protected override void VisitIfStatement(IfStatement ifStatement)
-            {
-                using (StartNodeObject(ifStatement))
-                {
+            protected override void VisitIfStatement(IfStatement ifStatement) {
+                using (StartNodeObject(ifStatement)) {
                     Member("test", ifStatement.Test);
                     Member("consequent", ifStatement.Consequent);
                     Member("alternate", ifStatement.Alternate);
                 }
             }
 
-            protected override void VisitEmptyStatement(EmptyStatement emptyStatement) =>
+            protected override void VisitEmptyStatement(EmptyStatement emptyStatement) {
                 EmptyNodeObject(emptyStatement);
+            }
 
-            protected override void VisitDebuggerStatement(DebuggerStatement debuggerStatement) =>
+            protected override void VisitDebuggerStatement(DebuggerStatement debuggerStatement) {
                 EmptyNodeObject(debuggerStatement);
+            }
 
-            protected override void VisitExpressionStatement(ExpressionStatement expressionStatement)
-            {
-                using (StartNodeObject(expressionStatement))
-                {
-                    if (expressionStatement is Directive d)
-                    {
+            protected override void VisitExpressionStatement(ExpressionStatement expressionStatement) {
+                using (StartNodeObject(expressionStatement)) {
+                    if (expressionStatement is Directive d) {
                         Member("directive", d.Directiv);
                     }
 
@@ -433,10 +385,8 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitForStatement(ForStatement forStatement)
-            {
-                using (StartNodeObject(forStatement))
-                {
+            protected override void VisitForStatement(ForStatement forStatement) {
+                using (StartNodeObject(forStatement)) {
                     Member("init", forStatement.Init);
                     Member("test", forStatement.Test);
                     Member("update", forStatement.Update);
@@ -444,10 +394,8 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitForInStatement(ForInStatement forInStatement)
-            {
-                using (StartNodeObject(forInStatement))
-                {
+            protected override void VisitForInStatement(ForInStatement forInStatement) {
+                using (StartNodeObject(forInStatement)) {
                     Member("left", forInStatement.Left);
                     Member("right", forInStatement.Right);
                     Member("body", forInStatement.Body);
@@ -455,19 +403,15 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitDoWhileStatement(DoWhileStatement doWhileStatement)
-            {
-                using (StartNodeObject(doWhileStatement))
-                {
+            protected override void VisitDoWhileStatement(DoWhileStatement doWhileStatement) {
+                using (StartNodeObject(doWhileStatement)) {
                     Member("body", doWhileStatement.Body);
                     Member("test", doWhileStatement.Test);
                 }
             }
 
-            protected override void VisitArrowFunctionExpression(ArrowFunctionExpression arrowFunctionExpression)
-            {
-                using (StartNodeObject(arrowFunctionExpression))
-                {
+            protected override void VisitArrowFunctionExpression(ArrowFunctionExpression arrowFunctionExpression) {
+                using (StartNodeObject(arrowFunctionExpression)) {
                     Member("id", arrowFunctionExpression.Id);
                     Member("params", arrowFunctionExpression.Params);
                     Member("body", arrowFunctionExpression.Body);
@@ -477,64 +421,56 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitUnaryExpression(UnaryExpression unaryExpression)
-            {
-                using (StartNodeObject(unaryExpression))
-                {
+            protected override void VisitUnaryExpression(UnaryExpression unaryExpression) {
+                using (StartNodeObject(unaryExpression)) {
                     Member("operator", unaryExpression.Operator);
                     Member("argument", unaryExpression.Argument);
                     Member("prefix", unaryExpression.Prefix);
                 }
             }
 
-            protected override void VisitUpdateExpression(UpdateExpression updateExpression) =>
+            protected override void VisitUpdateExpression(UpdateExpression updateExpression) {
                 VisitUnaryExpression(updateExpression);
+            }
 
-            protected override void VisitThisExpression(ThisExpression thisExpression) =>
+            protected override void VisitThisExpression(ThisExpression thisExpression) {
                 EmptyNodeObject(thisExpression);
+            }
 
-            protected override void VisitSequenceExpression(SequenceExpression sequenceExpression)
-            {
+            protected override void VisitSequenceExpression(SequenceExpression sequenceExpression) {
                 using (StartNodeObject(sequenceExpression))
                     Member("expressions", sequenceExpression.Expressions);
             }
 
-            protected override void VisitObjectExpression(ObjectExpression objectExpression)
-            {
+            protected override void VisitObjectExpression(ObjectExpression objectExpression) {
                 using (StartNodeObject(objectExpression))
                     Member("properties", objectExpression.Properties);
             }
 
-            protected override void VisitNewExpression(NewExpression newExpression)
-            {
-                using (StartNodeObject(newExpression))
-                {
+            protected override void VisitNewExpression(NewExpression newExpression) {
+                using (StartNodeObject(newExpression)) {
                     Member("callee", newExpression.Callee);
-                    Member("arguments", newExpression.Arguments, e => (INode) e);
+                    Member("arguments", newExpression.Arguments, e => e);
                 }
             }
 
-            protected override void VisitMemberExpression(MemberExpression memberExpression)
-            {
-                using (StartNodeObject(memberExpression))
-                {
+            protected override void VisitMemberExpression(MemberExpression memberExpression) {
+                using (StartNodeObject(memberExpression)) {
                     Member("computed", memberExpression.Computed);
                     Member("object", memberExpression.Object);
                     Member("property", memberExpression.Property);
                 }
             }
 
-            protected override void VisitLogicalExpression(BinaryExpression binaryExpression) =>
+            protected override void VisitLogicalExpression(BinaryExpression binaryExpression) {
                 VisitBinaryExpression(binaryExpression);
+            }
 
-            protected override void VisitLiteral(Literal literal)
-            {
-                using (StartNodeObject(literal))
-                {
+            protected override void VisitLiteral(Literal literal) {
+                using (StartNodeObject(literal)) {
                     _writer.Member("value");
                     var value = literal.Value;
-                    switch (value)
-                    {
+                    switch (value) {
                         case null:
                             _writer.Null();
                             break;
@@ -555,8 +491,7 @@ namespace Esprima.Utils
 
                     Member("raw", literal.Raw);
 
-                    if (literal.Regex != null)
-                    {
+                    if (literal.Regex != null) {
                         _writer.Member("regex");
                         _writer.StartObject();
                         Member("pattern", literal.Regex.Pattern);
@@ -566,16 +501,13 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitIdentifier(Identifier identifier)
-            {
+            protected override void VisitIdentifier(Identifier identifier) {
                 using (StartNodeObject(identifier))
                     Member("name", identifier.Name);
             }
 
-            protected override void VisitFunctionExpression(IFunction function)
-            {
-                using (StartNodeObject((Node) function))
-                {
+            protected override void VisitFunctionExpression(IFunction function) {
+                using (StartNodeObject((Node)function)) {
                     Member("id", function.Id);
                     Member("params", function.Params);
                     Member("body", function.Body);
@@ -585,88 +517,70 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitClassExpression(ClassExpression classExpression)
-            {
-                using (StartNodeObject(classExpression))
-                {
+            protected override void VisitClassExpression(ClassExpression classExpression) {
+                using (StartNodeObject(classExpression)) {
                     Member("id", classExpression.Id);
                     Member("superClass", classExpression.SuperClass);
                     Member("body", classExpression.Body);
                 }
             }
 
-            protected override void VisitExportDefaultDeclaration(ExportDefaultDeclaration exportDefaultDeclaration)
-            {
+            protected override void VisitExportDefaultDeclaration(ExportDefaultDeclaration exportDefaultDeclaration) {
                 using (StartNodeObject(exportDefaultDeclaration))
                     Member("declaration", exportDefaultDeclaration.Declaration.As<INode>());
             }
 
-            protected override void VisitExportAllDeclaration(ExportAllDeclaration exportAllDeclaration)
-            {
+            protected override void VisitExportAllDeclaration(ExportAllDeclaration exportAllDeclaration) {
                 using (StartNodeObject(exportAllDeclaration))
                     Member("source", exportAllDeclaration.Source);
             }
 
-            protected override void VisitExportNamedDeclaration(ExportNamedDeclaration exportNamedDeclaration)
-            {
-                using (StartNodeObject(exportNamedDeclaration))
-                {
+            protected override void VisitExportNamedDeclaration(ExportNamedDeclaration exportNamedDeclaration) {
+                using (StartNodeObject(exportNamedDeclaration)) {
                     Member("declaration", exportNamedDeclaration.Declaration.As<INode>());
                     Member("specifiers", exportNamedDeclaration.Specifiers);
                     Member("source", exportNamedDeclaration.Source);
                 }
             }
 
-            protected override void VisitExportSpecifier(ExportSpecifier exportSpecifier)
-            {
-                using (StartNodeObject(exportSpecifier))
-                {
+            protected override void VisitExportSpecifier(ExportSpecifier exportSpecifier) {
+                using (StartNodeObject(exportSpecifier)) {
                     Member("exported", exportSpecifier.Exported);
                     Member("local", exportSpecifier.Local);
                 }
             }
 
-            protected override void VisitImport(Import import)
-            {
-                using (StartNodeObject(import))
-                {
+            protected override void VisitImport(Import import) {
+                using (StartNodeObject(import)) {
                 }
             }
 
-            protected override void VisitImportDeclaration(ImportDeclaration importDeclaration)
-            {
-                using (StartNodeObject(importDeclaration))
-                {
-                    Member("specifiers", importDeclaration.Specifiers, e => (INode) e);
+            protected override void VisitImportDeclaration(ImportDeclaration importDeclaration) {
+                using (StartNodeObject(importDeclaration)) {
+                    Member("specifiers", importDeclaration.Specifiers, e => e);
                     Member("source", importDeclaration.Source);
                 }
             }
 
-            protected override void VisitImportNamespaceSpecifier(ImportNamespaceSpecifier importNamespaceSpecifier)
-            {
+            protected override void VisitImportNamespaceSpecifier(ImportNamespaceSpecifier importNamespaceSpecifier) {
                 using (StartNodeObject(importNamespaceSpecifier))
                     Member("local", importNamespaceSpecifier.Local);
             }
 
-            protected override void VisitImportDefaultSpecifier(ImportDefaultSpecifier importDefaultSpecifier)
-            {
+            protected override void VisitImportDefaultSpecifier(ImportDefaultSpecifier importDefaultSpecifier) {
                 using (StartNodeObject(importDefaultSpecifier))
                     Member("local", importDefaultSpecifier.Local);
             }
 
-            protected override void VisitImportSpecifier(ImportSpecifier importSpecifier)
-            {
-                using (StartNodeObject(importSpecifier))
-                {
+            protected override void VisitImportSpecifier(ImportSpecifier importSpecifier) {
+                using (StartNodeObject(importSpecifier)) {
                     Member("local", importSpecifier.Local);
                     Member("imported", importSpecifier.Imported);
                 }
             }
 
-            protected override void VisitMethodDefinition(MethodDefinition methodDefinition)
-            {
-                using (StartNodeObject(methodDefinition))
-                {
+            protected override void VisitMethodDefinition(MethodDefinition methodDefinition) {
+                using (StartNodeObject(methodDefinition)) {
                     Member("key", methodDefinition.Key);
                     Member("computed", methodDefinition.Computed);
                     Member("value", methodDefinition.Value);
@@ -675,64 +589,53 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitForOfStatement(ForOfStatement forOfStatement)
-            {
-                using (StartNodeObject(forOfStatement))
-                {
+            protected override void VisitForOfStatement(ForOfStatement forOfStatement) {
+                using (StartNodeObject(forOfStatement)) {
                     Member("left", forOfStatement.Left);
                     Member("right", forOfStatement.Right);
                     Member("body", forOfStatement.Body);
                 }
             }
 
-            protected override void VisitClassDeclaration(ClassDeclaration classDeclaration)
-            {
-                using (StartNodeObject(classDeclaration))
-                {
+            protected override void VisitClassDeclaration(ClassDeclaration classDeclaration) {
+                using (StartNodeObject(classDeclaration)) {
                     Member("id", classDeclaration.Id);
                     Member("superClass", classDeclaration.SuperClass);
                     Member("body", classDeclaration.Body);
                 }
             }
 
-            protected override void VisitClassBody(ClassBody classBody)
-            {
+            protected override void VisitClassBody(ClassBody classBody) {
                 using (StartNodeObject(classBody))
                     Member("body", classBody.Body);
             }
 
-            protected override void VisitYieldExpression(YieldExpression yieldExpression)
-            {
-                using (StartNodeObject(yieldExpression))
-                {
+            protected override void VisitYieldExpression(YieldExpression yieldExpression) {
+                using (StartNodeObject(yieldExpression)) {
                     Member("argument", yieldExpression.Argument);
                     Member("delegate", yieldExpression.Delegate);
                 }
             }
 
-            protected override void VisitTaggedTemplateExpression(TaggedTemplateExpression taggedTemplateExpression)
-            {
-                using (StartNodeObject(taggedTemplateExpression))
-                {
+            protected override void VisitTaggedTemplateExpression(TaggedTemplateExpression taggedTemplateExpression) {
+                using (StartNodeObject(taggedTemplateExpression)) {
                     Member("tag", taggedTemplateExpression.Tag);
                     Member("quasi", taggedTemplateExpression.Quasi);
                 }
             }
 
-            protected override void VisitSuper(Super super) =>
+            protected override void VisitSuper(Super super) {
                 EmptyNodeObject(super);
+            }
 
-            protected override void VisitMetaProperty(MetaProperty metaProperty)
-            {
-                using (StartNodeObject(metaProperty))
-                {
+            protected override void VisitMetaProperty(MetaProperty metaProperty) {
+                using (StartNodeObject(metaProperty)) {
                     Member("meta", metaProperty.Meta);
                     Member("property", metaProperty.Property);
                 }
             }
 
-            protected override void VisitArrowParameterPlaceHolder(ArrowParameterPlaceHolder arrowParameterPlaceHolder)
-            {
+            protected override void VisitArrowParameterPlaceHolder(ArrowParameterPlaceHolder arrowParameterPlaceHolder) {
                 // Seems that ArrowParameterPlaceHolder nodes never appear
                 // in the final tree and only used during the construction of
                 // a tree. If this assumption is wrong then best to just fail.
@@ -740,61 +643,47 @@ namespace Esprima.Utils
                 throw new NotImplementedException();
             }
 
-            protected override void VisitObjectPattern(ObjectPattern objectPattern)
-            {
-                using (StartNodeObject(objectPattern))
-                {
+            protected override void VisitObjectPattern(ObjectPattern objectPattern) {
+                using (StartNodeObject(objectPattern)) {
                     Member("properties", objectPattern.Properties);
                 }
             }
 
-            protected override void VisitSpreadElement(SpreadElement spreadElement)
-            {
-                using (StartNodeObject(spreadElement))
-                {
+            protected override void VisitSpreadElement(SpreadElement spreadElement) {
+                using (StartNodeObject(spreadElement)) {
                     Member("argument", spreadElement.Argument);
                 }
             }
 
-            protected override void VisitAssignmentPattern(AssignmentPattern assignmentPattern)
-            {
-                using (StartNodeObject(assignmentPattern))
-                {
+            protected override void VisitAssignmentPattern(AssignmentPattern assignmentPattern) {
+                using (StartNodeObject(assignmentPattern)) {
                     Member("left", assignmentPattern.Left);
                     Member("right", assignmentPattern.Right);
                 }
             }
 
-            protected override void VisitArrayPattern(ArrayPattern arrayPattern)
-            {
-                using (StartNodeObject(arrayPattern))
-                {
+            protected override void VisitArrayPattern(ArrayPattern arrayPattern) {
+                using (StartNodeObject(arrayPattern)) {
                     Member("elements", arrayPattern.Elements);
                 }
             }
 
-            protected override void VisitVariableDeclarator(VariableDeclarator variableDeclarator)
-            {
-                using (StartNodeObject(variableDeclarator))
-                {
+            protected override void VisitVariableDeclarator(VariableDeclarator variableDeclarator) {
+                using (StartNodeObject(variableDeclarator)) {
                     Member("id", variableDeclarator.Id);
                     Member("init", variableDeclarator.Init);
                 }
             }
 
-            protected override void VisitTemplateLiteral(TemplateLiteral templateLiteral)
-            {
-                using (StartNodeObject(templateLiteral))
-                {
+            protected override void VisitTemplateLiteral(TemplateLiteral templateLiteral) {
+                using (StartNodeObject(templateLiteral)) {
                     Member("quasis", templateLiteral.Quasis);
                     Member("expressions", templateLiteral.Expressions);
                 }
             }
 
-            protected override void VisitTemplateElement(TemplateElement templateElement)
-            {
-                using (StartNodeObject(templateElement))
-                {
+            protected override void VisitTemplateElement(TemplateElement templateElement) {
+                using (StartNodeObject(templateElement)) {
                     _writer.Member("value");
                     _writer.StartObject();
                     Member("raw", templateElement.Value.Raw);
@@ -804,18 +693,14 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitRestElement(RestElement restElement)
-            {
-                using (StartNodeObject(restElement))
-                {
+            protected override void VisitRestElement(RestElement restElement) {
+                using (StartNodeObject(restElement)) {
                     Member("argument", restElement.Argument);
                 }
             }
 
-            protected override void VisitProperty(Property property)
-            {
-                using (StartNodeObject(property))
-                {
+            protected override void VisitProperty(Property property) {
+                using (StartNodeObject(property)) {
                     Member("key", property.Key);
                     Member("computed", property.Computed);
                     Member("value", property.Value);
@@ -825,67 +710,55 @@ namespace Esprima.Utils
                 }
             }
 
-            protected override void VisitConditionalExpression(ConditionalExpression conditionalExpression)
-            {
-                using (StartNodeObject(conditionalExpression))
-                {
+            protected override void VisitConditionalExpression(ConditionalExpression conditionalExpression) {
+                using (StartNodeObject(conditionalExpression)) {
                     Member("test", conditionalExpression.Test);
                     Member("consequent", conditionalExpression.Consequent);
                     Member("alternate", conditionalExpression.Alternate);
                 }
             }
 
-            protected override void VisitCallExpression(CallExpression callExpression)
-            {
-                using (StartNodeObject(callExpression))
-                {
+            protected override void VisitCallExpression(CallExpression callExpression) {
+                using (StartNodeObject(callExpression)) {
                     Member("callee", callExpression.Callee);
-                    Member("arguments", callExpression.Arguments, e => (Expression) e);
+                    Member("arguments", callExpression.Arguments, e => (Expression)e);
                 }
             }
 
-            protected override void VisitBinaryExpression(BinaryExpression binaryExpression)
-            {
-                using (StartNodeObject(binaryExpression))
-                {
+            protected override void VisitBinaryExpression(BinaryExpression binaryExpression) {
+                using (StartNodeObject(binaryExpression)) {
                     Member("operator", binaryExpression.Operator);
                     Member("left", binaryExpression.Left);
                     Member("right", binaryExpression.Right);
                 }
             }
 
-            protected override void VisitArrayExpression(ArrayExpression arrayExpression)
-            {
+            protected override void VisitArrayExpression(ArrayExpression arrayExpression) {
                 using (StartNodeObject(arrayExpression))
                     Member("elements", arrayExpression.Elements);
             }
 
-            protected override void VisitAssignmentExpression(AssignmentExpression assignmentExpression)
-            {
-                using (StartNodeObject(assignmentExpression))
-                {
+            protected override void VisitAssignmentExpression(AssignmentExpression assignmentExpression) {
+                using (StartNodeObject(assignmentExpression)) {
                     Member("operator", assignmentExpression.Operator);
                     Member("left", assignmentExpression.Left);
                     Member("right", assignmentExpression.Right);
                 }
             }
 
-            protected override void VisitContinueStatement(ContinueStatement continueStatement)
-            {
+            protected override void VisitContinueStatement(ContinueStatement continueStatement) {
                 using (StartNodeObject(continueStatement))
                     Member("label", continueStatement.Label);
             }
 
-            protected override void VisitBreakStatement(BreakStatement breakStatement)
-            {
+            protected override void VisitBreakStatement(BreakStatement breakStatement) {
                 using (StartNodeObject(breakStatement))
                     Member("label", breakStatement.Label);
             }
 
-            protected override void VisitBlockStatement(BlockStatement blockStatement)
-            {
+            protected override void VisitBlockStatement(BlockStatement blockStatement) {
                 using (StartNodeObject(blockStatement))
-                    Member("body", blockStatement.Body, e => (Statement) e);
+                    Member("body", blockStatement.Body, e => (Statement)e);
             }
         }
     }

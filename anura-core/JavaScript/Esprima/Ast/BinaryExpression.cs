@@ -1,6 +1,6 @@
+using Esprima.Utils;
 using System;
 using System.Collections.Generic;
-using Esprima.Utils;
 
 namespace Esprima.Ast
 {
@@ -64,20 +64,17 @@ namespace Esprima.Ast
         public readonly Expression Right;
 
         public BinaryExpression(string op, Expression left, Expression right) :
-            this(ParseBinaryOperator(op), left, right) {}
+            this(ParseBinaryOperator(op), left, right) { }
 
         private BinaryExpression(BinaryOperator op, Expression left, Expression right) :
-            base(op == BinaryOperator.LogicalAnd || op == BinaryOperator.LogicalOr ? Nodes.LogicalExpression : Nodes.BinaryExpression)
-        {
+            base(op == BinaryOperator.LogicalAnd || op == BinaryOperator.LogicalOr ? Nodes.LogicalExpression : Nodes.BinaryExpression) {
             Operator = op;
             Left = left;
             Right = right;
         }
 
-        public static BinaryOperator ParseBinaryOperator(string op)
-        {
-            switch (op)
-            {
+        public static BinaryOperator ParseBinaryOperator(string op) {
+            switch (op) {
                 case "+":
                     return BinaryOperator.Plus;
                 case "-":

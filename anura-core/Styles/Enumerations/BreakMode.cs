@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum BreakMode : byte {
+namespace Anura.Styles
+{
+    public enum BreakMode : byte
+    {
         Auto,
         Always,
         Avoid,

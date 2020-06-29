@@ -4,7 +4,7 @@ namespace Anura.JavaScript.Native
 {
     public interface IPrimitiveInstance
     {
-        Types Type { get; } 
+        Types Type { get; }
         JsValue PrimitiveValue { get; }
     }
 }

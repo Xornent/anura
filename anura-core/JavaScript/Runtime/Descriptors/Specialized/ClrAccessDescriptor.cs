@@ -17,8 +17,7 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
             EnvironmentRecord env,
             Engine engine,
             string name)
-            : base(value: null, PropertyFlag.Configurable)
-        {
+            : base(value: null, PropertyFlag.Configurable) {
             _env = env;
             _engine = engine;
             _name = name;
@@ -27,15 +26,13 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
         public override JsValue Get => _get ??= new GetterFunctionInstance(_engine, DoGet);
         public override JsValue Set => _set ??= new SetterFunctionInstance(_engine, DoSet);
 
-        private JsValue DoGet(JsValue n)
-        {
+        private JsValue DoGet(JsValue n) {
             return _env.TryGetBinding(_name, false, out var binding, out _)
                 ? binding.Value
                 : JsValue.Undefined;
         }
 
-        private void DoSet(JsValue n, JsValue o)
-        {
+        private void DoSet(JsValue n, JsValue o) {
             _env.SetMutableBinding(_name, o, true);
         }
     }

@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum Whitespace : byte {
+namespace Anura.Styles
+{
+    public enum Whitespace : byte
+    {
         Normal,
         Pre,
         NoWrap,

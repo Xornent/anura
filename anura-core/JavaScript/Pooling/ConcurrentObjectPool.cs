@@ -103,18 +103,15 @@ namespace Anura.JavaScript.Pooling
 #endif
 
         internal ConcurrentObjectPool(Factory factory)
-            : this(factory, Environment.ProcessorCount * 2)
-        { }
+            : this(factory, Environment.ProcessorCount * 2) { }
 
-        internal ConcurrentObjectPool(Factory factory, int size)
-        {
+        internal ConcurrentObjectPool(Factory factory, int size) {
             Debug.Assert(size >= 1);
             _factory = factory;
             _items = new Element[size - 1];
         }
 
-        private T CreateInstance()
-        {
+        private T CreateInstance() {
             var inst = _factory();
             return inst;
         }
@@ -127,15 +124,13 @@ namespace Anura.JavaScript.Pooling
         /// Note that Free will try to store recycled objects close to the start thus statistically
         /// reducing how far we will typically search.
         /// </remarks>
-        internal T Allocate()
-        {
+        internal T Allocate() {
             // PERF: Examine the first element. If that fails, AllocateSlow will look at the remaining elements.
             // Note that the initial read is optimistically not synchronized. That is intentional.
             // We will interlock only when we have a candidate. in a worst case we may miss some
             // recently returned objects. Not a big deal.
             T inst = _firstItem;
-            if (inst == null || inst != Interlocked.CompareExchange(ref _firstItem, null, inst))
-            {
+            if (inst == null || inst != Interlocked.CompareExchange(ref _firstItem, null, inst)) {
                 inst = AllocateSlow();
             }
 
@@ -151,20 +146,16 @@ namespace Anura.JavaScript.Pooling
             return inst;
         }
 
-        private T AllocateSlow()
-        {
+        private T AllocateSlow() {
             var items = _items;
 
-            for (int i = 0; i < items.Length; i++)
-            {
+            for (int i = 0; i < items.Length; i++) {
                 // Note that the initial read is optimistically not synchronized. That is intentional.
                 // We will interlock only when we have a candidate. in a worst case we may miss some
                 // recently returned objects. Not a big deal.
                 T inst = items[i].Value;
-                if (inst != null)
-                {
-                    if (inst == Interlocked.CompareExchange(ref items[i].Value, null, inst))
-                    {
+                if (inst != null) {
+                    if (inst == Interlocked.CompareExchange(ref items[i].Value, null, inst)) {
                         return inst;
                     }
                 }
@@ -181,31 +172,24 @@ namespace Anura.JavaScript.Pooling
         /// Note that Free will try to store recycled objects close to the start thus statistically
         /// reducing how far we will typically search in Allocate.
         /// </remarks>
-        internal void Free(T obj)
-        {
+        internal void Free(T obj) {
             Validate(obj);
             ForgetTrackedObject(obj);
 
-            if (_firstItem == null)
-            {
+            if (_firstItem == null) {
                 // Intentionally not using interlocked here.
                 // In a worst case scenario two objects may be stored into same slot.
                 // It is very unlikely to happen and will only mean that one of the objects will get collected.
                 _firstItem = obj;
-            }
-            else
-            {
+            } else {
                 FreeSlow(obj);
             }
         }
 
-        private void FreeSlow(T obj)
-        {
+        private void FreeSlow(T obj) {
             var items = _items;
-            for (int i = 0; i < items.Length; i++)
-            {
-                if (items[i].Value == null)
-                {
+            for (int i = 0; i < items.Length; i++) {
+                if (items[i].Value == null) {
                     // Intentionally not using interlocked here.
                     // In a worst case scenario two objects may be stored into same slot.
                     // It is very unlikely to happen and will only mean that one of the objects will get collected.
@@ -224,8 +208,7 @@ namespace Anura.JavaScript.Pooling
         /// return a larger array to the pool than was originally allocated.
         /// </summary>
         [Conditional("DEBUG")]
-        internal void ForgetTrackedObject(T old, T replacement = null)
-        {
+        internal void ForgetTrackedObject(T old, T replacement = null) {
 #if DETECT_LEAKS
             LeakTracker tracker;
             if (leakTrackers.TryGetValue(old, out tracker))
@@ -257,22 +240,20 @@ namespace Anura.JavaScript.Pooling
 #endif
 
         [Conditional("DEBUG")]
-        private void Validate(object obj)
-        {
+        private void Validate(object obj) {
             Debug.Assert(obj != null, "freeing null?");
 
             Debug.Assert(_firstItem != obj, "freeing twice?");
 
             var items = _items;
-            for (int i = 0; i < items.Length; i++)
-            {
+            for (int i = 0; i < items.Length; i++) {
                 var value = items[i].Value;
-                if (value == null)
-                {
+                if (value == null) {
                     return;
                 }
 
                 Debug.Assert(value != obj, "freeing twice?");
             }
         }
-    }}
+    }
+}

@@ -1,14 +1,16 @@
 using System;
 
-namespace Anura.Styles {
-    public struct Angle : IEquatable<Angle>, IComparable<Angle>, IFormattable {
-        public static readonly Angle Zero = new Angle (0f, Unit.Rad);
-        public static readonly Angle HalfQuarter = new Angle (45f, Unit.Deg);
-        public static readonly Angle Quarter = new Angle (90f, Unit.Deg);
-        public static readonly Angle TripleHalfQuarter = new Angle (135f, Unit.Deg);
-        public static readonly Angle Half = new Angle (180f, Unit.Deg);
+namespace Anura.Styles
+{
+    public struct Angle : IEquatable<Angle>, IComparable<Angle>, IFormattable
+    {
+        public static readonly Angle Zero = new Angle(0f, Unit.Rad);
+        public static readonly Angle HalfQuarter = new Angle(45f, Unit.Deg);
+        public static readonly Angle Quarter = new Angle(90f, Unit.Deg);
+        public static readonly Angle TripleHalfQuarter = new Angle(135f, Unit.Deg);
+        public static readonly Angle Half = new Angle(180f, Unit.Deg);
 
-        public Angle (float value, Unit unit) {
+        public Angle(float value, Unit unit) {
             Value = value;
             Type = unit;
         }
@@ -39,31 +41,31 @@ namespace Anura.Styles {
         /// <summary>
         ///     Compares the magnitude of two angles.
         /// </summary>
-        public static bool operator >= (Angle a, Angle b) {
-            var result = a.CompareTo (b);
+        public static bool operator >=(Angle a, Angle b) {
+            var result = a.CompareTo(b);
             return (result == 0) || (result == 1);
         }
 
         /// <summary>
         ///     Compares the magnitude of two angles.
         /// </summary>
-        public static bool operator > (Angle a, Angle b) {
-            return a.CompareTo (b) == 1;
+        public static bool operator >(Angle a, Angle b) {
+            return a.CompareTo(b) == 1;
         }
 
         /// <summary>
         ///     Compares the magnitude of two angles.
         /// </summary>
-        public static bool operator <= (Angle a, Angle b) {
-            var result = a.CompareTo (b);
+        public static bool operator <=(Angle a, Angle b) {
+            var result = a.CompareTo(b);
             return (result == 0) || (result == -1);
         }
 
         /// <summary>
         ///     Compares the magnitude of two angles.
         /// </summary>
-        public static bool operator < (Angle a, Angle b) {
-            return a.CompareTo (b) == -1;
+        public static bool operator <(Angle a, Angle b) {
+            return a.CompareTo(b) == -1;
         }
 
         /// <summary>
@@ -71,24 +73,24 @@ namespace Anura.Styles {
         /// </summary>
         /// <param name="other">The angle to compare to.</param>
         /// <returns>The result of the comparison.</returns>
-        public int CompareTo (Angle other) {
-            return ToRadian ().CompareTo (other.ToRadian ());
+        public int CompareTo(Angle other) {
+            return ToRadian().CompareTo(other.ToRadian());
         }
 
-        public static bool TryParse (string s, out Angle result) {
-            var value = default (float);
-            var unit = GetUnit (s.StylesheetUnit (out value));
+        public static bool TryParse(string s, out Angle result) {
+            var value = default(float);
+            var unit = GetUnit(s.StylesheetUnit(out value));
 
             if (unit != Unit.None) {
-                result = new Angle (value, unit);
+                result = new Angle(value, unit);
                 return true;
             }
 
-            result = default (Angle);
+            result = default(Angle);
             return false;
         }
 
-        public static Unit GetUnit (string s) {
+        public static Unit GetUnit(string s) {
             switch (s) {
                 case "deg":
                     return Unit.Deg;
@@ -103,46 +105,47 @@ namespace Anura.Styles {
             }
         }
 
-        public float ToRadian () {
+        public float ToRadian() {
             switch (Type) {
                 case Unit.Deg:
-                    return (float) (Math.PI / 180.0 * Value);
+                    return (float)(Math.PI / 180.0 * Value);
 
                 case Unit.Grad:
-                    return (float) (Math.PI / 200.0 * Value);
+                    return (float)(Math.PI / 200.0 * Value);
 
                 case Unit.Turn:
-                    return (float) (2.0 * Math.PI * Value);
+                    return (float)(2.0 * Math.PI * Value);
 
                 default:
                     return Value;
             }
         }
 
-        public float ToTurns () {
+        public float ToTurns() {
             switch (Type) {
                 case Unit.Deg:
-                    return (float) (Value / 360.0);
+                    return (float)(Value / 360.0);
 
                 case Unit.Grad:
-                    return (float) (Value / 400.0);
+                    return (float)(Value / 400.0);
 
                 case Unit.Rad:
-                    return (float) (Value / (2.0 * Math.PI));
+                    return (float)(Value / (2.0 * Math.PI));
 
                 default:
                     return Value;
             }
         }
 
-        public bool Equals (Angle other) {
-            return ToRadian () == other.ToRadian ();
+        public bool Equals(Angle other) {
+            return ToRadian() == other.ToRadian();
         }
 
         /// <summary>
         ///     An enumeration of angle representations.
         /// </summary>
-        public enum Unit : byte {
+        public enum Unit : byte
+        {
             None,
             Deg,
             Rad,
@@ -153,15 +156,15 @@ namespace Anura.Styles {
         /// <summary>
         ///     Checks for equality of two angles.
         /// </summary>
-        public static bool operator == (Angle a, Angle b) {
-            return a.Equals (b);
+        public static bool operator ==(Angle a, Angle b) {
+            return a.Equals(b);
         }
 
         /// <summary>
         ///     Checks for inequality of two angles.
         /// </summary>
-        public static bool operator != (Angle a, Angle b) {
-            return !a.Equals (b);
+        public static bool operator !=(Angle a, Angle b) {
+            return !a.Equals(b);
         }
 
         /// <summary>
@@ -169,11 +172,11 @@ namespace Anura.Styles {
         /// </summary>
         /// <param name="obj">The object to test with.</param>
         /// <returns>True if the two objects are equal, otherwise false.</returns>
-        public override bool Equals (object obj) {
+        public override bool Equals(object obj) {
             var other = obj as Angle?;
 
             if (other != null)
-                return Equals (other.Value);
+                return Equals(other.Value);
 
             return false;
         }
@@ -182,16 +185,16 @@ namespace Anura.Styles {
         ///     Returns a hash code that defines the current angle.
         /// </summary>
         /// <returns>The integer value of the hashcode.</returns>
-        public override int GetHashCode () {
-            return (int) Value;
+        public override int GetHashCode() {
+            return (int)Value;
         }
 
-        public override string ToString () {
-            return string.Concat (Value.ToString (), UnitString);
+        public override string ToString() {
+            return string.Concat(Value.ToString(), UnitString);
         }
 
-        public string ToString (string format, IFormatProvider formatProvider) {
-            return string.Concat (Value.ToString (format, formatProvider), UnitString);
+        public string ToString(string format, IFormatProvider formatProvider) {
+            return string.Concat(Value.ToString(format, formatProvider), UnitString);
         }
     }
 }

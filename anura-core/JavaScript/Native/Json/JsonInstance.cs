@@ -11,12 +11,10 @@ namespace Anura.JavaScript.Native.Json
         private JsValue _reviver;
 
         private JsonInstance(Engine engine)
-            : base(engine, objectClass: ObjectClass.JSON)
-        {
+            : base(engine, objectClass: ObjectClass.JSON) {
         }
 
-        public static JsonInstance CreateJsonObject(Engine engine)
-        {
+        public static JsonInstance CreateJsonObject(Engine engine) {
             var json = new JsonInstance(engine)
             {
                 _prototype = engine.Object.PrototypeObject
@@ -24,8 +22,7 @@ namespace Anura.JavaScript.Native.Json
             return json;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(2, checkExistingKeys: false)
             {
                 ["parse"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "parse", Parse, 2), true, false, true),
@@ -34,26 +31,19 @@ namespace Anura.JavaScript.Native.Json
             SetProperties(properties);
         }
 
-        private JsValue AbstractWalkOperation(ObjectInstance thisObject, JsValue prop)
-        {
+        private JsValue AbstractWalkOperation(ObjectInstance thisObject, JsValue prop) {
             JsValue value = thisObject.Get(prop, thisObject);
-            if (value.IsObject())
-            {
+            if (value.IsObject()) {
                 var valueAsObject = value.AsObject();
-                if (valueAsObject.Class == ObjectClass.Array)
-                {
+                if (valueAsObject.Class == ObjectClass.Array) {
                     var valAsArray = value.AsArray();
                     var i = 0;
                     var arrLen = valAsArray.GetLength();
-                    while (i < arrLen)
-                    {
+                    while (i < arrLen) {
                         var newValue = AbstractWalkOperation(valAsArray, JsString.Create(i));
-                        if (newValue.IsUndefined())
-                        {
+                        if (newValue.IsUndefined()) {
                             valAsArray.Delete(JsString.Create(i));
-                        }
-                        else
-                        {
+                        } else {
                             valAsArray.DefineOwnProperty
                             (
                                 JsString.Create(i),
@@ -65,19 +55,13 @@ namespace Anura.JavaScript.Native.Json
                         }
                         i = i + 1;
                     }
-                }
-                else
-                {
+                } else {
                     var keys = valueAsObject.GetOwnProperties();
-                    foreach (var p in keys)
-                    {
+                    foreach (var p in keys) {
                         var newElement = AbstractWalkOperation(valueAsObject, p.Key);
-                        if (newElement.IsUndefined())
-                        {
+                        if (newElement.IsUndefined()) {
                             valueAsObject.Delete(p.Key);
-                        }
-                        else
-                        {
+                        } else {
                             valueAsObject.DefineOwnProperty(
                                 p.Key,
                                 new PropertyDescriptor
@@ -92,12 +76,10 @@ namespace Anura.JavaScript.Native.Json
             return _reviver.Invoke(thisObject, new[] { prop, value });
         }
 
-        public JsValue Parse(JsValue thisObject, JsValue[] arguments)
-        {
+        public JsValue Parse(JsValue thisObject, JsValue[] arguments) {
             var parser = new JsonParser(_engine);
             var res = parser.Parse(TypeConverter.ToString(arguments[0]));
-            if (arguments.Length > 1)
-            {
+            if (arguments.Length > 1) {
                 _reviver = arguments[1];
                 ObjectInstance revRes = _engine.Object.Construct(Arguments.Empty);
                 revRes.SetProperty("", new PropertyDescriptor(value: res, PropertyFlag.ConfigurableEnumerableWritable));
@@ -106,25 +88,21 @@ namespace Anura.JavaScript.Native.Json
             return res;
         }
 
-        public JsValue Stringify(JsValue thisObject, JsValue[] arguments)
-        {
+        public JsValue Stringify(JsValue thisObject, JsValue[] arguments) {
             JsValue
                 value = Undefined,
                 replacer = Undefined,
                 space = Undefined;
 
-            if (arguments.Length > 2)
-            {
+            if (arguments.Length > 2) {
                 space = arguments[2];
             }
 
-            if (arguments.Length > 1)
-            {
+            if (arguments.Length > 1) {
                 replacer = arguments[1];
             }
 
-            if (arguments.Length > 0)
-            {
+            if (arguments.Length > 0) {
                 value = arguments[0];
             }
 

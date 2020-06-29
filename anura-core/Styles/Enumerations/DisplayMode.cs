@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum DisplayMode : byte {
+namespace Anura.Styles
+{
+    public enum DisplayMode : byte
+    {
         None,
         Inline,
         Block,

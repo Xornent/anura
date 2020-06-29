@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum WordBreak : byte {
+namespace Anura.Styles
+{
+    public enum WordBreak : byte
+    {
         Normal,
         BreakAll,
         KeepAll

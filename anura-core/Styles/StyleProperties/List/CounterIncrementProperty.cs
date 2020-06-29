@@ -1,11 +1,13 @@
-namespace Anura.Styles {
+namespace Anura.Styles
+{
     using static Converters;
 
-    internal sealed class CounterIncrementProperty : Property {
-        private static readonly IValueConverter StyleConverter = Continuous (
-            WithOrder (IdentifierConverter.Required (), IntegerConverter.Option (1))).OrDefault ();
+    internal sealed class CounterIncrementProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Continuous(
+            WithOrder(IdentifierConverter.Required(), IntegerConverter.Option(1))).OrDefault();
 
-        internal CounterIncrementProperty () : base (PropertyNames.CounterIncrement) { }
+        internal CounterIncrementProperty() : base(PropertyNames.CounterIncrement) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

@@ -12,8 +12,7 @@ namespace Esprima.Ast
             Statement block,
             CatchClause handler,
             Statement finalizer) :
-            base(Nodes.TryStatement)
-        {
+            base(Nodes.TryStatement) {
             Block = block;
             Handler = handler;
             Finalizer = finalizer;

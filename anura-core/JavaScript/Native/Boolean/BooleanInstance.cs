@@ -6,8 +6,7 @@ namespace Anura.JavaScript.Native.Boolean
     public class BooleanInstance : ObjectInstance, IPrimitiveInstance
     {
         public BooleanInstance(Engine engine)
-            : base(engine, ObjectClass.Boolean)
-        {
+            : base(engine, ObjectClass.Boolean) {
         }
 
         Types IPrimitiveInstance.Type => Types.Boolean;

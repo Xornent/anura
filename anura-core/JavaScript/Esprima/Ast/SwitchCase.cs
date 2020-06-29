@@ -9,8 +9,7 @@ namespace Esprima.Ast
         public readonly Expression Test;
 
         public SwitchCase(Expression test, in NodeList<IStatementListItem> consequent) :
-            base(Nodes.SwitchCase)
-        {
+            base(Nodes.SwitchCase) {
             Test = test;
             _consequent = consequent;
         }

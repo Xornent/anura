@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class TextAlignLastProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class TextAlignLastProperty : Property
+    {
         private static readonly IValueConverter StyleConverter = Converters.TextAlignLastConverter;
 
-        public TextAlignLastProperty () : base (PropertyNames.TextAlignLast) { }
+        public TextAlignLastProperty() : base(PropertyNames.TextAlignLast) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

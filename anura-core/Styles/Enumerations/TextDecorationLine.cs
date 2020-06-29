@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum TextDecorationLine : byte {
+namespace Anura.Styles
+{
+    public enum TextDecorationLine : byte
+    {
         Underline,
         Overline,
         LineThrough,

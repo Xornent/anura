@@ -6,8 +6,7 @@ namespace Esprima.Ast
         public readonly bool Shorthand;
 
         public Property(PropertyKind kind, Expression key, bool computed, PropertyValue value, bool method, bool shorthand) :
-            base(Nodes.Property)
-        {
+            base(Nodes.Property) {
             Key = key;
             Computed = computed;
             Value = value;

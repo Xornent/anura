@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum PlayState : byte {
+namespace Anura.Styles
+{
+    public enum PlayState : byte
+    {
         Running,
         Paused
     }

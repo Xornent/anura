@@ -1,48 +1,49 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Anura.Styles {
-    internal sealed class StringsValueConverter : IValueConverter {
-        public IPropertyValue Convert (IEnumerable<Token> value) {
-            var items = value.ToItems ();
+namespace Anura.Styles
+{
+    internal sealed class StringsValueConverter : IValueConverter
+    {
+        public IPropertyValue Convert(IEnumerable<Token> value) {
+            var items = value.ToItems();
             var n = items.Count;
 
             if (n % 2 == 0) {
                 var values = new string[items.Count];
 
                 for (var i = 0; i < n; i++) {
-                    values[i] = items[i].ToCssString ();
+                    values[i] = items[i].ToCssString();
 
                     if (values[i] == null) {
                         return null;
                     }
                 }
 
-                return new StringsValue (values, value);
+                return new StringsValue(values, value);
             }
 
             return null;
         }
 
-        public IPropertyValue Construct (Property[] properties) {
-            return properties.Guard<StringsValue> ();
+        public IPropertyValue Construct(Property[] properties) {
+            return properties.Guard<StringsValue>();
         }
 
-        private sealed class StringsValue : IPropertyValue {
+        private sealed class StringsValue : IPropertyValue
+        {
             private readonly string[] _values;
 
-            public StringsValue (string[] values, IEnumerable<Token> tokens) {
+            public StringsValue(string[] values, IEnumerable<Token> tokens) {
                 _values = values;
-                Original = new TokenValue (tokens);
+                Original = new TokenValue(tokens);
             }
 
-            public string CssText {
-                get { return string.Join (" ", _values.Select (m => m.StylesheetString ())); }
-            }
+            public string CssText => string.Join(" ", _values.Select(m => m.StylesheetString()));
 
             public TokenValue Original { get; }
 
-            public TokenValue ExtractFor (string name) {
+            public TokenValue ExtractFor(string name) {
                 return Original;
             }
         }

@@ -1,8 +1,8 @@
-﻿using System.Globalization;
+﻿using Anura.JavaScript.Native;
+using Anura.JavaScript.Native.Function;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
-using Anura.JavaScript.Native;
-using Anura.JavaScript.Native.Function;
 
 namespace Anura.JavaScript.Runtime.Interop
 {
@@ -11,28 +11,25 @@ namespace Anura.JavaScript.Runtime.Interop
         private readonly MethodInfo[] _methods;
 
         public MethodInfoFunctionInstance(Engine engine, MethodInfo[] methods)
-            : base(engine, "Function", null, null, false)
-        {
+            : base(engine, "Function", null, null, false) {
             _methods = methods;
             _prototype = engine.Function.PrototypeObject;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             return Invoke(_methods, thisObject, arguments);
         }
 
-        public JsValue Invoke(MethodInfo[] methodInfos, JsValue thisObject, JsValue[] jsArguments)
-        {
-            JsValue[] ArgumentProvider(MethodInfo method, bool hasParams) =>
-                hasParams
-                    ? ProcessParamsArrays(jsArguments, method)
-                    : jsArguments;
+        public JsValue Invoke(MethodInfo[] methodInfos, JsValue thisObject, JsValue[] jsArguments) {
+            JsValue[] ArgumentProvider(MethodInfo method, bool hasParams) {
+                return hasParams
+? ProcessParamsArrays(jsArguments, method)
+: jsArguments;
+            }
 
             var converter = Engine.ClrTypeConverter;
 
-            foreach (var tuple in TypeConverter.FindBestMatch(_engine, methodInfos, ArgumentProvider))
-            {
+            foreach (var tuple in TypeConverter.FindBestMatch(_engine, methodInfos, ArgumentProvider)) {
                 var method = tuple.Item1;
                 var arguments = tuple.Item2;
 
@@ -40,54 +37,41 @@ namespace Anura.JavaScript.Runtime.Interop
                 var methodParameters = method.GetParameters();
                 var argumentsMatch = true;
 
-                for (var i = 0; i < arguments.Length; i++)
-                {
+                for (var i = 0; i < arguments.Length; i++) {
                     var parameterType = methodParameters[i].ParameterType;
 
-                    if (typeof(JsValue).IsAssignableFrom(parameterType))
-                    {
+                    if (typeof(JsValue).IsAssignableFrom(parameterType)) {
                         parameters[i] = arguments[i];
-                    }
-                    else if (parameterType == typeof(JsValue[]) && arguments[i].IsArray())
-                    {
+                    } else if (parameterType == typeof(JsValue[]) && arguments[i].IsArray()) {
                         // Handle specific case of F(params JsValue[])
 
                         var arrayInstance = arguments[i].AsArray();
                         var len = TypeConverter.ToInt32(arrayInstance.Get(CommonProperties.Length, this));
                         var result = new JsValue[len];
-                        for (uint k = 0; k < len; k++)
-                        {
+                        for (uint k = 0; k < len; k++) {
                             result[k] = arrayInstance.TryGetValue(k, out var value) ? value : Undefined;
                         }
                         parameters[i] = result;
-                    }
-                    else
-                    {
-                        if (!converter.TryConvert(arguments[i].ToObject(), parameterType, CultureInfo.InvariantCulture, out parameters[i]))
-                        {
+                    } else {
+                        if (!converter.TryConvert(arguments[i].ToObject(), parameterType, CultureInfo.InvariantCulture, out parameters[i])) {
                             argumentsMatch = false;
                             break;
                         }
 
-                        if (parameters[i] is LambdaExpression lambdaExpression)
-                        {
+                        if (parameters[i] is LambdaExpression lambdaExpression) {
                             parameters[i] = lambdaExpression.Compile();
                         }
                     }
                 }
 
-                if (!argumentsMatch)
-                {
+                if (!argumentsMatch) {
                     continue;
                 }
 
                 // todo: cache method info
-                try
-                {
+                try {
                     return FromObject(Engine, method.Invoke(thisObject.ToObject(), parameters));
-                }
-                catch (TargetInvocationException exception)
-                {
+                } catch (TargetInvocationException exception) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowMeaningfulException(_engine, exception);
                 }
             }
@@ -98,8 +82,7 @@ namespace Anura.JavaScript.Runtime.Interop
         /// <summary>
         /// Reduces a flat list of parameters to a params array, if needed
         /// </summary>
-        private JsValue[] ProcessParamsArrays(JsValue[] jsArguments, MethodInfo methodInfo)
-        {
+        private JsValue[] ProcessParamsArrays(JsValue[] jsArguments, MethodInfo methodInfo) {
             var parameters = methodInfo.GetParameters();
 
             var nonParamsArgumentsCount = parameters.Length - 1;
@@ -115,8 +98,7 @@ namespace Anura.JavaScript.Runtime.Interop
             Engine.Array.PrototypeObject.Push(jsArray, argsToTransform);
 
             var newArgumentsCollection = new JsValue[nonParamsArgumentsCount + 1];
-            for (var j = 0; j < nonParamsArgumentsCount; ++j)
-            {
+            for (var j = 0; j < nonParamsArgumentsCount; ++j) {
                 newArgumentsCollection[j] = jsArguments[j];
             }
 

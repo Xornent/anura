@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum HoverAbility : byte {
+namespace Anura.Styles
+{
+    public enum HoverAbility : byte
+    {
         None,
         OnDemand,
         Hover

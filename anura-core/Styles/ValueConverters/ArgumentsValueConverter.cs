@@ -1,16 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Anura.Styles {
-    internal sealed class ArgumentsValueConverter : IValueConverter {
+namespace Anura.Styles
+{
+    internal sealed class ArgumentsValueConverter : IValueConverter
+    {
         private readonly IValueConverter[] _converters;
 
-        public ArgumentsValueConverter (params IValueConverter[] converters) {
+        public ArgumentsValueConverter(params IValueConverter[] converters) {
             _converters = converters;
         }
 
-        public IPropertyValue Convert (IEnumerable<Token> value) {
-            var items = value.ToList ();
+        public IPropertyValue Convert(IEnumerable<Token> value) {
+            var items = value.ToList();
             var length = _converters.Length;
 
             if (items.Count > length) {
@@ -20,39 +22,40 @@ namespace Anura.Styles {
             var args = new IPropertyValue[length];
 
             for (var i = 0; i < length; i++) {
-                var item = i < items.Count ? items[i] : Enumerable.Empty<Token> ();
-                args[i] = _converters[i].Convert (item);
+                var item = i < items.Count ? items[i] : Enumerable.Empty<Token>();
+                args[i] = _converters[i].Convert(item);
 
                 if (args[i] == null) {
                     return null;
                 }
             }
 
-            return new ArgumentsValue (args, value);
+            return new ArgumentsValue(args, value);
         }
 
-        public IPropertyValue Construct (Property[] properties) {
-            return properties.Guard<ArgumentsValue> ();
+        public IPropertyValue Construct(Property[] properties) {
+            return properties.Guard<ArgumentsValue>();
         }
 
-        private sealed class ArgumentsValue : IPropertyValue {
+        private sealed class ArgumentsValue : IPropertyValue
+        {
             private readonly IPropertyValue[] _arguments;
 
-            public ArgumentsValue (IPropertyValue[] arguments, IEnumerable<Token> tokens) {
+            public ArgumentsValue(IPropertyValue[] arguments, IEnumerable<Token> tokens) {
                 _arguments = arguments;
-                Original = new TokenValue (tokens);
+                Original = new TokenValue(tokens);
             }
 
             public string CssText {
                 get {
-                    var texts = _arguments.Where (m => !string.IsNullOrEmpty (m.CssText)).Select (m => m.CssText);
-                    return string.Join (", ", texts);
+                    var texts = _arguments.Where(m => !string.IsNullOrEmpty(m.CssText)).Select(m => m.CssText);
+                    return string.Join(", ", texts);
                 }
             }
 
             public TokenValue Original { get; }
 
-            public TokenValue ExtractFor (string name) {
+            public TokenValue ExtractFor(string name) {
                 return Original;
             }
         }

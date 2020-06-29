@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum ListStyle : byte {
+namespace Anura.Styles
+{
+    public enum ListStyle : byte
+    {
         None,
         Disc,
         Circle,

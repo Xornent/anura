@@ -1,18 +1,20 @@
 using System.IO;
 
-namespace Anura.Styles {
-    public abstract class MediaFeature : StylesheetNode, IMediaFeature {
-        internal MediaFeature (string name) {
+namespace Anura.Styles
+{
+    public abstract class MediaFeature : StylesheetNode, IMediaFeature
+    {
+        internal MediaFeature(string name) {
             Name = name;
-            IsMinimum = name.StartsWith ("min-");
-            IsMaximum = name.StartsWith ("max-");
+            IsMinimum = name.StartsWith("min-");
+            IsMaximum = name.StartsWith("max-");
         }
 
         internal abstract IValueConverter Converter { get; }
 
-        public override void ToCss (TextWriter writer, IStyleFormatter formatter) {
+        public override void ToCss(TextWriter writer, IStyleFormatter formatter) {
             var value = HasValue ? Value : null;
-            writer.Write (formatter.Constraint (Name, value));
+            writer.Write(formatter.Constraint(Name, value));
         }
 
         private TokenValue _tokenValue;
@@ -27,13 +29,13 @@ namespace Anura.Styles {
 
         public bool HasValue => (_tokenValue != null) && (_tokenValue.Count > 0);
 
-        internal bool TrySetValue (TokenValue tokenValue) {
+        internal bool TrySetValue(TokenValue tokenValue) {
             bool result;
 
             if (tokenValue == null) {
-                result = !IsMinimum && !IsMaximum && Converter.ConvertDefault () != null;
+                result = !IsMinimum && !IsMaximum && Converter.ConvertDefault() != null;
             } else {
-                result = Converter.Convert (tokenValue) != null;
+                result = Converter.Convert(tokenValue) != null;
             }
 
             if (result) {

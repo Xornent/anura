@@ -2,119 +2,121 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Anura.Styles {
-    internal abstract class LexerBase : IDisposable {
+namespace Anura.Styles
+{
+    internal abstract class LexerBase : IDisposable
+    {
         private readonly Stack<ushort> _columns;
 
-        protected LexerBase (TextSource source) {
-            StringBuffer = Pool.NewStringBuilder ();
-            _columns = new Stack<ushort> ();
+        protected LexerBase(TextSource source) {
+            StringBuffer = Pool.NewStringBuilder();
+            _columns = new Stack<ushort>();
             Source = source;
             Current = Symbols.Null;
             Column = 0;
             Line = 1;
         }
 
-        public string FlushBuffer () {
-            var content = StringBuffer.ToString ();
-            StringBuffer.Clear ();
+        public string FlushBuffer() {
+            var content = StringBuffer.ToString();
+            StringBuffer.Clear();
             return content;
         }
 
-        public void Dispose () {
+        public void Dispose() {
             var isDisposed = StringBuffer == null;
             if (!isDisposed) {
                 var disposable = Source as IDisposable;
-                disposable?.Dispose ();
-                StringBuffer.Clear ().ToPool ();
+                disposable?.Dispose();
+                StringBuffer.Clear().ToPool();
                 StringBuffer = null;
             }
         }
 
-        public TextPosition GetCurrentPosition () {
-            return new TextPosition (Line, Column, Position);
+        public TextPosition GetCurrentPosition() {
+            return new TextPosition(Line, Column, Position);
         }
 
-        protected bool ContinuesWithInsensitive (string val) {
-            var content = PeekString (val.Length);
-            return (content.Length == val.Length) && content.Isi (val);
+        protected bool ContinuesWithInsensitive(string val) {
+            var content = PeekString(val.Length);
+            return (content.Length == val.Length) && content.Isi(val);
         }
 
-        protected bool ContinuesWithSensitive (string val) {
-            var content = PeekString (val.Length);
-            return (content.Length == val.Length) && content.Isi (val);
+        protected bool ContinuesWithSensitive(string val) {
+            var content = PeekString(val.Length);
+            return (content.Length == val.Length) && content.Isi(val);
         }
 
-        protected string PeekString (int length) {
+        protected string PeekString(int length) {
             var mark = Source.Index;
             Source.Index--;
-            var content = Source.ReadCharacters (length);
+            var content = Source.ReadCharacters(length);
             Source.Index = mark;
             return content;
         }
 
-        protected char SkipSpaces () {
-            var c = GetNext ();
-            while (c.IsSpaceCharacter ())
-                c = GetNext ();
+        protected char SkipSpaces() {
+            var c = GetNext();
+            while (c.IsSpaceCharacter())
+                c = GetNext();
             return c;
         }
 
-        protected char GetNext () {
-            Advance ();
+        protected char GetNext() {
+            Advance();
             return Current;
         }
 
-        protected char GetPrevious () {
-            Back ();
+        protected char GetPrevious() {
+            Back();
             return Current;
         }
 
-        protected void Advance () {
+        protected void Advance() {
             if (Current != Symbols.EndOfFile) {
-                AdvanceNative ();
+                AdvanceNative();
             }
         }
 
-        protected void Advance (int distance) {
+        protected void Advance(int distance) {
             while ((distance-- > 0) && (Current != Symbols.EndOfFile)) {
-                AdvanceNative ();
+                AdvanceNative();
             }
         }
 
-        protected void Back () {
+        protected void Back() {
             if (InsertionPoint > 0) {
-                BackNative ();
+                BackNative();
             }
         }
 
-        protected void Back (int distance) {
+        protected void Back(int distance) {
             while ((distance-- > 0) && (InsertionPoint > 0)) {
-                BackNative ();
+                BackNative();
             }
         }
 
-        private void AdvanceNative () {
+        private void AdvanceNative() {
             if (Current == Symbols.LineFeed) {
-                _columns.Push (Column);
+                _columns.Push(Column);
                 Column = 1;
                 Line++;
             } else {
                 Column++;
             }
-            Current = NormalizeForward (Source.ReadCharacter ());
+            Current = NormalizeForward(Source.ReadCharacter());
         }
 
-        private void BackNative () {
+        private void BackNative() {
             Source.Index -= 1;
             if (Source.Index == 0) {
                 Column = 0;
                 Current = Symbols.Null;
                 return;
             }
-            var c = NormalizeBackward (Source[Source.Index - 1]);
+            var c = NormalizeBackward(Source[Source.Index - 1]);
             if (c == Symbols.LineFeed) {
-                Column = _columns.Count != 0 ? _columns.Pop () : (ushort) 1;
+                Column = _columns.Count != 0 ? _columns.Pop() : (ushort)1;
                 Line--;
                 Current = c;
             } else if (c != Symbols.Null) {
@@ -123,22 +125,22 @@ namespace Anura.Styles {
             }
         }
 
-        private char NormalizeForward (char symbol) {
+        private char NormalizeForward(char symbol) {
             if (symbol != Symbols.CarriageReturn) {
                 return symbol;
             }
-            if (Source.ReadCharacter () != Symbols.LineFeed) {
+            if (Source.ReadCharacter() != Symbols.LineFeed) {
                 Source.Index--;
             }
             return Symbols.LineFeed;
         }
 
-        private char NormalizeBackward (char symbol) {
+        private char NormalizeBackward(char symbol) {
             if (symbol != Symbols.CarriageReturn) {
                 return symbol;
             }
             if ((Source.Index < Source.Length) && (Source[Source.Index] == Symbols.LineFeed)) {
-                BackNative ();
+                BackNative();
                 return Symbols.Null;
             }
             return Symbols.LineFeed;
@@ -153,15 +155,15 @@ namespace Anura.Styles {
         public int Position => Source.Index;
         protected char Current { get; private set; }
         public int InsertionPoint {
-            get { return Source.Index; }
+            get => Source.Index;
             protected set {
                 var delta = Source.Index - value;
                 while (delta > 0) {
-                    BackNative ();
+                    BackNative();
                     delta--;
                 }
                 while (delta < 0) {
-                    AdvanceNative ();
+                    AdvanceNative();
                     delta++;
                 }
             }

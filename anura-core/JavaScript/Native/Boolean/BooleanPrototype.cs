@@ -12,12 +12,10 @@ namespace Anura.JavaScript.Native.Boolean
     {
         private BooleanConstructor _booleanConstructor;
 
-        private BooleanPrototype(Engine engine) : base(engine)
-        {
+        private BooleanPrototype(Engine engine) : base(engine) {
         }
 
-        public static BooleanPrototype CreatePrototypeObject(Engine engine, BooleanConstructor booleanConstructor)
-        {
+        public static BooleanPrototype CreatePrototypeObject(Engine engine, BooleanConstructor booleanConstructor) {
             var obj = new BooleanPrototype(engine)
             {
                 _prototype = engine.Object.PrototypeObject,
@@ -28,8 +26,7 @@ namespace Anura.JavaScript.Native.Boolean
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(3, checkExistingKeys: false)
             {
                 ["constructor"] = new PropertyDescriptor(_booleanConstructor, PropertyFlag.NonEnumerable),
@@ -39,25 +36,21 @@ namespace Anura.JavaScript.Native.Boolean
             SetProperties(properties);
         }
 
-        private JsValue ValueOf(JsValue thisObj, JsValue[] arguments)
-        {
-            if (thisObj._type == InternalTypes.Boolean)
-            {
+        private JsValue ValueOf(JsValue thisObj, JsValue[] arguments) {
+            if (thisObj._type == InternalTypes.Boolean) {
                 return thisObj;
             }
 
-            if (thisObj is BooleanInstance bi)
-            {
+            if (thisObj is BooleanInstance bi) {
                 return bi.PrimitiveValue;
             }
 
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(Engine);
         }
 
-        private JsValue ToBooleanString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToBooleanString(JsValue thisObj, JsValue[] arguments) {
             var b = ValueOf(thisObj, Arguments.Empty);
-            return ((JsBoolean) b)._value ? JsString.TrueString : JsString.FalseString;
+            return ((JsBoolean)b)._value ? JsString.TrueString : JsString.FalseString;
         }
     }
 }

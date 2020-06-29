@@ -36,8 +36,7 @@ namespace Anura.JavaScript.Runtime
         /// <summary>
         /// Initializes a new instance of an OrderedDictionary.
         /// </summary>
-        public OrderedDictionary()
-        {
+        public OrderedDictionary() {
             dictionary = new Dictionary<TKey, TValue>();
             keys = new List<TKey>();
         }
@@ -47,8 +46,7 @@ namespace Anura.JavaScript.Runtime
         /// </summary>
         /// <param name="capacity">The initial capacity of the dictionary.</param>
         /// <exception cref="System.ArgumentOutOfRangeException">The capacity is less than zero.</exception>
-        public OrderedDictionary(int capacity)
-        {
+        public OrderedDictionary(int capacity) {
             dictionary = new Dictionary<TKey, TValue>(capacity);
             keys = new List<TKey>(capacity);
         }
@@ -57,8 +55,7 @@ namespace Anura.JavaScript.Runtime
         /// Initializes a new instance of an OrderedDictionary.
         /// </summary>
         /// <param name="comparer">The equality comparer to use to compare keys.</param>
-        public OrderedDictionary(IEqualityComparer<TKey> comparer)
-        {
+        public OrderedDictionary(IEqualityComparer<TKey> comparer) {
             dictionary = new Dictionary<TKey, TValue>(comparer);
             keys = new List<TKey>();
         }
@@ -68,8 +65,7 @@ namespace Anura.JavaScript.Runtime
         /// </summary>
         /// <param name="capacity">The initial capacity of the dictionary.</param>
         /// <param name="comparer">The equality comparer to use to compare keys.</param>
-        public OrderedDictionary(int capacity, IEqualityComparer<TKey> comparer)
-        {
+        public OrderedDictionary(int capacity, IEqualityComparer<TKey> comparer) {
             dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
             keys = new List<TKey>(capacity);
         }
@@ -81,8 +77,7 @@ namespace Anura.JavaScript.Runtime
         /// <param name="value">The value to associated with the key.</param>
         /// <exception cref="System.ArgumentException">The given key already exists in the dictionary.</exception>
         /// <exception cref="System.ArgumentNullException">The key is null.</exception>
-        public void Add(TKey key, TValue value)
-        {
+        public void Add(TKey key, TValue value) {
             dictionary.Add(key, value);
             keys.Add(key);
         }
@@ -96,10 +91,8 @@ namespace Anura.JavaScript.Runtime
         /// <exception cref="System.ArgumentException">The given key already exists in the dictionary.</exception>
         /// <exception cref="System.ArgumentNullException">The key is null.</exception>
         /// <exception cref="System.ArgumentOutOfRangeException">The index is negative -or- larger than the size of the dictionary.</exception>
-        public void Insert(int index, TKey key, TValue value)
-        {
-            if (index < 0 || index > dictionary.Count)
-            {
+        public void Insert(int index, TKey key, TValue value) {
+            if (index < 0 || index > dictionary.Count) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException(nameof(index), IndexOutOfRange);
             }
             dictionary.Add(key, value);
@@ -112,8 +105,7 @@ namespace Anura.JavaScript.Runtime
         /// <param name="key">The key to look for.</param>
         /// <returns>True if the key exists in the dictionary; otherwise, false.</returns>
         /// <exception cref="System.ArgumentNullException">The key is null.</exception>
-        public bool ContainsKey(TKey key)
-        {
+        public bool ContainsKey(TKey key) {
             return dictionary.ContainsKey(key);
         }
 
@@ -123,8 +115,7 @@ namespace Anura.JavaScript.Runtime
         /// <param name="index">The index of the key to get.</param>
         /// <returns>The key at the given index.</returns>
         /// <exception cref="System.ArgumentOutOfRangeException">The index is negative -or- larger than the number of keys.</exception>
-        public TKey GetKey(int index)
-        {
+        public TKey GetKey(int index) {
             return keys[index];
         }
 
@@ -134,18 +125,14 @@ namespace Anura.JavaScript.Runtime
         /// <param name="key">The key to get the index of.</param>
         /// <returns>The index of the key in the dictionary -or- -1 if the key is not found.</returns>
         /// <remarks>The operation runs in O(n).</remarks>
-        public int IndexOf(TKey key)
-        {
-            if (!dictionary.ContainsKey(key))
-            {
+        public int IndexOf(TKey key) {
+            if (!dictionary.ContainsKey(key)) {
                 return -1;
             }
 
             var keysCount = keys.Count;
-            for (int i = 0; i < keysCount; ++i)
-            {
-                if (dictionary.Comparer.Equals(keys[i], key))
-                {
+            for (int i = 0; i < keysCount; ++i) {
+                if (dictionary.Comparer.Equals(keys[i], key)) {
                     return i;
                 }
             }
@@ -164,15 +151,11 @@ namespace Anura.JavaScript.Runtime
         /// <returns>True if the key was found and the pair removed; otherwise, false.</returns>
         /// <exception cref="System.ArgumentNullException">The key is null.</exception>
         /// <remarks>This operation runs in O(n).</remarks>
-        public bool Remove(TKey key)
-        {
-            if (dictionary.Remove(key))
-            {
+        public bool Remove(TKey key) {
+            if (dictionary.Remove(key)) {
                 var keysCount = keys.Count;
-                for (int i = 0; i < keysCount; ++i)
-                {
-                    if (dictionary.Comparer.Equals(keys[i], key))
-                    {
+                for (int i = 0; i < keysCount; ++i) {
+                    if (dictionary.Comparer.Equals(keys[i], key)) {
                         keys.RemoveAt(i);
                         break;
                     }
@@ -188,8 +171,7 @@ namespace Anura.JavaScript.Runtime
         /// <param name="index">The index of the key/value pair to remove.</param>
         /// <exception cref="System.ArgumentOutOfRangeException">The index is negative -or- larger than the size of the dictionary.</exception>
         /// <remarks>This operation runs in O(n).</remarks>
-        public void RemoveAt(int index)
-        {
+        public void RemoveAt(int index) {
             TKey key = keys[index];
             dictionary.Remove(key);
             keys.RemoveAt(index);
@@ -203,8 +185,7 @@ namespace Anura.JavaScript.Runtime
         /// <param name="value">The value used to hold the results.</param>
         /// <returns>True if the key was found; otherwise, false.</returns>
         /// <exception cref="System.ArgumentNullException">The key is null.</exception>
-        public bool TryGetValue(TKey key, out TValue value)
-        {
+        public bool TryGetValue(TKey key, out TValue value) {
             return dictionary.TryGetValue(key, out value);
         }
 
@@ -219,8 +200,7 @@ namespace Anura.JavaScript.Runtime
         /// <param name="index">The index of the value to get.</param>
         /// <returns>The value at the given index.</returns>
         /// <exception cref="System.ArgumentOutOfRangeException">The index is negative -or- beyond the length of the dictionary.</exception>
-        public TValue this[int index]
-        {
+        public TValue this[int index] {
             get => dictionary[keys[index]];
             set => dictionary[keys[index]] = value;
         }
@@ -232,13 +212,10 @@ namespace Anura.JavaScript.Runtime
         /// <returns>The value associated with the given key.</returns>
         /// <exception cref="System.ArgumentNullException">The key is null.</exception>
         /// <exception cref="System.Collections.Generic.KeyNotFoundException">The key is not in the dictionary.</exception>
-        public TValue this[TKey key]
-        {
+        public TValue this[TKey key] {
             get => dictionary[key];
-            set
-            {
-                if (!dictionary.ContainsKey(key))
-                {
+            set {
+                if (!dictionary.ContainsKey(key)) {
                     keys.Add(key);
                 }
                 dictionary[key] = value;
@@ -248,8 +225,7 @@ namespace Anura.JavaScript.Runtime
         /// <summary>
         /// Removes all key/value pairs from the dictionary.
         /// </summary>
-        public void Clear()
-        {
+        public void Clear() {
             dictionary.Clear();
             keys.Clear();
         }
@@ -263,30 +239,23 @@ namespace Anura.JavaScript.Runtime
         /// Gets the key/value pairs in the dictionary in the order they were added.
         /// </summary>
         /// <returns>An enumerator over the key/value pairs in the dictionary.</returns>
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
-        {
-            foreach (TKey key in keys)
-            {
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() {
+            foreach (TKey key in keys) {
                 yield return new KeyValuePair<TKey, TValue>(key, dictionary[key]);
             }
         }
 
-        int IList<KeyValuePair<TKey, TValue>>.IndexOf(KeyValuePair<TKey, TValue> item)
-        {
-            if (!dictionary.TryGetValue(item.Key, out var value))
-            {
+        int IList<KeyValuePair<TKey, TValue>>.IndexOf(KeyValuePair<TKey, TValue> item) {
+            if (!dictionary.TryGetValue(item.Key, out var value)) {
                 return -1;
             }
-            if (!Equals(item.Value, value))
-            {
+            if (!Equals(item.Value, value)) {
                 return -1;
             }
 
             var keysCount = keys.Count;
-            for (int i = 0; i < keysCount; ++i)
-            {
-                if (dictionary.Comparer.Equals(keys[i], item.Key))
-                {
+            for (int i = 0; i < keysCount; ++i) {
+                if (dictionary.Comparer.Equals(keys[i], item.Key)) {
                     return i;
                 }
             }
@@ -294,33 +263,25 @@ namespace Anura.JavaScript.Runtime
             return -1;
         }
 
-        void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item)
-        {
-            if (index < 0 || index > dictionary.Count)
-            {
+        void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item) {
+            if (index < 0 || index > dictionary.Count) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException(nameof(index), IndexOutOfRange);
             }
             dictionary.Add(item.Key, item.Value);
             keys.Insert(index, item.Key);
         }
 
-        KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index]
-        {
-            get
-            {
+        KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index] {
+            get {
                 TKey key = keys[index];
                 TValue value = dictionary[key];
                 return new KeyValuePair<TKey, TValue>(key, value);
             }
-            set
-            {
+            set {
                 TKey key = keys[index];
-                if (dictionary.Comparer.Equals(key, value.Key))
-                {
+                if (dictionary.Comparer.Equals(key, value.Key)) {
                     dictionary[value.Key] = value.Value;
-                }
-                else
-                {
+                } else {
                     dictionary.Add(value.Key, value.Value);
                     dictionary.Remove(key);
                     keys[index] = value.Key;
@@ -332,38 +293,30 @@ namespace Anura.JavaScript.Runtime
 
         ICollection<TValue> IDictionary<TKey, TValue>.Values => Values;
 
-        void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
-        {
+        void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) {
             dictionary.Add(item.Key, item.Value);
             keys.Add(item.Key);
         }
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
-        {
-            if (!dictionary.TryGetValue(item.Key, out var value))
-            {
+        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) {
+            if (!dictionary.TryGetValue(item.Key, out var value)) {
                 return false;
             }
             return Equals(value, item.Value);
         }
 
-        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-        {
-            if (array == null)
-            {
+        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) {
+            if (array == null) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentNullException(nameof(array));
                 return;
             }
-            if (arrayIndex < 0)
-            {
+            if (arrayIndex < 0) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException(nameof(arrayIndex), string.Format(CultureInfo.CurrentCulture, TooSmall, 0));
             }
-            if (dictionary.Count > array.Length - arrayIndex)
-            {
+            if (dictionary.Count > array.Length - arrayIndex) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException(ArrayTooSmall, nameof(array));
             }
-            foreach (TKey key in keys)
-            {
+            foreach (TKey key in keys) {
                 TValue value = dictionary[key];
                 array[arrayIndex] = new KeyValuePair<TKey, TValue>(key, value);
                 ++arrayIndex;
@@ -372,32 +325,26 @@ namespace Anura.JavaScript.Runtime
 
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
-        {
-            if (!dictionary.TryGetValue(item.Key, out var value))
-            {
+        bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) {
+            if (!dictionary.TryGetValue(item.Key, out var value)) {
                 return false;
             }
-            if (!Equals(item.Value, value))
-            {
+            if (!Equals(item.Value, value)) {
                 return false;
             }
             // O(n)
             dictionary.Remove(item.Key);
 
             var keysCount = keys.Count;
-            for (int i = 0; i < keysCount; ++i)
-            {
-                if (dictionary.Comparer.Equals(keys[i], item.Key))
-                {
+            for (int i = 0; i < keysCount; ++i) {
+                if (dictionary.Comparer.Equals(keys[i], item.Key)) {
                     keys.RemoveAt(i);
                 }
             }
             return true;
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
+        IEnumerator IEnumerable.GetEnumerator() {
             return GetEnumerator();
         }
 
@@ -413,8 +360,7 @@ namespace Anura.JavaScript.Runtime
             /// </summary>
             /// <param name="dictionary">The OrderedDictionary whose keys to wrap.</param>
             /// <exception cref="System.ArgumentNullException">The dictionary is null.</exception>
-            public KeyCollection(OrderedDictionary<TKey, TValue> dictionary)
-            {
+            public KeyCollection(OrderedDictionary<TKey, TValue> dictionary) {
                 parent = dictionary
                          ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentNullException<OrderedDictionary<TKey, TValue>>(nameof(dictionary));
             }
@@ -427,61 +373,48 @@ namespace Anura.JavaScript.Runtime
             /// <exception cref="System.ArgumentNullException">The array is null.</exception>
             /// <exception cref="System.ArgumentOutOfRangeException">The arrayIndex is negative.</exception>
             /// <exception cref="System.ArgumentException">The array, starting at the given index, is not large enough to contain all the keys.</exception>
-            public void CopyTo(TKey[] array, int arrayIndex)
-            {
+            public void CopyTo(TKey[] array, int arrayIndex) {
                 parent.keys.CopyTo(array, arrayIndex);
             }
 
             /// <summary>
             /// Gets the number of keys in the OrderedDictionary.
             /// </summary>
-            public int Count
-            {
-                get { return parent.dictionary.Count; }
-            }
+            public int Count => parent.dictionary.Count;
 
             /// <summary>
             /// Gets an enumerator over the keys in the OrderedDictionary.
             /// </summary>
             /// <returns>The enumerator.</returns>
-            public IEnumerator<TKey> GetEnumerator()
-            {
+            public IEnumerator<TKey> GetEnumerator() {
                 return parent.keys.GetEnumerator();
             }
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            bool ICollection<TKey>.Contains(TKey item)
-            {
+            bool ICollection<TKey>.Contains(TKey item) {
                 return parent.dictionary.ContainsKey(item);
             }
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            void ICollection<TKey>.Add(TKey item)
-            {
+            void ICollection<TKey>.Add(TKey item) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException(EditReadOnlyList);
             }
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            void ICollection<TKey>.Clear()
-            {
+            void ICollection<TKey>.Clear() {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException(EditReadOnlyList);
             }
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            bool ICollection<TKey>.IsReadOnly
-            {
-                get { return true; }
-            }
+            bool ICollection<TKey>.IsReadOnly => true;
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            bool ICollection<TKey>.Remove(TKey item)
-            {
+            bool ICollection<TKey>.Remove(TKey item) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException(EditReadOnlyList);
                 return false;
             }
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
+            IEnumerator IEnumerable.GetEnumerator() {
                 return GetEnumerator();
             }
         }
@@ -498,8 +431,7 @@ namespace Anura.JavaScript.Runtime
             /// </summary>
             /// <param name="dictionary">The OrderedDictionary whose keys to wrap.</param>
             /// <exception cref="System.ArgumentNullException">The dictionary is null.</exception>
-            public ValueCollection(OrderedDictionary<TKey, TValue> dictionary)
-            {
+            public ValueCollection(OrderedDictionary<TKey, TValue> dictionary) {
                 parent = dictionary
                          ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentNullException<OrderedDictionary<TKey, TValue>>(nameof(dictionary));
             }
@@ -512,23 +444,18 @@ namespace Anura.JavaScript.Runtime
             /// <exception cref="System.ArgumentNullException">The array is null.</exception>
             /// <exception cref="System.ArgumentOutOfRangeException">The arrayIndex is negative.</exception>
             /// <exception cref="System.ArgumentException">The array, starting at the given index, is not large enough to contain all the values.</exception>
-            public void CopyTo(TValue[] array, int arrayIndex)
-            {
-                if (array == null)
-                {
+            public void CopyTo(TValue[] array, int arrayIndex) {
+                if (array == null) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentNullException(nameof(array));
                     return;
                 }
-                if (arrayIndex < 0)
-                {
+                if (arrayIndex < 0) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException(nameof(arrayIndex), string.Format(TooSmall, 0));
                 }
-                if (parent.dictionary.Count > array.Length - arrayIndex)
-                {
+                if (parent.dictionary.Count > array.Length - arrayIndex) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException(ArrayTooSmall, nameof(array));
                 }
-                foreach (TKey key in parent.keys)
-                {
+                foreach (TKey key in parent.keys) {
                     TValue value = parent.dictionary[key];
                     array[arrayIndex] = value;
                     ++arrayIndex;
@@ -544,30 +471,25 @@ namespace Anura.JavaScript.Runtime
             /// Gets an enumerator over the values in the OrderedDictionary.
             /// </summary>
             /// <returns>The enumerator.</returns>
-            public IEnumerator<TValue> GetEnumerator()
-            {
-                foreach (TKey key in parent.keys)
-                {
+            public IEnumerator<TValue> GetEnumerator() {
+                foreach (TKey key in parent.keys) {
                     TValue value = parent.dictionary[key];
                     yield return value;
                 }
             }
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            bool ICollection<TValue>.Contains(TValue item)
-            {
+            bool ICollection<TValue>.Contains(TValue item) {
                 return parent.dictionary.ContainsValue(item);
             }
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            void ICollection<TValue>.Add(TValue item)
-            {
+            void ICollection<TValue>.Add(TValue item) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException(EditReadOnlyList);
             }
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            void ICollection<TValue>.Clear()
-            {
+            void ICollection<TValue>.Clear() {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException(EditReadOnlyList);
             }
 
@@ -575,14 +497,12 @@ namespace Anura.JavaScript.Runtime
             bool ICollection<TValue>.IsReadOnly => true;
 
             [EditorBrowsable(EditorBrowsableState.Never)]
-            bool ICollection<TValue>.Remove(TValue item)
-            {
+            bool ICollection<TValue>.Remove(TValue item) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotSupportedException(EditReadOnlyList);
                 return false;
             }
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
+            IEnumerator IEnumerable.GetEnumerator() {
                 return GetEnumerator();
             }
         }

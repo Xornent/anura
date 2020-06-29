@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class TextJustifyProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class TextJustifyProperty : Property
+    {
         private static readonly IValueConverter StyleConverter = Converters.TextJustifyConverter;
 
-        public TextJustifyProperty () : base (PropertyNames.TextJustify) { }
+        public TextJustifyProperty() : base(PropertyNames.TextJustify) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

@@ -15,12 +15,10 @@ namespace Anura.JavaScript.Native.Function
         private static readonly JsString _functionName = new JsString("Function");
 
         private FunctionPrototype(Engine engine)
-            : base(engine, _functionName, strict: false)
-        {
+            : base(engine, _functionName, strict: false) {
         }
 
-        public static FunctionPrototype CreatePrototypeObject(Engine engine)
-        {
+        public static FunctionPrototype CreatePrototypeObject(Engine engine) {
             var obj = new FunctionPrototype(engine)
             {
                 // The value of the [[Prototype]] internal property of the Function prototype object is the standard built-in Object prototype object
@@ -31,8 +29,7 @@ namespace Anura.JavaScript.Native.Function
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(5, checkExistingKeys: false)
             {
                 ["constructor"] = new PropertyDescriptor(Engine.Function, PropertyFlag.NonEnumerable),
@@ -44,10 +41,8 @@ namespace Anura.JavaScript.Native.Function
             SetProperties(properties);
         }
 
-        private JsValue Bind(JsValue thisObj, JsValue[] arguments)
-        {
-            var target = thisObj.TryCast<ICallable>(x =>
-            {
+        private JsValue Bind(JsValue thisObj, JsValue[] arguments) {
+            var target = thisObj.TryCast<ICallable>(x => {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             });
 
@@ -60,13 +55,10 @@ namespace Anura.JavaScript.Native.Function
                 _prototype = Engine.Function.PrototypeObject
             };
 
-            if (target is FunctionInstance functionInstance)
-            {
+            if (target is FunctionInstance functionInstance) {
                 var l = TypeConverter.ToNumber(functionInstance.Get(CommonProperties.Length, functionInstance)) - (arguments.Length - 1);
                 f.SetOwnProperty(CommonProperties.Length, new PropertyDescriptor(System.Math.Max(l, 0), PropertyFlag.AllForbidden));
-            }
-            else
-            {
+            } else {
                 f.SetOwnProperty(CommonProperties.Length, PropertyDescriptor.AllForbiddenDescriptor.NumberZero);
             }
 
@@ -76,24 +68,20 @@ namespace Anura.JavaScript.Native.Function
             return f;
         }
 
-        private JsValue ToString(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!(thisObj is FunctionInstance))
-            {
+        private JsValue ToString(JsValue thisObj, JsValue[] arguments) {
+            if (!(thisObj is FunctionInstance)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<FunctionInstance>(_engine, "Function object expected.");
             }
 
             return "function() {{ ... }}";
         }
 
-        internal JsValue Apply(JsValue thisObject, JsValue[] arguments)
-        {
+        internal JsValue Apply(JsValue thisObject, JsValue[] arguments) {
             var func = thisObject as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ICallable>(Engine);
             var thisArg = arguments.At(0);
             var argArray = arguments.At(1);
 
-            if (argArray.IsNullOrUndefined())
-            {
+            if (argArray.IsNullOrUndefined()) {
                 return func.Call(thisArg, Arguments.Empty);
             }
 
@@ -104,23 +92,20 @@ namespace Anura.JavaScript.Native.Function
             return result;
         }
 
-        internal JsValue[] CreateListFromArrayLike(JsValue argArray, Types? elementTypes = null)
-        {
+        internal JsValue[] CreateListFromArrayLike(JsValue argArray, Types? elementTypes = null) {
             var argArrayObj = argArray as ObjectInstance ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine);
             var operations = ArrayOperations.For(argArrayObj);
             var allowedTypes = elementTypes ??
                                Types.Undefined | Types.Null | Types.Boolean | Types.String | Types.Symbol | Types.Number | Types.Object;
-            
+
             var argList = operations.GetAll(allowedTypes);
             return argList;
         }
 
-        private JsValue CallImpl(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue CallImpl(JsValue thisObject, JsValue[] arguments) {
             var func = thisObject as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ICallable>(Engine);
             JsValue[] values = System.Array.Empty<JsValue>();
-            if (arguments.Length > 1)
-            {
+            if (arguments.Length > 1) {
                 values = new JsValue[arguments.Length - 1];
                 System.Array.Copy(arguments, 1, values, 0, arguments.Length - 1);
             }
@@ -130,8 +115,7 @@ namespace Anura.JavaScript.Native.Function
             return result;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             return Undefined;
         }
     }

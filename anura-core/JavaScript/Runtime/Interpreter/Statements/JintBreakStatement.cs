@@ -9,13 +9,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
     {
         private readonly string _label;
 
-        public JintBreakStatement(Engine engine, BreakStatement statement) : base(engine, statement)
-        {
+        public JintBreakStatement(Engine engine, BreakStatement statement) : base(engine, statement) {
             _label = statement.Label?.Name;
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             return new Completion(CompletionType.Break, null, _label, Location);
         }
     }

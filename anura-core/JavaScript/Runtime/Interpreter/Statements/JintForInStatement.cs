@@ -1,9 +1,9 @@
-using System.Collections.Generic;
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
 using Anura.JavaScript.Runtime.References;
+using Esprima.Ast;
+using System.Collections.Generic;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -16,31 +16,23 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
         private readonly JintExpression _identifier;
         private readonly JintExpression _right;
 
-        public JintForInStatement(Engine engine, ForInStatement statement) : base(engine, statement)
-        {
-            if (_statement.Left.Type == Nodes.VariableDeclaration)
-            {
-                _identifier = JintExpression.Build(engine, (Identifier) ((VariableDeclaration) _statement.Left).Declarations[0].Id);
-            }
-            else if (_statement.Left.Type == Nodes.MemberExpression)
-            {
-                _identifier = JintExpression.Build(engine, ((MemberExpression) _statement.Left));
-            }
-            else
-            {
-                _identifier = JintExpression.Build(engine, (Identifier) _statement.Left);
+        public JintForInStatement(Engine engine, ForInStatement statement) : base(engine, statement) {
+            if (_statement.Left.Type == Nodes.VariableDeclaration) {
+                _identifier = JintExpression.Build(engine, (Identifier)((VariableDeclaration)_statement.Left).Declarations[0].Id);
+            } else if (_statement.Left.Type == Nodes.MemberExpression) {
+                _identifier = JintExpression.Build(engine, ((MemberExpression)_statement.Left));
+            } else {
+                _identifier = JintExpression.Build(engine, (Identifier)_statement.Left);
             }
 
             _body = Build(engine, _statement.Body);
             _right = JintExpression.Build(engine, statement.Right);
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             var varRef = _identifier.Evaluate() as Reference;
             var experValue = _right.GetValue();
-            if (experValue.IsNullOrUndefined())
-            {
+            if (experValue.IsNullOrUndefined()) {
                 return new Completion(CompletionType.Normal, null, null, Location);
             }
 
@@ -51,51 +43,42 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
             var cursor = obj;
             var processedKeys = new HashSet<JsString>();
 
-            while (!ReferenceEquals(cursor, null))
-            {
+            while (!ReferenceEquals(cursor, null)) {
                 var keys = _engine.Object.GetOwnPropertyNames(Undefined.Instance, Arguments.From(cursor)).AsArray();
 
                 var length = keys.GetLength();
-                for (uint i = 0; i < length; i++)
-                {
-                    var p = (JsString) keys.GetOwnProperty(i).Value;
+                for (uint i = 0; i < length; i++) {
+                    var p = (JsString)keys.GetOwnProperty(i).Value;
 
-                    if (processedKeys.Contains(p))
-                    {
+                    if (processedKeys.Contains(p)) {
                         continue;
                     }
 
                     processedKeys.Add(p);
 
                     // collection might be modified by inner statement
-                    if (cursor.GetOwnProperty(p) == PropertyDescriptor.Undefined)
-                    {
+                    if (cursor.GetOwnProperty(p) == PropertyDescriptor.Undefined) {
                         continue;
                     }
 
                     var value = cursor.GetOwnProperty(p);
-                    if (!value.Enumerable)
-                    {
+                    if (!value.Enumerable) {
                         continue;
                     }
 
                     _engine.PutValue(varRef, p);
 
                     var stmt = _body.Execute();
-                    if (!ReferenceEquals(stmt.Value, null))
-                    {
+                    if (!ReferenceEquals(stmt.Value, null)) {
                         v = stmt.Value;
                     }
 
-                    if (stmt.Type == CompletionType.Break)
-                    {
+                    if (stmt.Type == CompletionType.Break) {
                         return new Completion(CompletionType.Normal, v, null, Location);
                     }
 
-                    if (stmt.Type != CompletionType.Continue)
-                    {
-                        if (stmt.Type != CompletionType.Normal)
-                        {
+                    if (stmt.Type != CompletionType.Continue) {
+                        if (stmt.Type != CompletionType.Normal) {
                             return stmt;
                         }
                     }

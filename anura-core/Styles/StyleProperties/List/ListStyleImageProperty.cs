@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class ListStyleImageProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.OptionalImageSourceConverter.OrDefault ();
+namespace Anura.Styles
+{
+    internal sealed class ListStyleImageProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.OptionalImageSourceConverter.OrDefault();
 
-        internal ListStyleImageProperty () : base (PropertyNames.ListStyleImage, PropertyFlags.Inherited) { }
+        internal ListStyleImageProperty() : base(PropertyNames.ListStyleImage, PropertyFlags.Inherited) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

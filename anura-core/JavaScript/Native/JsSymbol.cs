@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Anura.JavaScript.Runtime;
+using System;
 using System.Runtime.CompilerServices;
-using Anura.JavaScript.Runtime;
 
 namespace Anura.JavaScript.Native
 {
@@ -11,38 +11,31 @@ namespace Anura.JavaScript.Native
     {
         internal readonly JsValue _value;
 
-        internal JsSymbol(string value) : this(new JsString(value))
-        {
+        internal JsSymbol(string value) : this(new JsString(value)) {
         }
 
-        internal JsSymbol(JsValue value) : base(Types.Symbol)
-        {
+        internal JsSymbol(JsValue value) : base(Types.Symbol) {
             _value = value;
         }
 
-        public override object ToObject()
-        {
+        public override object ToObject() {
             return _value;
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             var value = _value.IsUndefined() ? "" : _value.AsString();
             return "Symbol(" + value + ")";
         }
 
-        public override bool Equals(JsValue obj)
-        {
+        public override bool Equals(JsValue obj) {
             return Equals(obj as JsSymbol);
         }
 
-        public bool Equals(JsSymbol other)
-        {
+        public bool Equals(JsSymbol other) {
             return ReferenceEquals(this, other);
         }
 
-        public override int GetHashCode()
-        {
+        public override int GetHashCode() {
             return RuntimeHelpers.GetHashCode(this);
         }
     }

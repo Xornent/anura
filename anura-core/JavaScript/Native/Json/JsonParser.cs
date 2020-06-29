@@ -1,11 +1,11 @@
+using Anura.JavaScript.Native.Object;
+using Anura.JavaScript.Runtime;
+using Esprima;
+using Esprima.Ast;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Esprima;
-using Esprima.Ast;
-using Anura.JavaScript.Native.Object;
-using Anura.JavaScript.Runtime;
 
 namespace Anura.JavaScript.Native.Json
 {
@@ -13,8 +13,7 @@ namespace Anura.JavaScript.Native.Json
     {
         private readonly Engine _engine;
 
-        public JsonParser(Engine engine)
-        {
+        public JsonParser(Engine engine) {
             _engine = engine;
         }
 
@@ -30,13 +29,11 @@ namespace Anura.JavaScript.Native.Json
 
         private State _state;
 
-        private static bool IsDecimalDigit(char ch)
-        {
+        private static bool IsDecimalDigit(char ch) {
             return (ch >= '0' && ch <= '9');
         }
 
-        private static bool IsHexDigit(char ch)
-        {
+        private static bool IsHexDigit(char ch) {
             return
                 ch >= '0' && ch <= '9' ||
                 ch >= 'a' && ch <= 'f' ||
@@ -44,26 +41,22 @@ namespace Anura.JavaScript.Native.Json
                 ;
         }
 
-        private static bool IsOctalDigit(char ch)
-        {
+        private static bool IsOctalDigit(char ch) {
             return ch >= '0' && ch <= '7';
         }
 
-        private static bool IsWhiteSpace(char ch)
-        {
-            return (ch == ' ')  ||
+        private static bool IsWhiteSpace(char ch) {
+            return (ch == ' ') ||
                    (ch == '\t') ||
                    (ch == '\n') ||
                    (ch == '\r');
         }
 
-        private static bool IsLineTerminator(char ch)
-        {
+        private static bool IsLineTerminator(char ch) {
             return (ch == 10) || (ch == 13) || (ch == 0x2028) || (ch == 0x2029);
         }
 
-        private static bool IsNullChar(char ch)
-        {
+        private static bool IsNullChar(char ch) {
             return ch == 'n'
                 || ch == 'u'
                 || ch == 'l'
@@ -71,8 +64,7 @@ namespace Anura.JavaScript.Native.Json
                 ;
         }
 
-        private static bool IsTrueOrFalseChar(char ch)
-        {
+        private static bool IsTrueOrFalseChar(char ch) {
             return ch == 't'
                 || ch == 'f'
                 || ch == 'r'
@@ -84,51 +76,39 @@ namespace Anura.JavaScript.Native.Json
                 ;
         }
 
-        private char ScanHexEscape(char prefix)
-        {
+        private char ScanHexEscape(char prefix) {
             int code = char.MinValue;
 
             int len = (prefix == 'u') ? 4 : 2;
-            for (int i = 0; i < len; ++i)
-            {
-                if (_index < _length && IsHexDigit(_source.CharCodeAt(_index)))
-                {
+            for (int i = 0; i < len; ++i) {
+                if (_index < _length && IsHexDigit(_source.CharCodeAt(_index))) {
                     char ch = _source.CharCodeAt(_index++);
                     code = code * 16 + "0123456789abcdef".IndexOf(ch.ToString(), StringComparison.OrdinalIgnoreCase);
-                }
-                else
-                {
+                } else {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, $"Expected hexadecimal digit:{_source}");
                 }
             }
             return (char)code;
         }
 
-        private void SkipWhiteSpace()
-        {
-            while (_index < _length)
-            {
+        private void SkipWhiteSpace() {
+            while (_index < _length) {
                 char ch = _source.CharCodeAt(_index);
 
-                if (IsWhiteSpace(ch))
-                {
+                if (IsWhiteSpace(ch)) {
                     ++_index;
-                }
-                else
-                {
+                } else {
                     break;
                 }
             }
         }
 
-        private Token ScanPunctuator()
-        {
+        private Token ScanPunctuator() {
             int start = _index;
             char code = _source.CharCodeAt(_index);
 
-            switch ((int) code)
-            {
-                    // Check for most common single-character punctuators.
+            switch ((int)code) {
+                // Check for most common single-character punctuators.
                 case 46: // . dot
                 case 40: // ( open bracket
                 case 41: // ) close bracket
@@ -144,109 +124,92 @@ namespace Anura.JavaScript.Native.Json
                     ++_index;
 
                     return new Token
-                        {
-                            Type = Tokens.Punctuator,
-                            Value = TypeConverter.ToString(code),
-                            LineNumber = _lineNumber,
-                            LineStart = _lineStart,
-                            Range = new[] {start, _index}
-                        };
+                    {
+                        Type = Tokens.Punctuator,
+                        Value = TypeConverter.ToString(code),
+                        LineNumber = _lineNumber,
+                        LineStart = _lineStart,
+                        Range = new[] { start, _index }
+                    };
             }
 
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError<Token>(_engine, string.Format(Messages.UnexpectedToken, code));
         }
 
-        private Token ScanNumericLiteral()
-        {
+        private Token ScanNumericLiteral() {
             char ch = _source.CharCodeAt(_index);
 
             int start = _index;
             string number = "";
 
             // Number start with a -
-            if (ch == '-')
-            {
+            if (ch == '-') {
                 number += _source.CharCodeAt(_index++).ToString();
                 ch = _source.CharCodeAt(_index);
             }
 
-            if (ch != '.')
-            {
+            if (ch != '.') {
                 number += _source.CharCodeAt(_index++).ToString();
                 ch = _source.CharCodeAt(_index);
 
                 // Hex number starts with '0x'.
                 // Octal number starts with '0'.
-                if (number == "0")
-                {
+                if (number == "0") {
                     // decimal number starts with '0' such as '09' is illegal.
-                    if (ch > 0 && IsDecimalDigit(ch))
-                    {
+                    if (ch > 0 && IsDecimalDigit(ch)) {
                         Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, string.Format(Messages.UnexpectedToken, ch));
                     }
                 }
 
-                while (IsDecimalDigit(_source.CharCodeAt(_index)))
-                {
+                while (IsDecimalDigit(_source.CharCodeAt(_index))) {
                     number += _source.CharCodeAt(_index++).ToString();
                 }
                 ch = _source.CharCodeAt(_index);
             }
 
-            if (ch == '.')
-            {
+            if (ch == '.') {
                 number += _source.CharCodeAt(_index++).ToString();
-                while (IsDecimalDigit(_source.CharCodeAt(_index)))
-                {
+                while (IsDecimalDigit(_source.CharCodeAt(_index))) {
                     number += _source.CharCodeAt(_index++).ToString();
                 }
                 ch = _source.CharCodeAt(_index);
             }
 
-            if (ch == 'e' || ch == 'E')
-            {
+            if (ch == 'e' || ch == 'E') {
                 number += _source.CharCodeAt(_index++).ToString();
 
                 ch = _source.CharCodeAt(_index);
-                if (ch == '+' || ch == '-')
-                {
+                if (ch == '+' || ch == '-') {
                     number += _source.CharCodeAt(_index++).ToString();
                 }
-                if (IsDecimalDigit(_source.CharCodeAt(_index)))
-                {
-                    while (IsDecimalDigit(_source.CharCodeAt(_index)))
-                    {
+                if (IsDecimalDigit(_source.CharCodeAt(_index))) {
+                    while (IsDecimalDigit(_source.CharCodeAt(_index))) {
                         number += _source.CharCodeAt(_index++).ToString();
                     }
-                }
-                else
-                {
+                } else {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, string.Format(Messages.UnexpectedToken, _source.CharCodeAt(_index)));
                 }
             }
 
             return new Token
-                {
-                    Type = Tokens.Number,
-                    Value = Double.Parse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture),
-                    LineNumber = _lineNumber,
-                    LineStart = _lineStart,
-                    Range = new[] {start, _index}
-                };
+            {
+                Type = Tokens.Number,
+                Value = Double.Parse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture),
+                LineNumber = _lineNumber,
+                LineStart = _lineStart,
+                Range = new[] { start, _index }
+            };
         }
 
-        private Token ScanBooleanLiteral()
-        {
+        private Token ScanBooleanLiteral() {
             int start = _index;
             string s = "";
 
-            while (IsTrueOrFalseChar(_source.CharCodeAt(_index)))
-            {
+            while (IsTrueOrFalseChar(_source.CharCodeAt(_index))) {
                 s += _source.CharCodeAt(_index++).ToString();
             }
 
-            if (s == "true" || s == "false")
-            {
+            if (s == "true" || s == "false") {
                 return new Token
                 {
                     Type = Tokens.BooleanLiteral,
@@ -260,18 +223,15 @@ namespace Anura.JavaScript.Native.Json
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError<Token>(_engine, string.Format(Messages.UnexpectedToken, s));
         }
 
-        private Token ScanNullLiteral()
-        {
+        private Token ScanNullLiteral() {
             int start = _index;
             string s = "";
 
-            while (IsNullChar(_source.CharCodeAt(_index)))
-            {
+            while (IsNullChar(_source.CharCodeAt(_index))) {
                 s += _source.CharCodeAt(_index++).ToString();
             }
 
-            if (s == Null.Text)
-            {
+            if (s == Null.Text) {
                 return new Token
                 {
                     Type = Tokens.NullLiteral,
@@ -285,8 +245,7 @@ namespace Anura.JavaScript.Native.Json
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError<Token>(_engine, string.Format(Messages.UnexpectedToken, s));
         }
 
-        private Token ScanStringLiteral()
-        {
+        private Token ScanStringLiteral() {
             var sb = new System.Text.StringBuilder();
 
             char quote = _source.CharCodeAt(_index);
@@ -294,29 +253,23 @@ namespace Anura.JavaScript.Native.Json
             int start = _index;
             ++_index;
 
-            while (_index < _length)
-            {
+            while (_index < _length) {
                 char ch = _source.CharCodeAt(_index++);
 
-                if (ch == quote)
-                {
+                if (ch == quote) {
                     quote = char.MinValue;
                     break;
                 }
 
-                if (ch <= 31)
-                {
+                if (ch <= 31) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, $"Invalid character '{ch}', position:{_index}, string:{_source}");
                 }
 
-                if (ch == '\\')
-                {
+                if (ch == '\\') {
                     ch = _source.CharCodeAt(_index++);
 
-                    if (ch > 0 || !IsLineTerminator(ch))
-                    {
-                        switch (ch)
-                        {
+                    if (ch > 0 || !IsLineTerminator(ch)) {
+                        switch (ch) {
                             case 'n':
                                 sb.Append('\n');
                                 break;
@@ -330,12 +283,9 @@ namespace Anura.JavaScript.Native.Json
                             case 'x':
                                 int restore = _index;
                                 char unescaped = ScanHexEscape(ch);
-                                if (unescaped > 0)
-                                {
+                                if (unescaped > 0) {
                                     sb.Append(unescaped.ToString());
-                                }
-                                else
-                                {
+                                } else {
                                     _index = restore;
                                     sb.Append(ch.ToString());
                                 }
@@ -351,102 +301,83 @@ namespace Anura.JavaScript.Native.Json
                                 break;
 
                             default:
-                                if (IsOctalDigit(ch))
-                                {
+                                if (IsOctalDigit(ch)) {
                                     int code = "01234567".IndexOf(ch);
 
-                                    if (_index < _length && IsOctalDigit(_source.CharCodeAt(_index)))
-                                    {
+                                    if (_index < _length && IsOctalDigit(_source.CharCodeAt(_index))) {
                                         code = code * 8 + "01234567".IndexOf(_source.CharCodeAt(_index++));
 
                                         // 3 digits are only allowed when string starts
                                         // with 0, 1, 2, 3
                                         if ("0123".IndexOf(ch) >= 0 &&
                                             _index < _length &&
-                                            IsOctalDigit(_source.CharCodeAt(_index)))
-                                        {
+                                            IsOctalDigit(_source.CharCodeAt(_index))) {
                                             code = code * 8 + "01234567".IndexOf(_source.CharCodeAt(_index++));
                                         }
                                     }
                                     sb.Append(((char)code).ToString());
-                                }
-                                else
-                                {
+                                } else {
                                     sb.Append(ch.ToString());
                                 }
                                 break;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         ++_lineNumber;
-                        if (ch == '\r' && _source.CharCodeAt(_index) == '\n')
-                        {
+                        if (ch == '\r' && _source.CharCodeAt(_index) == '\n') {
                             ++_index;
                         }
                     }
-                }
-                else if (IsLineTerminator(ch))
-                {
+                } else if (IsLineTerminator(ch)) {
                     break;
-                }
-                else
-                {
+                } else {
                     sb.Append(ch.ToString());
                 }
             }
 
-            if (quote != 0)
-            {
+            if (quote != 0) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, string.Format(Messages.UnexpectedToken, _source));
             }
 
             return new Token
-                {
-                    Type = Tokens.String,
-                    Value = sb.ToString(),
-                    LineNumber = _lineNumber,
-                    LineStart = _lineStart,
-                    Range = new[] {start, _index}
-                };
+            {
+                Type = Tokens.String,
+                Value = sb.ToString(),
+                LineNumber = _lineNumber,
+                LineStart = _lineStart,
+                Range = new[] { start, _index }
+            };
         }
 
-        private Token Advance()
-        {
+        private Token Advance() {
             SkipWhiteSpace();
 
-            if (_index >= _length)
-            {
+            if (_index >= _length) {
                 return new Token
-                    {
-                        Type = Tokens.EOF,
-                        LineNumber = _lineNumber,
-                        LineStart = _lineStart,
-                        Range = new[] {_index, _index}
-                    };
+                {
+                    Type = Tokens.EOF,
+                    LineNumber = _lineNumber,
+                    LineStart = _lineStart,
+                    Range = new[] { _index, _index }
+                };
             }
 
             char ch = _source.CharCodeAt(_index);
 
             // Very common: ( and ) and ;
-            if (ch == 40 || ch == 41 || ch == 58)
-            {
+            if (ch == 40 || ch == 41 || ch == 58) {
                 return ScanPunctuator();
             }
 
             // String literal starts with double quote (#34).
             // Single quote (#39) are not allowed in JSON.
-            if (ch == 34)
-            {
+            if (ch == 34) {
                 return ScanStringLiteral();
             }
 
             // Dot (.) char #46 can also start a floating-point number, hence the need
             // to check the next character.
-            if (ch == 46)
-            {
-                if (IsDecimalDigit(_source.CharCodeAt(_index + 1)))
-                {
+            if (ch == 46) {
+                if (IsDecimalDigit(_source.CharCodeAt(_index + 1))) {
                     return ScanNumericLiteral();
                 }
                 return ScanPunctuator();
@@ -454,33 +385,28 @@ namespace Anura.JavaScript.Native.Json
 
             if (ch == '-') // Negative Number
             {
-                if (IsDecimalDigit(_source.CharCodeAt(_index + 1)))
-                {
+                if (IsDecimalDigit(_source.CharCodeAt(_index + 1))) {
                     return ScanNumericLiteral();
                 }
                 return ScanPunctuator();
             }
 
-            if (IsDecimalDigit(ch))
-            {
+            if (IsDecimalDigit(ch)) {
                 return ScanNumericLiteral();
             }
 
-            if (ch == 't' || ch == 'f')
-            {
+            if (ch == 't' || ch == 'f') {
                 return ScanBooleanLiteral();
             }
 
-            if (ch == 'n')
-            {
+            if (ch == 'n') {
                 return ScanNullLiteral();
             }
 
             return ScanPunctuator();
         }
 
-        private Token CollectToken()
-        {
+        private Token CollectToken() {
             var start = new Position(
                 line: _lineNumber,
                 column: _index - _lineStart);
@@ -493,23 +419,21 @@ namespace Anura.JavaScript.Native.Json
 
             _location = new Location(start, end, _source);
 
-            if (token.Type != Tokens.EOF)
-            {
-                var range = new[] {token.Range[0], token.Range[1]};
+            if (token.Type != Tokens.EOF) {
+                var range = new[] { token.Range[0], token.Range[1] };
                 string value = _source.Slice(token.Range[0], token.Range[1]);
                 _extra.Tokens.Add(new Token
-                    {
-                        Type = token.Type,
-                        Value = value,
-                        Range = range,
-                    });
+                {
+                    Type = token.Type,
+                    Value = value,
+                    Range = range,
+                });
             }
 
             return token;
         }
 
-        private Token Lex()
-        {
+        private Token Lex() {
             Token token = _lookahead;
             _index = token.Range[1];
             _lineNumber = token.LineNumber.HasValue ? token.LineNumber.Value : 0;
@@ -524,8 +448,7 @@ namespace Anura.JavaScript.Native.Json
             return token;
         }
 
-        private void Peek()
-        {
+        private void Peek() {
             int pos = _index;
             int line = _lineNumber;
             int start = _lineStart;
@@ -535,27 +458,21 @@ namespace Anura.JavaScript.Native.Json
             _lineStart = start;
         }
 
-        private void MarkStart()
-        {
-            if (_extra.Loc.HasValue)
-            {
+        private void MarkStart() {
+            if (_extra.Loc.HasValue) {
                 _state.MarkerStack.Push(_index - _lineStart);
                 _state.MarkerStack.Push(_lineNumber);
             }
-            if (_extra.Range != null)
-            {
+            if (_extra.Range != null) {
                 _state.MarkerStack.Push(_index);
             }
         }
 
-        private T MarkEnd<T>(T node) where T : INode
-        {
-            if (_extra.Range != null)
-            {
+        private T MarkEnd<T>(T node) where T : INode {
+            if (_extra.Range != null) {
                 node.Range = new Esprima.Ast.Range(_state.MarkerStack.Pop(), _index);
             }
-            if (_extra.Loc.HasValue)
-            {
+            if (_extra.Loc.HasValue) {
                 node.Location = new Location(
                     start: new Position(
                         line: _state.MarkerStack.Pop(),
@@ -569,29 +486,22 @@ namespace Anura.JavaScript.Native.Json
             return node;
         }
 
-        public T MarkEndIf<T>(T node) where T : INode
-        {
-            if (node.Range != null || node.Location != null)
-            {
-                if (_extra.Loc.HasValue)
-                {
+        public T MarkEndIf<T>(T node) where T : INode {
+            if (node.Range != null || node.Location != null) {
+                if (_extra.Loc.HasValue) {
                     _state.MarkerStack.Pop();
                     _state.MarkerStack.Pop();
                 }
-                if (_extra.Range != null)
-                {
+                if (_extra.Range != null) {
                     _state.MarkerStack.Pop();
                 }
-            }
-            else
-            {
+            } else {
                 MarkEnd(node);
             }
             return node;
         }
 
-        public INode PostProcess(INode node)
-        {
+        public INode PostProcess(INode node) {
             //if (_extra.Source != null)
             //{
             //    node.Location.Source = _extra.Source;
@@ -600,8 +510,7 @@ namespace Anura.JavaScript.Native.Json
             return node;
         }
 
-        public ObjectInstance CreateArrayInstance(IEnumerable<JsValue> values)
-        {
+        public ObjectInstance CreateArrayInstance(IEnumerable<JsValue> values) {
             var jsValues = values.ToArray();
             var jsArray = _engine.Array.Construct(jsValues.Length);
             _engine.Array.PrototypeObject.Push(jsArray, jsValues);
@@ -610,8 +519,7 @@ namespace Anura.JavaScript.Native.Json
 
         // Throw an exception
 
-        private void ThrowError(Token token, string messageFormat, params object[] arguments)
-        {
+        private void ThrowError(Token token, string messageFormat, params object[] arguments) {
             string msg = System.String.Format(messageFormat, arguments);
             int lineNumber = token.LineNumber ?? _lineNumber;
 
@@ -620,27 +528,23 @@ namespace Anura.JavaScript.Native.Json
                     source: _source,
                     index: token.Range[0],
                     position: new Position(token.LineNumber ?? _lineNumber, token.Range[0] - _lineStart + 1));
-            var exception = new ParserException("Line " + lineNumber  + ": " + msg, error);
-            
+            var exception = new ParserException("Line " + lineNumber + ": " + msg, error);
+
             throw exception;
         }
 
         // Throw an exception because of the token.
 
-        private void ThrowUnexpected(Token token)
-        {
-            if (token.Type == Tokens.EOF)
-            {
+        private void ThrowUnexpected(Token token) {
+            if (token.Type == Tokens.EOF) {
                 ThrowError(token, Messages.UnexpectedEOS);
             }
 
-            if (token.Type == Tokens.Number)
-            {
+            if (token.Type == Tokens.Number) {
                 ThrowError(token, Messages.UnexpectedNumber);
             }
 
-            if (token.Type == Tokens.String)
-            {
+            if (token.Type == Tokens.String) {
                 ThrowError(token, Messages.UnexpectedString);
             }
 
@@ -651,41 +555,32 @@ namespace Anura.JavaScript.Native.Json
         // Expect the next token to match the specified punctuator.
         // If not, an exception will be thrown.
 
-        private void Expect(string value)
-        {
+        private void Expect(string value) {
             Token token = Lex();
-            if (token.Type != Tokens.Punctuator || !value.Equals(token.Value))
-            {
+            if (token.Type != Tokens.Punctuator || !value.Equals(token.Value)) {
                 ThrowUnexpected(token);
             }
         }
 
         // Return true if the next token matches the specified punctuator.
 
-        private bool Match(string value)
-        {
+        private bool Match(string value) {
             return _lookahead.Type == Tokens.Punctuator && value.Equals(_lookahead.Value);
         }
 
-        private ObjectInstance ParseJsonArray()
-        {
+        private ObjectInstance ParseJsonArray() {
             var elements = new List<JsValue>();
 
             Expect("[");
 
-            while (!Match("]"))
-            {
-                if (Match(","))
-                {
+            while (!Match("]")) {
+                if (Match(",")) {
                     Lex();
                     elements.Add(Null.Instance);
-                }
-                else
-                {
+                } else {
                     elements.Add(ParseJsonValue());
 
-                    if (!Match("]"))
-                    {
+                    if (!Match("]")) {
                         Expect(",");
                     }
                 }
@@ -696,23 +591,19 @@ namespace Anura.JavaScript.Native.Json
             return CreateArrayInstance(elements);
         }
 
-        public ObjectInstance ParseJsonObject()
-        {
+        public ObjectInstance ParseJsonObject() {
             Expect("{");
 
             var obj = _engine.Object.Construct(Arguments.Empty);
 
-            while (!Match("}"))
-            {
+            while (!Match("}")) {
                 Tokens type = _lookahead.Type;
-                if (type != Tokens.String)
-                {
+                if (type != Tokens.String) {
                     ThrowUnexpected(Lex());
                 }
 
                 var name = Lex().Value.ToString();
-                if (PropertyNameContainsInvalidChar0To31(name))
-                {
+                if (PropertyNameContainsInvalidChar0To31(name)) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, $"Invalid character in property name '{name}'");
                 }
 
@@ -721,8 +612,7 @@ namespace Anura.JavaScript.Native.Json
 
                 obj.FastAddProperty(name, value, true, true, true);
 
-                if (!Match("}"))
-                {
+                if (!Match("}")) {
                     Expect(",");
                 }
             }
@@ -732,12 +622,10 @@ namespace Anura.JavaScript.Native.Json
             return obj;
         }
 
-        private static bool PropertyNameContainsInvalidChar0To31(string s)
-        {
+        private static bool PropertyNameContainsInvalidChar0To31(string s) {
             const int max = 31;
 
-            for (var i = 0; i < s.Length; i++)
-            {
+            for (var i = 0; i < s.Length; i++) {
                 var val = (int)s[i];
                 if (val <= max)
                     return true;
@@ -752,33 +640,29 @@ namespace Anura.JavaScript.Native.Json
         /// _lookahead.Value already contain the value.
         /// </summary>
         /// <returns></returns>
-        private JsValue ParseJsonValue()
-        {
+        private JsValue ParseJsonValue() {
             Tokens type = _lookahead.Type;
             MarkStart();
 
-            switch (type)
-            {
+            switch (type) {
                 case Tokens.NullLiteral:
                     var v = Lex().Value;
                     return Null.Instance;
                 case Tokens.BooleanLiteral:
                     // implicit conversion operator goes through caching
-                    return (bool) Lex().Value ? JsBoolean.True : JsBoolean.False;
+                    return (bool)Lex().Value ? JsBoolean.True : JsBoolean.False;
                 case Tokens.String:
                     // implicit conversion operator goes through caching
-                    return new JsString((string) Lex().Value);
+                    return new JsString((string)Lex().Value);
                 case Tokens.Number:
-                    return (double) Lex().Value;
+                    return (double)Lex().Value;
             }
 
-            if (Match("["))
-            {
+            if (Match("[")) {
                 return ParseJsonArray();
             }
 
-            if (Match("{"))
-            {
+            if (Match("{")) {
                 return ParseJsonObject();
             }
 
@@ -788,13 +672,11 @@ namespace Anura.JavaScript.Native.Json
             return Null.Instance;
         }
 
-        public JsValue Parse(string code)
-        {
+        public JsValue Parse(string code) {
             return Parse(code, null);
         }
 
-        public JsValue Parse(string code, ParserOptions options)
-        {
+        public JsValue Parse(string code, ParserOptions options) {
             _source = code;
             _index = 0;
             _lineNumber = (_source.Length > 0) ? 1 : 0;
@@ -813,37 +695,31 @@ namespace Anura.JavaScript.Native.Json
             };
 
             _extra = new Extra
-                {
-                    Range = new int[0],
-                    Loc = 0,
-
-                };
-
-            if (options != null)
             {
-                if (options.Tokens)
-                {
+                Range = new int[0],
+                Loc = 0,
+
+            };
+
+            if (options != null) {
+                if (options.Tokens) {
                     _extra.Tokens = new List<Token>();
                 }
 
             }
 
-            try
-            {
+            try {
                 MarkStart();
                 Peek();
                 JsValue jsv = ParseJsonValue();
 
                 Peek();
 
-                if(_lookahead.Type != Tokens.EOF)
-                {
+                if (_lookahead.Type != Tokens.EOF) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, $"Unexpected {_lookahead.Type} {_lookahead.Value}");
                 }
                 return jsv;
-            }
-            finally
-            {
+            } finally {
                 _extra = new Extra();
             }
         }

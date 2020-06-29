@@ -11,12 +11,10 @@ namespace Anura.JavaScript.Native.Reflect
     /// </summary>
     public sealed class ReflectInstance : ObjectInstance
     {
-        private ReflectInstance(Engine engine) : base(engine, ObjectClass.Reflect)
-        {
+        private ReflectInstance(Engine engine) : base(engine, ObjectClass.Reflect) {
         }
 
-        public static ReflectInstance CreateReflectObject(Engine engine)
-        {
+        public static ReflectInstance CreateReflectObject(Engine engine) {
             var math = new ReflectInstance(engine)
             {
                 _prototype = engine.Object.PrototypeObject
@@ -25,8 +23,7 @@ namespace Anura.JavaScript.Native.Reflect
             return math;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(14, checkExistingKeys: false)
             {
                 ["apply"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "apply", Apply, 3, PropertyFlag.Configurable), true, false, true),
@@ -46,8 +43,7 @@ namespace Anura.JavaScript.Native.Reflect
             SetProperties(properties);
         }
 
-        private JsValue Apply(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Apply(JsValue thisObject, JsValue[] arguments) {
             return _engine.Function.PrototypeObject.Apply(arguments.At(0), new[]
             {
                 arguments.At(1),
@@ -55,17 +51,14 @@ namespace Anura.JavaScript.Native.Reflect
             });
         }
 
-        private JsValue Construct(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Construct(JsValue thisObject, JsValue[] arguments) {
             var targetArgument = arguments.At(0);
-            if (!(targetArgument is IConstructor target))
-            {
+            if (!(targetArgument is IConstructor target)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, targetArgument + " is not a constructor");
             }
 
             var newTargetArgument = arguments.At(2, arguments[0]);
-            if (!(newTargetArgument is IConstructor newTarget))
-            {
+            if (!(newTargetArgument is IConstructor newTarget)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, newTargetArgument + " is not a constructor");
             }
 
@@ -74,8 +67,7 @@ namespace Anura.JavaScript.Native.Reflect
             return target.Construct(args, newTargetArgument);
         }
 
-        private JsValue DefineProperty(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue DefineProperty(JsValue thisObject, JsValue[] arguments) {
             var o = arguments.As<ObjectInstance>(0, _engine);
             var p = arguments.At(1);
             var name = TypeConverter.ToPropertyKey(p);
@@ -86,11 +78,9 @@ namespace Anura.JavaScript.Native.Reflect
             return o.DefineOwnProperty(name, desc);
         }
 
-        private JsValue DeleteProperty(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue DeleteProperty(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
-            if (!(target is ObjectInstance o))
-            {
+            if (!(target is ObjectInstance o)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.deleteProperty called on non-object");
             }
 
@@ -98,11 +88,9 @@ namespace Anura.JavaScript.Native.Reflect
             return o.Delete(property) ? JsBoolean.True : JsBoolean.False;
         }
 
-        private JsValue Has(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Has(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
-            if (!(target is ObjectInstance o))
-            {
+            if (!(target is ObjectInstance o)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.has called on non-object");
             }
 
@@ -110,26 +98,22 @@ namespace Anura.JavaScript.Native.Reflect
             return o.HasProperty(property) ? JsBoolean.True : JsBoolean.False;
         }
 
-        private JsValue Set(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Set(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
             var property = TypeConverter.ToPropertyKey(arguments.At(1));
             var value = arguments.At(2);
             var receiver = arguments.At(3, target);
 
-            if (!(target is ObjectInstance o))
-            {
+            if (!(target is ObjectInstance o)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.set called on non-object");
             }
 
             return o.Set(property, value, receiver);
         }
 
-        private JsValue Get(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Get(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
-            if (!(target is ObjectInstance o))
-            {
+            if (!(target is ObjectInstance o)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.get called on non-object");
             }
 
@@ -138,20 +122,16 @@ namespace Anura.JavaScript.Native.Reflect
             return o.Get(property, receiver);
         }
 
-        private JsValue GetOwnPropertyDescriptor(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!arguments.At(0).IsObject())
-            {
+        private JsValue GetOwnPropertyDescriptor(JsValue thisObject, JsValue[] arguments) {
+            if (!arguments.At(0).IsObject()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Reflect.getOwnPropertyDescriptor called on non-object");
             }
             return _engine.Object.GetOwnPropertyDescriptor(Undefined, arguments);
         }
 
-        private JsValue OwnKeys(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue OwnKeys(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
-            if (!(target is ObjectInstance o))
-            {
+            if (!(target is ObjectInstance o)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.get called on non-object");
             }
 
@@ -159,52 +139,43 @@ namespace Anura.JavaScript.Native.Reflect
             return _engine.Array.CreateArrayFromList(keys);
         }
 
-        private JsValue IsExtensible(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue IsExtensible(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
-            if (!(target is ObjectInstance o))
-            {
+            if (!(target is ObjectInstance o)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.isExtensible called on non-object");
             }
 
             return o.Extensible;
         }
 
-        private JsValue PreventExtensions(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue PreventExtensions(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
-            if (!(target is ObjectInstance o))
-            {
+            if (!(target is ObjectInstance o)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.preventExtensions called on non-object");
             }
 
             return o.PreventExtensions();
         }
 
-        private JsValue GetPrototypeOf(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue GetPrototypeOf(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
 
-            if (!target.IsObject())
-            {
+            if (!target.IsObject()) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.getPrototypeOf called on non-object");
             }
 
             return _engine.Object.GetPrototypeOf(Undefined, arguments);
         }
 
-        private JsValue SetPrototypeOf(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue SetPrototypeOf(JsValue thisObject, JsValue[] arguments) {
             var target = arguments.At(0);
 
-            if (!(target is ObjectInstance o))
-            {
+            if (!(target is ObjectInstance o)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Reflect.setPrototypeOf called on non-object");
             }
 
             var prototype = arguments.At(1);
-            if (!prototype.IsObject() && !prototype.IsNull())
-            {
+            if (!prototype.IsObject() && !prototype.IsNull()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, $"Object prototype may only be an Object or null: {prototype}");
             }
 

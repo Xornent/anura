@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class AnimationTimingFunctionProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class AnimationTimingFunctionProperty : Property
+    {
         private static readonly IValueConverter ListConverter =
-            Converters.TransitionConverter.FromList ().OrDefault (Map.TimingFunctions[Keywords.Ease]);
+            Converters.TransitionConverter.FromList().OrDefault(Map.TimingFunctions[Keywords.Ease]);
 
-        internal AnimationTimingFunctionProperty () : base (PropertyNames.AnimationTimingFunction) { }
+        internal AnimationTimingFunctionProperty() : base(PropertyNames.AnimationTimingFunction) { }
 
         internal override IValueConverter Converter => ListConverter;
     }

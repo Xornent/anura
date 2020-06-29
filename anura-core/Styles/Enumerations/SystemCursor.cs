@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum SystemCursor : byte {
+namespace Anura.Styles
+{
+    public enum SystemCursor : byte
+    {
         Auto,
         Default,
         None,

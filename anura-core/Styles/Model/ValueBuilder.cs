@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 
-namespace Anura.Styles {
-    internal sealed class ValueBuilder {
-        public ValueBuilder () {
-            _values = new List<Token> ();
-            Reset ();
+namespace Anura.Styles
+{
+    internal sealed class ValueBuilder
+    {
+        public ValueBuilder() {
+            _values = new List<Token>();
+            Reset();
         }
 
         private readonly List<Token> _values;
@@ -17,28 +19,28 @@ namespace Anura.Styles {
         public bool IsValid => _valid && IsReady;
         public bool IsImportant { get; private set; }
 
-        public TokenValue GetResult () {
-            return new TokenValue (_values);
+        public TokenValue GetResult() {
+            return new TokenValue(_values);
         }
 
-        public void Apply (Token token) {
+        public void Apply(Token token) {
             switch (token.Type) {
                 case TokenType.RoundBracketOpen:
                     _open++;
-                    Add (token);
+                    Add(token);
                     break;
                 case TokenType.Function:
-                    Add (token);
+                    Add(token);
                     break;
                 case TokenType.Ident:
-                    IsImportant = CheckImportant (token);
+                    IsImportant = CheckImportant(token);
                     break;
                 case TokenType.RoundBracketClose:
                     _open--;
-                    Add (token);
+                    Add(token);
                     break;
                 case TokenType.Whitespace:
-                    if ((_values.Count > 0) && (IsSlash (_values[_values.Count - 1]) == false))
+                    if ((_values.Count > 0) && (IsSlash(_values[_values.Count - 1]) == false))
                         _buffer = token;
                     break;
                 case TokenType.Dimension:
@@ -49,43 +51,43 @@ namespace Anura.Styles {
                 case TokenType.Url:
                 case TokenType.Number:
                 case TokenType.Comma:
-                    Add (token);
+                    Add(token);
                     break;
                 case TokenType.Comment:
                     break;
                 default:
                     _valid = false;
-                    Add (token);
+                    Add(token);
                     break;
             }
         }
-        public ValueBuilder Reset () {
+        public ValueBuilder Reset() {
             _open = 0;
             _valid = true;
             _buffer = null;
             IsImportant = false;
-            _values.Clear ();
+            _values.Clear();
             return this;
         }
 
-        private bool CheckImportant (Token token) {
+        private bool CheckImportant(Token token) {
             if ((_values.Count != 0) && (token.Data == Keywords.Important)) {
                 var previous = _values[_values.Count - 1];
-                if (IsExclamationMark (previous)) {
+                if (IsExclamationMark(previous)) {
                     do {
-                        _values.RemoveAt (_values.Count - 1);
+                        _values.RemoveAt(_values.Count - 1);
                     } while ((_values.Count > 0) && (_values[_values.Count - 1].Type == TokenType.Whitespace));
                     return true;
                 }
             }
-            Add (token);
+            Add(token);
             return IsImportant;
         }
-        private void Add (Token token) {
-            if ((_buffer != null) && !IsCommaOrSlash (token)) {
-                _values.Add (_buffer);
-            } else if ((_values.Count != 0) && !IsComma (token) && IsComma (_values[_values.Count - 1])) {
-                _values.Add (Token.Whitespace);
+        private void Add(Token token) {
+            if ((_buffer != null) && !IsCommaOrSlash(token)) {
+                _values.Add(_buffer);
+            } else if ((_values.Count != 0) && !IsComma(token) && IsComma(_values[_values.Count - 1])) {
+                _values.Add(Token.Whitespace);
             }
 
             _buffer = null;
@@ -93,23 +95,23 @@ namespace Anura.Styles {
             if (IsImportant) {
                 _valid = false;
             }
-            _values.Add (token);
+            _values.Add(token);
         }
 
-        private static bool IsCommaOrSlash (Token token) {
-            return IsComma (token) || IsSlash (token);
+        private static bool IsCommaOrSlash(Token token) {
+            return IsComma(token) || IsSlash(token);
         }
 
-        private static bool IsComma (Token token) {
+        private static bool IsComma(Token token) {
             return token.Type == TokenType.Comma;
         }
 
-        private static bool IsExclamationMark (Token token) {
-            return (token.Type == TokenType.Delim) && token.Data.Has (Symbols.ExclamationMark);
+        private static bool IsExclamationMark(Token token) {
+            return (token.Type == TokenType.Delim) && token.Data.Has(Symbols.ExclamationMark);
         }
 
-        private static bool IsSlash (Token token) {
-            return (token.Type == TokenType.Delim) && token.Data.Has (Symbols.Solidus);
+        private static bool IsSlash(Token token) {
+            return (token.Type == TokenType.Delim) && token.Data.Has(Symbols.Solidus);
         }
     }
 }

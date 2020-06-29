@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class KeywordToken : Token {
-        public KeywordToken (TokenType type, string data, TextPosition position) : base (type, data, position) { }
+namespace Anura.Styles
+{
+    internal sealed class KeywordToken : Token
+    {
+        public KeywordToken(TokenType type, string data, TextPosition position) : base(type, data, position) { }
 
-        public override string ToValue () {
+        public override string ToValue() {
             switch (Type) {
                 case TokenType.Hash:
                     return "#" + Data;

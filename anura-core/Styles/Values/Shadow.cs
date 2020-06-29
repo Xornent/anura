@@ -1,6 +1,8 @@
-namespace Anura.Styles {
-    public sealed class Shadow {
-        public Shadow (bool inset, Length offsetX, Length offsetY, Length blurRadius, Length spreadRadius, Color color) {
+namespace Anura.Styles
+{
+    public sealed class Shadow
+    {
+        public Shadow(bool inset, Length offsetX, Length offsetY, Length blurRadius, Length spreadRadius, Color color) {
             IsInset = inset;
             OffsetX = offsetX;
             OffsetY = offsetY;

@@ -12,8 +12,7 @@ namespace Esprima.Ast
         public NewExpression(
             Expression callee,
             in NodeList<ArgumentListElement> args) :
-            base(Nodes.NewExpression)
-        {
+            base(Nodes.NewExpression) {
             Callee = callee;
             _arguments = args;
         }

@@ -7,8 +7,7 @@ namespace Esprima.Ast
         private readonly NodeList<ClassProperty> _body;
 
         public ClassBody(in NodeList<ClassProperty> body) :
-            base(Nodes.ClassBody)
-        {
+            base(Nodes.ClassBody) {
             _body = body;
         }
 

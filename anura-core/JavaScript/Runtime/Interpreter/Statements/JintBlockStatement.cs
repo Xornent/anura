@@ -6,13 +6,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
     {
         private readonly JintStatementList _statementList;
 
-        public JintBlockStatement(Engine engine, JintStatementList statementList) : base(engine, null)
-        {
+        public JintBlockStatement(Engine engine, JintStatementList statementList) : base(engine, null) {
             _statementList = statementList;
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             return _statementList.Execute();
         }
     }

@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class ScriptingMediaFeature : MediaFeature {
-        private static readonly IValueConverter TheConverter = Map.ScriptingStates.ToConverter ();
+namespace Anura.Styles
+{
+    internal sealed class ScriptingMediaFeature : MediaFeature
+    {
+        private static readonly IValueConverter TheConverter = Map.ScriptingStates.ToConverter();
 
-        public ScriptingMediaFeature () : base (FeatureNames.Scripting) { }
+        public ScriptingMediaFeature() : base(FeatureNames.Scripting) { }
 
         internal override IValueConverter Converter => TheConverter;
     }

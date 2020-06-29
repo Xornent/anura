@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class OutlineColorProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class OutlineColorProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.InvertedColorConverter.OrDefault (Color.Transparent);
+            Converters.InvertedColorConverter.OrDefault(Color.Transparent);
 
-        internal OutlineColorProperty () : base (PropertyNames.OutlineColor, PropertyFlags.Animatable) { }
+        internal OutlineColorProperty() : base(PropertyNames.OutlineColor, PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

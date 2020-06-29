@@ -18,11 +18,10 @@ namespace Esprima.Ast
             INode first,
             INode second = null,
             INode third = null,
-            INode fourth = null)
-        {
-            if (first  != null) yield return first;
+            INode fourth = null) {
+            if (first != null) yield return first;
             if (second != null) yield return second;
-            if (third  != null) yield return third;
+            if (third != null) yield return third;
             if (fourth != null) yield return fourth;
         }
 
@@ -33,13 +32,11 @@ namespace Esprima.Ast
 
         public static IEnumerable<INode> Yield<T>(
             NodeList<T> first, INode second = null)
-            where T : class, INode
-        {
+            where T : class, INode {
             foreach (var node in first)
                 yield return node;
 
-            if (second != null)
-            {
+            if (second != null) {
                 yield return second;
             }
         }
@@ -52,8 +49,7 @@ namespace Esprima.Ast
         public static IEnumerable<INode> Yield<T1, T2>(
             NodeList<T1> first, NodeList<T2> second)
             where T1 : class, INode
-            where T2 : class, INode
-        {
+            where T2 : class, INode {
             foreach (var node in first)
                 yield return node;
 
@@ -69,18 +65,15 @@ namespace Esprima.Ast
 
         public static IEnumerable<INode> Yield<T>(
             INode first, NodeList<T> second, INode third = null)
-            where T : class, INode
-        {
-            if (first != null)
-            {
+            where T : class, INode {
+            if (first != null) {
                 yield return first;
             }
 
             foreach (var node in second)
                 yield return node;
 
-            if (third != null)
-            {
+            if (third != null) {
                 yield return third;
             }
         }

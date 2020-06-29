@@ -1,7 +1,9 @@
-namespace Anura.Styles {
-    internal interface IPropertyValue {
+namespace Anura.Styles
+{
+    internal interface IPropertyValue
+    {
         string CssText { get; }
         TokenValue Original { get; }
-        TokenValue ExtractFor (string name);
+        TokenValue ExtractFor(string name);
     }
 }

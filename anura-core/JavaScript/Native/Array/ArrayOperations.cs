@@ -10,18 +10,15 @@ namespace Anura.JavaScript.Native.Array
         protected internal const ulong MaxArrayLength = 4294967295;
         protected internal const ulong MaxArrayLikeLength = NumberConstructor.MaxSafeInteger;
 
-        public static ArrayOperations For(ObjectInstance instance)
-        {
-            if (instance is ArrayInstance arrayInstance)
-            {
+        public static ArrayOperations For(ObjectInstance instance) {
+            if (instance is ArrayInstance arrayInstance) {
                 return new ArrayInstanceOperations(arrayInstance);
             }
 
             return new ObjectInstanceOperations(instance);
         }
 
-        public static ArrayOperations For(Engine engine, JsValue thisObj)
-        {
+        public static ArrayOperations For(Engine engine, JsValue thisObj) {
             var instance = TypeConverter.ToObject(engine, thisObj);
             return For(instance);
         }
@@ -40,15 +37,12 @@ namespace Anura.JavaScript.Native.Array
 
         public abstract JsValue Get(ulong index);
 
-        public virtual JsValue[] GetAll(Types elementTypes)
-        {
-            var n = (int) GetLength();
+        public virtual JsValue[] GetAll(Types elementTypes) {
+            var n = (int)GetLength();
             var jsValues = new JsValue[n];
-            for (uint i = 0; i < (uint) jsValues.Length; i++)
-            {
+            for (uint i = 0; i < (uint)jsValues.Length; i++) {
                 var jsValue = Get(i);
-                if ((jsValue.Type & elementTypes) == 0)
-                {
+                if ((jsValue.Type & elementTypes) == 0) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeErrorNoEngine<object>("invalid type");
                 }
 
@@ -60,7 +54,9 @@ namespace Anura.JavaScript.Native.Array
 
         public abstract bool TryGetValue(ulong index, out JsValue value);
 
-        public bool HasProperty(ulong index) => Target.HasProperty(index);
+        public bool HasProperty(ulong index) {
+            return Target.HasProperty(index);
+        }
 
         public abstract void CreateDataPropertyOrThrow(ulong index, JsValue value);
 
@@ -70,44 +66,34 @@ namespace Anura.JavaScript.Native.Array
 
         private sealed class ObjectInstanceOperations : ArrayOperations<ObjectInstance>
         {
-            public ObjectInstanceOperations(ObjectInstance target) : base(target)
-            {
+            public ObjectInstanceOperations(ObjectInstance target) : base(target) {
             }
 
-            private double GetIntegerLength()
-            {
+            private double GetIntegerLength() {
                 var descValue = _target.Get(CommonProperties.Length, _target);
-                if (!ReferenceEquals(descValue, null))
-                {
+                if (!ReferenceEquals(descValue, null)) {
                     return TypeConverter.ToInteger(descValue);
                 }
 
                 return 0;
             }
 
-            public override ulong GetSmallestIndex(ulong length)
-            {
+            public override ulong GetSmallestIndex(ulong length) {
                 // there are some evil tests that iterate a lot with unshift..
-                if (_target.Properties == null)
-                {
+                if (_target.Properties == null) {
                     return 0;
                 }
 
                 var min = length;
-                foreach (var entry in _target.Properties)
-                {
-                    if (ulong.TryParse(entry.Key.ToString(), out var index))
-                    {
+                foreach (var entry in _target.Properties) {
+                    if (ulong.TryParse(entry.Key.ToString(), out var index)) {
                         min = System.Math.Min(index, min);
                     }
                 }
 
-                if (_target.Prototype?.Properties != null)
-                {
-                    foreach (var entry in _target.Prototype.Properties)
-                    {
-                        if (ulong.TryParse(entry.Key.ToString(), out var index))
-                        {
+                if (_target.Prototype?.Properties != null) {
+                    foreach (var entry in _target.Prototype.Properties) {
+                        if (ulong.TryParse(entry.Key.ToString(), out var index)) {
                             min = System.Math.Min(index, min);
                         }
                     }
@@ -116,39 +102,32 @@ namespace Anura.JavaScript.Native.Array
                 return min;
             }
 
-            public override uint GetLength()
-            {
+            public override uint GetLength() {
                 var integerLength = GetIntegerLength();
-                return (uint) (integerLength >= 0 ? integerLength : 0);
+                return (uint)(integerLength >= 0 ? integerLength : 0);
             }
 
-            public override ulong GetLongLength()
-            {
+            public override ulong GetLongLength() {
                 var integerLength = GetIntegerLength();
-                if (integerLength <= 0)
-                {
+                if (integerLength <= 0) {
                     return 0;
                 }
 
-                return (ulong) System.Math.Min(integerLength, MaxArrayLikeLength);
+                return (ulong)System.Math.Min(integerLength, MaxArrayLikeLength);
             }
 
-            public override void SetLength(ulong length)
-            {
+            public override void SetLength(ulong length) {
                 _target.Set(CommonProperties.Length, length, true);
             }
 
-            public override void EnsureCapacity(ulong capacity)
-            {
+            public override void EnsureCapacity(ulong capacity) {
             }
 
-            public override JsValue Get(ulong index)
-            {
+            public override JsValue Get(ulong index) {
                 return _target.Get(JsString.Create(index), _target);
             }
 
-            public override bool TryGetValue(ulong index, out JsValue value)
-            {
+            public override bool TryGetValue(ulong index, out JsValue value) {
                 var propertyName = JsString.Create(index);
                 var property = _target.GetProperty(propertyName);
                 var kPresent = property != PropertyDescriptor.Undefined;
@@ -156,86 +135,70 @@ namespace Anura.JavaScript.Native.Array
                 return kPresent;
             }
 
-            public override void CreateDataPropertyOrThrow(ulong index, JsValue value)
-            {
+            public override void CreateDataPropertyOrThrow(ulong index, JsValue value) {
                 _target.CreateDataPropertyOrThrow(JsString.Create(index), value);
             }
 
-            public override void Set(ulong index, JsValue value, bool updateLength, bool throwOnError)
-            {
+            public override void Set(ulong index, JsValue value, bool updateLength, bool throwOnError) {
                 _target.Set(JsString.Create(index), value, throwOnError);
             }
 
-            public override void DeletePropertyOrThrow(ulong index)
-            {
+            public override void DeletePropertyOrThrow(ulong index) {
                 _target.DeletePropertyOrThrow(JsString.Create(index));
             }
         }
 
         private sealed class ArrayInstanceOperations : ArrayOperations<ArrayInstance>
         {
-            public ArrayInstanceOperations(ArrayInstance target) : base(target)
-            {
+            public ArrayInstanceOperations(ArrayInstance target) : base(target) {
             }
 
-            public override ulong GetSmallestIndex(ulong length)
-            {
+            public override ulong GetSmallestIndex(ulong length) {
                 return _target.GetSmallestIndex();
             }
 
-            public override uint GetLength()
-            {
-                return (uint) ((JsNumber) _target._length._value)._value;
+            public override uint GetLength() {
+                return (uint)((JsNumber)_target._length._value)._value;
             }
 
-            public override ulong GetLongLength()
-            {
-                return (ulong) ((JsNumber) _target._length._value)._value;
+            public override ulong GetLongLength() {
+                return (ulong)((JsNumber)_target._length._value)._value;
             }
 
-            public override void SetLength(ulong length)
-            {
+            public override void SetLength(ulong length) {
                 _target.Set(CommonProperties.Length, length, true);
             }
 
-            public override void EnsureCapacity(ulong capacity)
-            {
-                _target.EnsureCapacity((uint) capacity);
+            public override void EnsureCapacity(ulong capacity) {
+                _target.EnsureCapacity((uint)capacity);
             }
 
-            public override bool TryGetValue(ulong index, out JsValue value)
-            {
+            public override bool TryGetValue(ulong index, out JsValue value) {
                 // array max size is uint
-                return _target.TryGetValue((uint) index, out value);
+                return _target.TryGetValue((uint)index, out value);
             }
 
-            public override JsValue Get(ulong index)
-            {
-                return _target.Get((uint) index);
+            public override JsValue Get(ulong index) {
+                return _target.Get((uint)index);
             }
 
-            public override JsValue[] GetAll(Types elementTypes)
-            {
+            public override JsValue[] GetAll(Types elementTypes) {
                 var n = _target.GetLength();
 
-                if (_target._dense == null || _target._dense.Length < n)
-                {
+                if (_target._dense == null || _target._dense.Length < n) {
                     return base.GetAll(elementTypes);
                 }
 
                 // optimized
                 var jsValues = new JsValue[n];
-                for (uint i = 0; i < (uint) jsValues.Length; i++)
-                {
+                for (uint i = 0; i < (uint)jsValues.Length; i++) {
                     var prop = _target._dense[i] ?? PropertyDescriptor.Undefined;
-                    if (prop == PropertyDescriptor.Undefined)
-                    {
+                    if (prop == PropertyDescriptor.Undefined) {
                         prop = _target.Prototype?.GetProperty(i) ?? PropertyDescriptor.Undefined;
                     }
 
                     var jsValue = _target.UnwrapJsValue(prop);
-                    if ((jsValue.Type & elementTypes) == 0)
-                    {
+                    if ((jsValue.Type & elementTypes) == 0) {
                         Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeErrorNoEngine<object>("invalid type");
                     }
 
@@ -245,19 +208,16 @@ namespace Anura.JavaScript.Native.Array
                 return jsValues;
             }
 
-            public override void DeletePropertyOrThrow(ulong index)
-            {
-                _target.DeletePropertyOrThrow((uint) index);
+            public override void DeletePropertyOrThrow(ulong index) {
+                _target.DeletePropertyOrThrow((uint)index);
             }
 
-            public override void CreateDataPropertyOrThrow(ulong index, JsValue value)
-            {
-                _target.SetIndexValue((uint) index, value, updateLength: false);
+            public override void CreateDataPropertyOrThrow(ulong index, JsValue value) {
+                _target.SetIndexValue((uint)index, value, updateLength: false);
             }
 
-            public override void Set(ulong index, JsValue value, bool updateLength, bool throwOnError)
-            {
-                _target.SetIndexValue((uint) index, value, updateLength);
+            public override void Set(ulong index, JsValue value, bool updateLength, bool throwOnError) {
+                _target.SetIndexValue((uint)index, value, updateLength);
             }
         }
     }
@@ -270,8 +230,7 @@ namespace Anura.JavaScript.Native.Array
     {
         protected readonly T _target;
 
-        protected ArrayOperations(T target)
-        {
+        protected ArrayOperations(T target) {
             _target = target;
         }
 

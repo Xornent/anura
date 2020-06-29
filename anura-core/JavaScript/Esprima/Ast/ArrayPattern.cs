@@ -7,8 +7,7 @@ namespace Esprima.Ast
         private readonly NodeList<IArrayPatternElement> _elements;
 
         public ArrayPattern(in NodeList<IArrayPatternElement> elements) :
-            base(Nodes.ArrayPattern)
-        {
+            base(Nodes.ArrayPattern) {
             _elements = elements;
         }
 

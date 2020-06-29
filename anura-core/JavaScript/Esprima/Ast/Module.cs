@@ -10,8 +10,7 @@ namespace Esprima.Ast
         public Module(
             in NodeList<IStatementListItem> body,
             HoistingScope hoistingScope) :
-            base(Nodes.Program)
-        {
+            base(Nodes.Program) {
             _body = body;
             HoistingScope = hoistingScope;
         }

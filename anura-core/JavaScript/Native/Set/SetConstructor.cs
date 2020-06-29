@@ -14,14 +14,12 @@ namespace Anura.JavaScript.Native.Set
         private static readonly JsString _functionName = new JsString("Set");
 
         private SetConstructor(Engine engine)
-            : base(engine, _functionName, false)
-        {
+            : base(engine, _functionName, false) {
         }
 
         public SetPrototype PrototypeObject { get; private set; }
 
-        public static SetConstructor CreateSetConstructor(Engine engine)
-        {
+        public static SetConstructor CreateSetConstructor(Engine engine) {
             var obj = new SetConstructor(engine)
             {
                 _prototype = engine.Function.PrototypeObject
@@ -38,8 +36,7 @@ namespace Anura.JavaScript.Native.Set
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var symbols = new SymbolDictionary(1)
             {
                 [GlobalSymbolRegistry.Species] = new GetSetPropertyDescriptor(get: new ClrFunctionInstance(_engine, "get [Symbol.species]", Species, 0, PropertyFlag.Configurable), set: Undefined, PropertyFlag.Configurable)
@@ -48,44 +45,35 @@ namespace Anura.JavaScript.Native.Set
             SetSymbols(symbols);
         }
 
-        private static JsValue Species(JsValue thisObject, JsValue[] arguments)
-        {
+        private static JsValue Species(JsValue thisObject, JsValue[] arguments) {
             return thisObject;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
-            if (thisObject.IsUndefined())
-            {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
+            if (thisObject.IsUndefined()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Constructor Set requires 'new'");
             }
 
             return Construct(arguments, thisObject);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             var set = new SetInstance(Engine)
             {
                 _prototype = PrototypeObject
             };
-            if (arguments.Length > 0 && !arguments[0].IsNullOrUndefined())
-            {
+            if (arguments.Length > 0 && !arguments[0].IsNullOrUndefined()) {
                 var adderValue = set.Get("add");
-                if (!(adderValue is ICallable adder))
-                {
+                if (!(adderValue is ICallable adder)) {
                     return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine, "add must be callable");
                 }
 
                 var iterable = arguments.At(0).GetIterator(_engine);
 
-                try
-                {
+                try {
                     var args = new JsValue[1];
-                    do
-                    {
-                        if (!iterable.TryIteratorStep(out var next))
-                        {
+                    do {
+                        if (!iterable.TryIteratorStep(out var next)) {
                             return set;
                         }
 
@@ -93,9 +81,7 @@ namespace Anura.JavaScript.Native.Set
                         args[0] = nextValue;
                         adder.Call(set, args);
                     } while (true);
-                }
-                catch
-                {
+                } catch {
                     iterable.Close(CompletionType.Throw);
                     throw;
                 }

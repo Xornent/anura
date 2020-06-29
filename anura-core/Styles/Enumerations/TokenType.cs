@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    internal enum TokenType : byte {
+namespace Anura.Styles
+{
+    internal enum TokenType : byte
+    {
         String,
         Url,
         Color,

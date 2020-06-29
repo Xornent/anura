@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public static class PropertyNames {
+namespace Anura.Styles
+{
+    public static class PropertyNames
+    {
         public static readonly string AlignContent = "align-content";
         public static readonly string AlignItems = "align-items";
         public static readonly string AlignBaseline = "alignment-baseline";

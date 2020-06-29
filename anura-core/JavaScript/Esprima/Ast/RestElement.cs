@@ -12,8 +12,7 @@ namespace Esprima.Ast
         public readonly INode Argument; // BindingIdentifier | BindingPattern
 
         public RestElement(INode argument) :
-            base(Nodes.RestElement)
-        {
+            base(Nodes.RestElement) {
             Argument = argument;
         }
 

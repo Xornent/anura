@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class TextIndentProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class TextIndentProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.LengthOrPercentConverter.OrDefault (Length.Zero);
+            Converters.LengthOrPercentConverter.OrDefault(Length.Zero);
 
-        internal TextIndentProperty () : base (PropertyNames.TextIndent, PropertyFlags.Inherited | PropertyFlags.Animatable) { }
+        internal TextIndentProperty() : base(PropertyNames.TextIndent, PropertyFlags.Inherited | PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

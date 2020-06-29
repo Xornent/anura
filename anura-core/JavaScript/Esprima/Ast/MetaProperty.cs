@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly Identifier Property;
 
         public MetaProperty(Identifier meta, Identifier property) :
-            base(Nodes.MetaProperty)
-        {
+            base(Nodes.MetaProperty) {
             Meta = meta;
             Property = property;
         }

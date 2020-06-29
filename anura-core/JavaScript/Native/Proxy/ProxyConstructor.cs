@@ -14,39 +14,33 @@ namespace Anura.JavaScript.Native.Proxy
         private static readonly JsString PropertyRevoke = new JsString("revoke");
 
         private ProxyConstructor(Engine engine)
-            : base(engine, _name, strict: false)
-        {
+            : base(engine, _name, strict: false) {
         }
 
-        public static ProxyConstructor CreateProxyConstructor(Engine engine)
-        {
+        public static ProxyConstructor CreateProxyConstructor(Engine engine) {
             var obj = new ProxyConstructor(engine);
             obj._length = new PropertyDescriptor(2, PropertyFlag.Configurable);
             return obj;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine, "Constructor Proxy requires 'new'");
         }
 
         /// <summary>
         /// https://www.ecma-international.org/ecma-262/6.0/index.html#sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget
         /// </summary>
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             var target = arguments.At(0);
             var handler = arguments.At(1);
 
-            if (!target.IsObject() || !handler.IsObject())
-            {
+            if (!target.IsObject() || !handler.IsObject()) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_engine, "Cannot create proxy with a non-object as target or handler");
             }
             return Construct(target.AsObject(), handler.AsObject());
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(1, checkExistingKeys: false)
             {
                 ["revocable"] = new PropertyDescriptor(new ClrFunctionInstance(_engine, "revocable", Revocable, 2, PropertyFlag.Configurable), true, true, true)
@@ -54,27 +48,22 @@ namespace Anura.JavaScript.Native.Proxy
             SetProperties(properties);
         }
 
-        protected override ObjectInstance GetPrototypeOf()
-        {
+        protected override ObjectInstance GetPrototypeOf() {
             return _engine.Function.Prototype;
         }
 
-        public ProxyInstance Construct(ObjectInstance target, ObjectInstance handler)
-        {
-            if (target is ProxyInstance targetProxy && targetProxy._handler is null)
-            {
+        public ProxyInstance Construct(ObjectInstance target, ObjectInstance handler) {
+            if (target is ProxyInstance targetProxy && targetProxy._handler is null) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
-            if (handler is ProxyInstance handlerProxy && handlerProxy._handler is null)
-            {
+            if (handler is ProxyInstance handlerProxy && handlerProxy._handler is null) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
             var instance = new ProxyInstance(Engine, target, handler);
             return instance;
         }
 
-        private JsValue Revocable(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Revocable(JsValue thisObject, JsValue[] arguments) {
             var p = _engine.Proxy.Construct(arguments, Undefined);
             var result = _engine.Object.Construct(System.Array.Empty<JsValue>());
             result.DefineOwnProperty(PropertyRevoke, new PropertyDescriptor(new ClrFunctionInstance(_engine, name: null, Revoke, 0, PropertyFlag.Configurable), PropertyFlag.ConfigurableEnumerableWritable));
@@ -82,10 +71,9 @@ namespace Anura.JavaScript.Native.Proxy
             return result;
         }
 
-        private JsValue Revoke(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Revoke(JsValue thisObject, JsValue[] arguments) {
             var o = thisObject.AsObject();
-            var proxy = (ProxyInstance) o.Get(PropertyProxy);
+            var proxy = (ProxyInstance)o.Get(PropertyProxy);
             proxy._handler = null;
             proxy._target = null;
             return Undefined;

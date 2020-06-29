@@ -13,8 +13,7 @@ namespace Esprima.Ast
         public INode Right;
 
         public AssignmentPattern(INode left, INode right) :
-            base(Nodes.AssignmentPattern)
-        {
+            base(Nodes.AssignmentPattern) {
             Left = left;
             Right = right;
         }

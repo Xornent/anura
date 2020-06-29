@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Dynamic;
-using System.Runtime.CompilerServices;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Boolean;
 using Anura.JavaScript.Native.Date;
@@ -17,6 +12,11 @@ using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Descriptors.Specialized;
 using Anura.JavaScript.Runtime.Interop;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Dynamic;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Native.Object
 {
@@ -31,20 +31,17 @@ namespace Anura.JavaScript.Native.Object
         internal ObjectInstance _prototype;
         protected readonly Engine _engine;
 
-        public ObjectInstance(Engine engine) : this(engine, ObjectClass.Object)
-        {
+        public ObjectInstance(Engine engine) : this(engine, ObjectClass.Object) {
         }
 
         internal ObjectInstance(Engine engine, ObjectClass objectClass, InternalTypes type = InternalTypes.Object)
-            : base(type)
-        {
+            : base(type) {
             _engine = engine;
             _class = objectClass;
             Extensible = true;
         }
 
-        public Engine Engine
-        {
+        public Engine Engine {
             [DebuggerStepThrough]
             get => _engine;
         }
@@ -52,8 +49,7 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// The prototype of this object.
         /// </summary>
-        public ObjectInstance Prototype
-        {
+        public ObjectInstance Prototype {
             [DebuggerStepThrough]
             get => GetPrototypeOf();
         }
@@ -64,9 +60,8 @@ namespace Anura.JavaScript.Native.Object
         /// </summary>
         public virtual bool Extensible { get; private set; }
 
-        internal PropertyDictionary Properties
-        {
-            [DebuggerStepThrough]            
+        internal PropertyDictionary Properties {
+            [DebuggerStepThrough]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _properties;
         }
@@ -74,8 +69,7 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// A value indicating a specification defined classification of objects.
         /// </summary>
-        internal ObjectClass Class
-        {
+        internal ObjectClass Class {
             [DebuggerStepThrough]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _class;
@@ -84,154 +78,122 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// https://tc39.es/ecma262/#sec-construct
         /// </summary>
-        internal ObjectInstance Construct(IConstructor f, JsValue[] argumentsList = null, IConstructor newTarget = null)
-        {
+        internal ObjectInstance Construct(IConstructor f, JsValue[] argumentsList = null, IConstructor newTarget = null) {
             newTarget ??= f;
             argumentsList ??= System.Array.Empty<JsValue>();
-            return f.Construct(argumentsList, (JsValue) newTarget);
+            return f.Construct(argumentsList, (JsValue)newTarget);
         }
 
         /// <summary>
         /// https://tc39.es/ecma262/#sec-speciesconstructor
         /// </summary>
-        internal static IConstructor SpeciesConstructor(ObjectInstance o, IConstructor defaultConstructor)
-        {
+        internal static IConstructor SpeciesConstructor(ObjectInstance o, IConstructor defaultConstructor) {
             var c = o.Get(CommonProperties.Constructor);
-            if (c.IsUndefined())
-            {
+            if (c.IsUndefined()) {
                 return defaultConstructor;
             }
 
-            if (!(c is ObjectInstance oi))
-            {
+            if (!(c is ObjectInstance oi)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<IConstructor>(o._engine);
             }
 
             var s = oi.Get(GlobalSymbolRegistry.Species);
-            if (s.IsNullOrUndefined())
-            {
+            if (s.IsNullOrUndefined()) {
                 return defaultConstructor;
             }
 
-            if (s.IsConstructor)
-            {
-                return (IConstructor) s;
+            if (s.IsConstructor) {
+                return (IConstructor)s;
             }
-            
+
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<IConstructor>(o._engine);
         }
 
 
-        internal void SetProperties(PropertyDictionary properties)
-        {
-            if (properties != null)
-            {
+        internal void SetProperties(PropertyDictionary properties) {
+            if (properties != null) {
                 properties.CheckExistingKeys = true;
             }
             _properties = properties;
         }
 
-        internal void SetSymbols(SymbolDictionary symbols)
-        {
+        internal void SetSymbols(SymbolDictionary symbols) {
             _symbols = symbols;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetProperty(JsValue property, PropertyDescriptor value)
-        {
-            if (property is JsString jsString)
-            {
+        internal void SetProperty(JsValue property, PropertyDescriptor value) {
+            if (property is JsString jsString) {
                 SetProperty(jsString.ToString(), value);
-            }
-            else
-            {
+            } else {
                 SetPropertyUnlikely(property, value);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetProperty(string property, PropertyDescriptor value)
-        {
+        internal void SetProperty(string property, PropertyDescriptor value) {
             Key key = property;
             SetProperty(in key, value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetProperty(in Key property, PropertyDescriptor value)
-        {
+        internal void SetProperty(in Key property, PropertyDescriptor value) {
             _properties ??= new PropertyDictionary();
             _properties[property] = value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetDataProperty(string property, JsValue value)
-        {
+        internal void SetDataProperty(string property, JsValue value) {
             _properties ??= new PropertyDictionary();
             _properties[property] = new PropertyDescriptor(value, PropertyFlag.ConfigurableEnumerableWritable);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void SetPropertyUnlikely(JsValue property, PropertyDescriptor value)
-        {
+        private void SetPropertyUnlikely(JsValue property, PropertyDescriptor value) {
             var propertyKey = TypeConverter.ToPropertyKey(property);
-            if (!property.IsSymbol())
-            {
+            if (!property.IsSymbol()) {
                 _properties ??= new PropertyDictionary();
                 _properties[TypeConverter.ToString(propertyKey)] = value;
-            }
-            else
-            {
+            } else {
                 _symbols ??= new SymbolDictionary();
-                _symbols[(JsSymbol) propertyKey] = value;
+                _symbols[(JsSymbol)propertyKey] = value;
             }
         }
 
-        internal void ClearProperties()
-        {
+        internal void ClearProperties() {
             _properties?.Clear();
             _symbols?.Clear();
         }
 
-        public virtual IEnumerable<KeyValuePair<JsValue, PropertyDescriptor>> GetOwnProperties()
-        {
+        public virtual IEnumerable<KeyValuePair<JsValue, PropertyDescriptor>> GetOwnProperties() {
             EnsureInitialized();
 
-            if (_properties != null)
-            {
-                foreach (var pair in _properties)
-                {
+            if (_properties != null) {
+                foreach (var pair in _properties) {
                     yield return new KeyValuePair<JsValue, PropertyDescriptor>(new JsString(pair.Key), pair.Value);
                 }
             }
 
-            if (_symbols != null)
-            {
-                foreach (var pair in _symbols)
-                {
+            if (_symbols != null) {
+                foreach (var pair in _symbols) {
                     yield return new KeyValuePair<JsValue, PropertyDescriptor>(pair.Key, pair.Value);
                 }
             }
         }
 
-        public virtual List<JsValue> GetOwnPropertyKeys(Types types = Types.String | Types.Symbol)
-        {
+        public virtual List<JsValue> GetOwnPropertyKeys(Types types = Types.String | Types.Symbol) {
             EnsureInitialized();
 
             var keys = new List<JsValue>(_properties?.Count ?? 0 + _symbols?.Count ?? 0);
             var propertyKeys = new List<JsValue>();
             List<JsValue> symbolKeys = null;
 
-            if ((types & Types.String) != 0 && _properties != null)
-            {
-                foreach (var pair in _properties)
-                {
+            if ((types & Types.String) != 0 && _properties != null) {
+                foreach (var pair in _properties) {
                     var isArrayIndex = ulong.TryParse(pair.Key, out var index);
-                    if (isArrayIndex)
-                    {
+                    if (isArrayIndex) {
                         keys.Add(JsString.Create(index));
-                    }
-                    else
-                    {
+                    } else {
                         propertyKeys.Add(new JsString(pair.Key));
                     }
                 }
@@ -240,17 +202,14 @@ namespace Anura.JavaScript.Native.Object
             keys.Sort((v1, v2) => TypeConverter.ToNumber(v1).CompareTo(TypeConverter.ToNumber(v2)));
             keys.AddRange(propertyKeys);
 
-            if ((types & Types.Symbol) != 0 && _symbols != null)
-            {
-                foreach (var pair in _symbols)
-                {
+            if ((types & Types.Symbol) != 0 && _symbols != null) {
+                foreach (var pair in _symbols) {
                     symbolKeys ??= new List<JsValue>();
                     symbolKeys.Add(pair.Key);
                 }
             }
 
-            if (symbolKeys != null)
-            {
+            if (symbolKeys != null) {
                 keys.AddRange(symbolKeys);
             }
 
@@ -258,67 +217,56 @@ namespace Anura.JavaScript.Native.Object
         }
 
 
-        protected virtual void AddProperty(JsValue property, PropertyDescriptor descriptor)
-        {
+        protected virtual void AddProperty(JsValue property, PropertyDescriptor descriptor) {
             SetProperty(property, descriptor);
         }
 
-        protected virtual bool TryGetProperty(JsValue property, out PropertyDescriptor descriptor)
-        {
+        protected virtual bool TryGetProperty(JsValue property, out PropertyDescriptor descriptor) {
             descriptor = null;
 
             var key = TypeConverter.ToPropertyKey(property);
-            if (!key.IsSymbol())
-            {
+            if (!key.IsSymbol()) {
                 return _properties?.TryGetValue(TypeConverter.ToString(key), out descriptor) == true;
             }
 
-            return _symbols?.TryGetValue((JsSymbol) key, out descriptor) == true;
+            return _symbols?.TryGetValue((JsSymbol)key, out descriptor) == true;
         }
 
-        public virtual bool HasOwnProperty(JsValue property)
-        {
+        public virtual bool HasOwnProperty(JsValue property) {
             EnsureInitialized();
 
             var key = TypeConverter.ToPropertyKey(property);
-            if (!key.IsSymbol())
-            {
+            if (!key.IsSymbol()) {
                 return _properties?.ContainsKey(TypeConverter.ToString(key)) == true;
             }
 
-            return _symbols?.ContainsKey((JsSymbol) key) == true;
+            return _symbols?.ContainsKey((JsSymbol)key) == true;
         }
 
-        public virtual void RemoveOwnProperty(JsValue property)
-        {
+        public virtual void RemoveOwnProperty(JsValue property) {
             EnsureInitialized();
 
             var key = TypeConverter.ToPropertyKey(property);
-            if (!key.IsSymbol())
-            {
+            if (!key.IsSymbol()) {
                 _properties?.Remove(TypeConverter.ToString(key));
                 return;
             }
 
-            _symbols?.Remove((JsSymbol) key);
+            _symbols?.Remove((JsSymbol)key);
         }
 
-        public override JsValue Get(JsValue property, JsValue receiver)
-        {
+        public override JsValue Get(JsValue property, JsValue receiver) {
             var desc = GetProperty(property);
             return UnwrapJsValue(desc, receiver);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal JsValue UnwrapJsValue(PropertyDescriptor desc)
-        {
+        internal JsValue UnwrapJsValue(PropertyDescriptor desc) {
             return UnwrapJsValue(desc, this);
         }
 
-        internal static JsValue UnwrapJsValue(PropertyDescriptor desc, JsValue thisObject)
-        {
-            if (desc == PropertyDescriptor.Undefined)
-            {
+        internal static JsValue UnwrapJsValue(PropertyDescriptor desc, JsValue thisObject) {
+            if (desc == PropertyDescriptor.Undefined) {
                 return Undefined;
             }
 
@@ -328,14 +276,12 @@ namespace Anura.JavaScript.Native.Object
 
             // IsDataDescriptor inlined
             if ((desc._flags & (PropertyFlag.WritableSet | PropertyFlag.Writable)) != 0
-                || !ReferenceEquals(value, null))
-            {
+                || !ReferenceEquals(value, null)) {
                 return value ?? Undefined;
             }
 
             var getter = desc.Get ?? Undefined;
-            if (getter.IsUndefined())
-            {
+            if (getter.IsUndefined()) {
                 return Undefined;
             }
 
@@ -350,26 +296,21 @@ namespace Anura.JavaScript.Native.Object
         /// absent.
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.1
         /// </summary>
-        public virtual PropertyDescriptor GetOwnProperty(JsValue property)
-        {
+        public virtual PropertyDescriptor GetOwnProperty(JsValue property) {
             EnsureInitialized();
 
             PropertyDescriptor descriptor = null;
             var key = TypeConverter.ToPropertyKey(property);
-            if (!key.IsSymbol())
-            {
+            if (!key.IsSymbol()) {
                 _properties?.TryGetValue(TypeConverter.ToString(key), out descriptor);
-            }
-            else
-            {
-                _symbols?.TryGetValue((JsSymbol) key, out descriptor);
+            } else {
+                _symbols?.TryGetValue((JsSymbol)key, out descriptor);
             }
 
             return descriptor ?? PropertyDescriptor.Undefined;
         }
 
-        protected internal virtual void SetOwnProperty(JsValue property, PropertyDescriptor desc)
-        {
+        protected internal virtual void SetOwnProperty(JsValue property, PropertyDescriptor desc) {
             EnsureInitialized();
             SetProperty(property, desc);
         }
@@ -378,39 +319,32 @@ namespace Anura.JavaScript.Native.Object
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.2
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public PropertyDescriptor GetProperty(JsValue property)
-        {
+        public PropertyDescriptor GetProperty(JsValue property) {
             var prop = GetOwnProperty(property);
 
-            if (prop != PropertyDescriptor.Undefined)
-            {
+            if (prop != PropertyDescriptor.Undefined) {
                 return prop;
             }
 
             return Prototype?.GetProperty(property) ?? PropertyDescriptor.Undefined;
         }
 
-        public bool TryGetValue(JsValue property, out JsValue value)
-        {
+        public bool TryGetValue(JsValue property, out JsValue value) {
             value = Undefined;
             var desc = GetOwnProperty(property);
-            if (desc != null && desc != PropertyDescriptor.Undefined)
-            {
-                if (desc == PropertyDescriptor.Undefined)
-                {
+            if (desc != null && desc != PropertyDescriptor.Undefined) {
+                if (desc == PropertyDescriptor.Undefined) {
                     return false;
                 }
 
                 var descValue = desc.Value;
-                if (desc.WritableSet && !ReferenceEquals(descValue, null))
-                {
+                if (desc.WritableSet && !ReferenceEquals(descValue, null)) {
                     value = descValue;
                     return true;
                 }
 
-                var getter = desc.Get ??  Undefined;
-                if (getter.IsUndefined())
-                {
+                var getter = desc.Get ?? Undefined;
+                if (getter.IsUndefined()) {
                     value = Undefined;
                     return false;
                 }
@@ -421,8 +355,7 @@ namespace Anura.JavaScript.Native.Object
                 return true;
             }
 
-            if (ReferenceEquals(Prototype, null))
-            {
+            if (ReferenceEquals(Prototype, null)) {
                 return false;
             }
 
@@ -430,10 +363,8 @@ namespace Anura.JavaScript.Native.Object
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Set(JsValue p, JsValue v, bool throwOnError)
-        {
-            if (!Set(p, v, this) && throwOnError)
-            {
+        public bool Set(JsValue p, JsValue v, bool throwOnError) {
+            if (!Set(p, v, this) && throwOnError) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
 
@@ -441,68 +372,53 @@ namespace Anura.JavaScript.Native.Object
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Set(JsValue property, JsValue value)
-        {
+        public bool Set(JsValue property, JsValue value) {
             return Set(property, value, this);
         }
 
-        public override bool Set(JsValue property, JsValue value, JsValue receiver)
-        {
+        public override bool Set(JsValue property, JsValue value, JsValue receiver) {
             var ownDesc = GetOwnProperty(property);
 
-            if (ownDesc == PropertyDescriptor.Undefined)
-            {
+            if (ownDesc == PropertyDescriptor.Undefined) {
                 var parent = GetPrototypeOf();
-                if (!(parent is null))
-                {
+                if (!(parent is null)) {
                     return parent.Set(property, value, receiver);
-                }
-                else
-                {
+                } else {
                     ownDesc = new PropertyDescriptor(Undefined, PropertyFlag.ConfigurableEnumerableWritable);
                 }
             }
 
-            if (ownDesc.IsDataDescriptor())
-            {
-                if (!ownDesc.Writable)
-                {
+            if (ownDesc.IsDataDescriptor()) {
+                if (!ownDesc.Writable) {
                     return false;
                 }
 
-                if (!(receiver is ObjectInstance oi))
-                {
+                if (!(receiver is ObjectInstance oi)) {
                     return false;
                 }
 
                 var existingDescriptor = oi.GetOwnProperty(property);
-                if (existingDescriptor != PropertyDescriptor.Undefined)
-                {
-                    if (existingDescriptor.IsAccessorDescriptor())
-                    {
+                if (existingDescriptor != PropertyDescriptor.Undefined) {
+                    if (existingDescriptor.IsAccessorDescriptor()) {
                         return false;
                     }
 
-                    if (!existingDescriptor.Writable)
-                    {
+                    if (!existingDescriptor.Writable) {
                         return false;
                     }
 
                     var valueDesc = new PropertyDescriptor(value, PropertyFlag.None);
                     return oi.DefineOwnProperty(property, valueDesc);
-                }
-                else
-                {
+                } else {
                     return oi.CreateDataProperty(property, value);
                 }
             }
 
-            if (!(ownDesc.Set is ICallable setter))
-            {
+            if (!(ownDesc.Set is ICallable setter)) {
                 return false;
             }
 
-            setter.Call(receiver, new[] {value});
+            setter.Call(receiver, new[] { value });
 
             return true;
         }
@@ -513,17 +429,13 @@ namespace Anura.JavaScript.Native.Object
         /// performed.
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.4
         /// </summary>
-        public bool CanPut(JsValue property)
-        {
+        public bool CanPut(JsValue property) {
             var desc = GetOwnProperty(property);
 
-            if (desc != PropertyDescriptor.Undefined)
-            {
-                if (desc.IsAccessorDescriptor())
-                {
+            if (desc != PropertyDescriptor.Undefined) {
+                if (desc.IsAccessorDescriptor()) {
                     var set = desc.Set;
-                    if (ReferenceEquals(set, null) || set.IsUndefined())
-                    {
+                    if (ReferenceEquals(set, null) || set.IsUndefined()) {
                         return false;
                     }
 
@@ -533,31 +445,26 @@ namespace Anura.JavaScript.Native.Object
                 return desc.Writable;
             }
 
-            if (ReferenceEquals(Prototype, null))
-            {
+            if (ReferenceEquals(Prototype, null)) {
                 return Extensible;
             }
 
             var inherited = Prototype.GetProperty(property);
 
-            if (inherited == PropertyDescriptor.Undefined)
-            {
+            if (inherited == PropertyDescriptor.Undefined) {
                 return Extensible;
             }
 
-            if (inherited.IsAccessorDescriptor())
-            {
+            if (inherited.IsAccessorDescriptor()) {
                 var set = inherited.Set;
-                if (ReferenceEquals(set, null) || set.IsUndefined())
-                {
+                if (ReferenceEquals(set, null) || set.IsUndefined()) {
                     return false;
                 }
 
                 return true;
             }
 
-            if (!Extensible)
-            {
+            if (!Extensible) {
                 return false;
             }
 
@@ -567,17 +474,14 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/#sec-ordinary-object-internal-methods-and-internal-slots-hasproperty-p
         /// </summary>
-        public virtual bool HasProperty(JsValue property)
-        {
+        public virtual bool HasProperty(JsValue property) {
             var hasOwn = GetOwnProperty(property);
-            if (hasOwn != PropertyDescriptor.Undefined)
-            {
+            if (hasOwn != PropertyDescriptor.Undefined) {
                 return true;
             }
 
             var parent = GetPrototypeOf();
-            if (parent != null)
-            {
+            if (parent != null) {
                 return parent.HasProperty(property);
             }
 
@@ -587,10 +491,8 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/#sec-deletepropertyorthrow
         /// </summary>
-        public bool DeletePropertyOrThrow(JsValue property)
-        {
-            if (!Delete(property))
-            {
+        public bool DeletePropertyOrThrow(JsValue property) {
+            if (!Delete(property)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
             return true;
@@ -601,17 +503,14 @@ namespace Anura.JavaScript.Native.Object
         /// from the object. The flag controls failure
         /// handling.
         /// </summary>
-        public virtual bool Delete(JsValue property)
-        {
+        public virtual bool Delete(JsValue property) {
             var desc = GetOwnProperty(property);
 
-            if (desc == PropertyDescriptor.Undefined)
-            {
+            if (desc == PropertyDescriptor.Undefined) {
                 return true;
             }
 
-            if (desc.Configurable)
-            {
+            if (desc.Configurable) {
                 RemoveOwnProperty(property);
                 return true;
             }
@@ -619,10 +518,8 @@ namespace Anura.JavaScript.Native.Object
             return false;
         }
 
-        public bool DefinePropertyOrThrow(JsValue property, PropertyDescriptor desc)
-        {
-            if (!DefineOwnProperty(property, desc))
-            {
+        public bool DefinePropertyOrThrow(JsValue property, PropertyDescriptor desc) {
+            if (!DefineOwnProperty(property, desc)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
 
@@ -634,13 +531,11 @@ namespace Anura.JavaScript.Native.Object
         /// have the state described by a Property
         /// Descriptor. The flag controls failure handling.
         /// </summary>
-        public virtual bool DefineOwnProperty(JsValue property, PropertyDescriptor desc)
-        {
+        public virtual bool DefineOwnProperty(JsValue property, PropertyDescriptor desc) {
             var current = GetOwnProperty(property);
             var extensible = Extensible;
 
-            if (current == desc)
-            {
+            if (current == desc) {
                 return true;
             }
 
@@ -650,31 +545,21 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/#sec-validateandapplypropertydescriptor
         /// </summary>
-        protected static bool ValidateAndApplyPropertyDescriptor(ObjectInstance o, JsValue property, bool extensible, PropertyDescriptor desc, PropertyDescriptor current)
-        {
+        protected static bool ValidateAndApplyPropertyDescriptor(ObjectInstance o, JsValue property, bool extensible, PropertyDescriptor desc, PropertyDescriptor current) {
             var descValue = desc.Value;
-            if (current == PropertyDescriptor.Undefined)
-            {
-                if (!extensible)
-                {
+            if (current == PropertyDescriptor.Undefined) {
+                if (!extensible) {
                     return false;
                 }
 
-                if (o is object)
-                {
-                    if (desc.IsGenericDescriptor() || desc.IsDataDescriptor())
-                    {
+                if (o is object) {
+                    if (desc.IsGenericDescriptor() || desc.IsDataDescriptor()) {
                         PropertyDescriptor propertyDescriptor;
-                        if ((desc._flags & PropertyFlag.ConfigurableEnumerableWritable) == PropertyFlag.ConfigurableEnumerableWritable)
-                        {
+                        if ((desc._flags & PropertyFlag.ConfigurableEnumerableWritable) == PropertyFlag.ConfigurableEnumerableWritable) {
                             propertyDescriptor = new PropertyDescriptor(descValue ?? Undefined, PropertyFlag.ConfigurableEnumerableWritable);
-                        }
-                        else if ((desc._flags & PropertyFlag.ConfigurableEnumerableWritable) == 0)
-                        {
+                        } else if ((desc._flags & PropertyFlag.ConfigurableEnumerableWritable) == 0) {
                             propertyDescriptor = new PropertyDescriptor(descValue ?? Undefined, PropertyFlag.AllForbidden);
-                        }
-                        else
-                        {
+                        } else {
                             propertyDescriptor = new PropertyDescriptor(desc)
                             {
                                 Value = descValue ?? Undefined
@@ -682,9 +567,7 @@ namespace Anura.JavaScript.Native.Object
                         }
 
                         o.SetOwnProperty(property, propertyDescriptor);
-                    }
-                    else
-                    {
+                    } else {
                         o.SetOwnProperty(property, new GetSetPropertyDescriptor(desc));
                     }
                 }
@@ -700,8 +583,7 @@ namespace Anura.JavaScript.Native.Object
             if ((current._flags & PropertyFlag.ConfigurableSet | PropertyFlag.EnumerableSet | PropertyFlag.WritableSet) == 0 &&
                 ReferenceEquals(currentGet, null) &&
                 ReferenceEquals(currentSet, null) &&
-                ReferenceEquals(currentValue, null))
-            {
+                ReferenceEquals(currentValue, null)) {
                 return true;
             }
 
@@ -715,124 +597,95 @@ namespace Anura.JavaScript.Native.Object
                 ((ReferenceEquals(currentGet, null) && ReferenceEquals(descGet, null)) || (!ReferenceEquals(currentGet, null) && !ReferenceEquals(descGet, null) && SameValue(currentGet, descGet))) &&
                 ((ReferenceEquals(currentSet, null) && ReferenceEquals(descSet, null)) || (!ReferenceEquals(currentSet, null) && !ReferenceEquals(descSet, null) && SameValue(currentSet, descSet))) &&
                 ((ReferenceEquals(currentValue, null) && ReferenceEquals(descValue, null)) || (!ReferenceEquals(currentValue, null) && !ReferenceEquals(descValue, null) && JintBinaryExpression.StrictlyEqual(currentValue, descValue)))
-            )
-            {
+            ) {
                 return true;
             }
 
-            if (!current.Configurable)
-            {
-                if (desc.Configurable)
-                {
+            if (!current.Configurable) {
+                if (desc.Configurable) {
                     return false;
                 }
 
-                if (desc.EnumerableSet && (desc.Enumerable != current.Enumerable))
-                {
+                if (desc.EnumerableSet && (desc.Enumerable != current.Enumerable)) {
                     return false;
                 }
             }
 
-            if (!desc.IsGenericDescriptor())
-            {
-                if (current.IsDataDescriptor() != desc.IsDataDescriptor())
-                {
-                    if (!current.Configurable)
-                    {
+            if (!desc.IsGenericDescriptor()) {
+                if (current.IsDataDescriptor() != desc.IsDataDescriptor()) {
+                    if (!current.Configurable) {
                         return false;
                     }
 
 
-                    if (o is object)
-                    {
+                    if (o is object) {
                         var flags = current.Flags & ~(PropertyFlag.Writable | PropertyFlag.WritableSet);
-                        if (current.IsDataDescriptor())
-                        {
+                        if (current.IsDataDescriptor()) {
                             o.SetOwnProperty(property, current = new GetSetPropertyDescriptor(
                                 get: Undefined,
                                 set: Undefined,
                                 flags
                             ));
-                        }
-                        else
-                        {
+                        } else {
                             o.SetOwnProperty(property, current = new PropertyDescriptor(
                                 value: Undefined,
                                 flags
                             ));
                         }
                     }
-                }
-                else if (current.IsDataDescriptor() && desc.IsDataDescriptor())
-                {
-                    if (!current.Configurable)
-                    {
-                        if (!current.Writable && desc.Writable)
-                        {
+                } else if (current.IsDataDescriptor() && desc.IsDataDescriptor()) {
+                    if (!current.Configurable) {
+                        if (!current.Writable && desc.Writable) {
                             return false;
                         }
 
-                        if (!current.Writable)
-                        {
-                            if (!ReferenceEquals(descValue, null) && !SameValue(descValue, currentValue))
-                            {
+                        if (!current.Writable) {
+                            if (!ReferenceEquals(descValue, null) && !SameValue(descValue, currentValue)) {
                                 return false;
                             }
                         }
                     }
-                }
-                else if (current.IsAccessorDescriptor() && desc.IsAccessorDescriptor())
-                {
-                    if (!current.Configurable)
-                    {
+                } else if (current.IsAccessorDescriptor() && desc.IsAccessorDescriptor()) {
+                    if (!current.Configurable) {
                         if ((!ReferenceEquals(descSet, null) && !SameValue(descSet, currentSet ?? Undefined))
                             ||
-                            (!ReferenceEquals(descGet, null) && !SameValue(descGet, currentGet ?? Undefined)))
-                        {
+                            (!ReferenceEquals(descGet, null) && !SameValue(descGet, currentGet ?? Undefined))) {
                             return false;
                         }
                     }
                 }
             }
 
-            if (o is object)
-            {
-                
-                if (!ReferenceEquals(descValue, null))
-                {
+            if (o is object) {
+
+                if (!ReferenceEquals(descValue, null)) {
                     current.Value = descValue;
                 }
 
-                if (desc.WritableSet)
-                {
+                if (desc.WritableSet) {
                     current.Writable = desc.Writable;
                 }
 
-                if (desc.EnumerableSet)
-                {
+                if (desc.EnumerableSet) {
                     current.Enumerable = desc.Enumerable;
                 }
 
-                if (desc.ConfigurableSet)
-                {
+                if (desc.ConfigurableSet) {
                     current.Configurable = desc.Configurable;
                 }
-                
+
                 PropertyDescriptor mutable = null;
-                if (!ReferenceEquals(descGet, null))
-                {
+                if (!ReferenceEquals(descGet, null)) {
                     mutable = new GetSetPropertyDescriptor(mutable ?? current);
-                    ((GetSetPropertyDescriptor) mutable).SetGet(descGet);
+                    ((GetSetPropertyDescriptor)mutable).SetGet(descGet);
                 }
 
-                if (!ReferenceEquals(descSet, null))
-                {
+                if (!ReferenceEquals(descSet, null)) {
                     mutable = new GetSetPropertyDescriptor(mutable ?? current);
-                    ((GetSetPropertyDescriptor) mutable).SetSet(descSet);
+                    ((GetSetPropertyDescriptor)mutable).SetSet(descSet);
                 }
 
-                if (mutable != null)
-                {
+                if (mutable != null) {
                     // replace old with new type that supports get and set
                     o.FastSetProperty(property, mutable);
                 }
@@ -844,8 +697,7 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// Optimized version of [[Put]] when the property is known to be undeclared already
         /// </summary>
-        public void FastAddProperty(JsValue name, JsValue value, bool writable, bool enumerable, bool configurable)
-        {
+        public void FastAddProperty(JsValue name, JsValue value, bool writable, bool enumerable, bool configurable) {
             SetOwnProperty(name, new PropertyDescriptor(value, writable, enumerable, configurable));
         }
 
@@ -854,16 +706,13 @@ namespace Anura.JavaScript.Native.Object
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
-        public void FastSetProperty(JsValue name, PropertyDescriptor value)
-        {
+        public void FastSetProperty(JsValue name, PropertyDescriptor value) {
             SetOwnProperty(name, value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void EnsureInitialized()
-        {
-            if (_initialized)
-            {
+        protected void EnsureInitialized() {
+            if (_initialized) {
                 return;
             }
 
@@ -872,40 +721,30 @@ namespace Anura.JavaScript.Native.Object
             Initialize();
         }
 
-        protected virtual void Initialize()
-        {
+        protected virtual void Initialize() {
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return TypeConverter.ToString(this);
         }
 
-        public override object ToObject()
-        {
-            if (this is IObjectWrapper wrapper)
-            {
+        public override object ToObject() {
+            if (this is IObjectWrapper wrapper) {
                 return wrapper.Target;
             }
 
-            switch (Class)
-            {
+            switch (Class) {
                 case ObjectClass.Array:
-                    if (this is ArrayInstance arrayInstance)
-                    {
+                    if (this is ArrayInstance arrayInstance) {
                         var len = TypeConverter.ToInt32(arrayInstance.Get(CommonProperties.Length, arrayInstance));
                         var result = new object[len];
-                        for (var k = 0; k < len; k++)
-                        {
+                        for (var k = 0; k < len; k++) {
                             var pk = TypeConverter.ToJsString(k);
                             var kpresent = arrayInstance.HasProperty(pk);
-                            if (kpresent)
-                            {
+                            if (kpresent) {
                                 var kvalue = arrayInstance.Get(pk, arrayInstance);
                                 result[k] = kvalue.ToObject();
-                            }
-                            else
-                            {
+                            } else {
                                 result[k] = null;
                             }
                         }
@@ -916,25 +755,22 @@ namespace Anura.JavaScript.Native.Object
                     break;
 
                 case ObjectClass.String:
-                    if (this is StringInstance stringInstance)
-                    {
+                    if (this is StringInstance stringInstance) {
                         return stringInstance.PrimitiveValue.ToString();
                     }
 
                     break;
 
                 case ObjectClass.Date:
-                    if (this is DateInstance dateInstance)
-                    {
+                    if (this is DateInstance dateInstance) {
                         return dateInstance.ToDateTime();
                     }
 
                     break;
 
                 case ObjectClass.Boolean:
-                    if (this is BooleanInstance booleanInstance)
-                    {
-                        return ((JsBoolean) booleanInstance.PrimitiveValue)._value
+                    if (this is BooleanInstance booleanInstance) {
+                        return ((JsBoolean)booleanInstance.PrimitiveValue)._value
                              ? JsBoolean.BoxedTrue
                              : JsBoolean.BoxedFalse;
                     }
@@ -942,24 +778,21 @@ namespace Anura.JavaScript.Native.Object
                     break;
 
                 case ObjectClass.Function:
-                    if (this is FunctionInstance function)
-                    {
-                        return (Func<JsValue, JsValue[], JsValue>) function.Call;
+                    if (this is FunctionInstance function) {
+                        return (Func<JsValue, JsValue[], JsValue>)function.Call;
                     }
 
                     break;
 
                 case ObjectClass.Number:
-                    if (this is NumberInstance numberInstance)
-                    {
+                    if (this is NumberInstance numberInstance) {
                         return numberInstance.NumberData._value;
                     }
 
                     break;
 
                 case ObjectClass.RegExp:
-                    if (this is RegExpInstance regeExpInstance)
-                    {
+                    if (this is RegExpInstance regeExpInstance) {
                         return regeExpInstance.Value;
                     }
 
@@ -968,10 +801,8 @@ namespace Anura.JavaScript.Native.Object
                 case ObjectClass.Arguments:
                 case ObjectClass.Object:
                     IDictionary<string, object> o = new ExpandoObject();
-                    foreach (var p in GetOwnProperties())
-                    {
-                        if (!p.Value.Enumerable)
-                        {
+                    foreach (var p in GetOwnProperties()) {
+                        if (!p.Value.Enumerable) {
                             continue;
                         }
 
@@ -992,51 +823,41 @@ namespace Anura.JavaScript.Native.Object
             JsValue[] arguments,
             out uint index,
             out JsValue value,
-            bool visitUnassigned)
-        {
-            long GetLength()
-            {
+            bool visitUnassigned) {
+            long GetLength() {
                 var desc = GetProperty(CommonProperties.Length);
                 var descValue = desc.Value;
                 double len;
-                if (desc.IsDataDescriptor() && !ReferenceEquals(descValue, null))
-                {
+                if (desc.IsDataDescriptor() && !ReferenceEquals(descValue, null)) {
                     len = TypeConverter.ToNumber(descValue);
-                }
-                else
-                {
+                } else {
                     var getter = desc.Get ?? Undefined;
-                    if (getter.IsUndefined())
-                    {
+                    if (getter.IsUndefined()) {
                         len = 0;
-                    }
-                    else
-                    {
+                    } else {
                         // if getter is not undefined it must be ICallable
-                        len = TypeConverter.ToNumber(((ICallable) getter).Call(this, Arguments.Empty));
+                        len = TypeConverter.ToNumber(((ICallable)getter).Call(this, Arguments.Empty));
                     }
                 }
 
-                return (long) System.Math.Max(
-                    0, 
+                return (long)System.Math.Max(
+                    0,
                     System.Math.Min(len, ArrayOperations.MaxArrayLikeLength));
             }
 
-            bool TryGetValue(uint idx, out JsValue jsValue)
-            {
+            bool TryGetValue(uint idx, out JsValue jsValue) {
                 var property = JsString.Create(idx);
                 var kPresent = HasProperty(property);
                 jsValue = kPresent ? Get(property, this) : Undefined;
                 return kPresent;
             }
 
-            if (GetLength() == 0)
-            {
+            if (GetLength() == 0) {
                 index = 0;
                 value = Undefined;
                 return false;
             }
-            
+
             var callbackfn = arguments.At(0);
             var thisArg = arguments.At(1);
             var callable = GetCallable(callbackfn);
@@ -1044,15 +865,12 @@ namespace Anura.JavaScript.Native.Object
             var args = _engine._jsValueArrayPool.RentArray(3);
             args[2] = this;
             var length = GetLength();
-            for (uint k = 0; k < length; k++)
-            {
-                if (TryGetValue(k, out var kvalue) || visitUnassigned)
-                {
+            for (uint k = 0; k < length; k++) {
+                if (TryGetValue(k, out var kvalue) || visitUnassigned) {
                     args[0] = kvalue;
                     args[1] = k;
                     var testResult = callable.Call(thisArg, args);
-                    if (TypeConverter.ToBoolean(testResult))
-                    {
+                    if (TypeConverter.ToBoolean(testResult)) {
                         index = k;
                         value = kvalue;
                         return true;
@@ -1067,23 +885,18 @@ namespace Anura.JavaScript.Native.Object
             return false;
         }
 
-        protected ICallable GetCallable(JsValue source)
-        {
-            if (source is ICallable callable)
-            {
+        protected ICallable GetCallable(JsValue source) {
+            if (source is ICallable callable) {
                 return callable;
             }
 
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ICallable>(_engine, "Argument must be callable");
         }
 
-        internal bool IsConcatSpreadable
-        {
-            get
-            {
+        internal bool IsConcatSpreadable {
+            get {
                 var spreadable = Get(GlobalSymbolRegistry.IsConcatSpreadable, this);
-                if (!spreadable.IsUndefined())
-                {
+                if (!spreadable.IsUndefined()) {
                     return TypeConverter.ToBoolean(spreadable);
                 }
                 return IsArray();
@@ -1092,45 +905,38 @@ namespace Anura.JavaScript.Native.Object
 
         public virtual bool IsArrayLike => TryGetValue(CommonProperties.Length, out var lengthValue)
                                            && lengthValue.IsNumber()
-                                           && ((JsNumber) lengthValue)._value >= 0;
+                                           && ((JsNumber)lengthValue)._value >= 0;
 
 
-        public virtual uint Length => (uint) TypeConverter.ToLength(Get(CommonProperties.Length));
+        public virtual uint Length => (uint)TypeConverter.ToLength(Get(CommonProperties.Length));
 
-        public virtual JsValue PreventExtensions()
-        {
+        public virtual JsValue PreventExtensions() {
             Extensible = false;
             return JsBoolean.True;
         }
 
-        protected virtual ObjectInstance GetPrototypeOf()
-        {
+        protected virtual ObjectInstance GetPrototypeOf() {
             return _prototype;
         }
 
         /// <summary>
         /// https://tc39.es/ecma262/#sec-ordinarysetprototypeof
         /// </summary>
-        public virtual bool SetPrototypeOf(JsValue value)
-        {
-            if (!value.IsObject() && !value.IsNull())
-            {
+        public virtual bool SetPrototypeOf(JsValue value) {
+            if (!value.IsObject() && !value.IsNull()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException();
             }
 
             var current = _prototype ?? Null;
-            if (ReferenceEquals(value, current))
-            {
+            if (ReferenceEquals(value, current)) {
                 return true;
             }
 
-            if (!Extensible)
-            {
+            if (!Extensible) {
                 return false;
             }
 
-            if (value.IsNull())
-            {
+            if (value.IsNull()) {
                 _prototype = null;
                 return true;
             }
@@ -1138,18 +944,12 @@ namespace Anura.JavaScript.Native.Object
             // validate chain
             var p = value as ObjectInstance;
             bool done = false;
-            while (!done)
-            {
-                if (p is null)
-                {
+            while (!done) {
+                if (p is null) {
                     done = true;
-                }
-                else if (ReferenceEquals(p, this))
-                {
+                } else if (ReferenceEquals(p, this)) {
                     return false;
-                }
-                else
-                {
+                } else {
                     p = p._prototype;
                 }
             }
@@ -1161,8 +961,7 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/#sec-createdatapropertyorthrow
         /// </summary>
-        internal bool CreateDataProperty(JsValue p, JsValue v)
-        {
+        internal bool CreateDataProperty(JsValue p, JsValue v) {
             var newDesc = new PropertyDescriptor(v, PropertyFlag.ConfigurableEnumerableWritable);
             return DefineOwnProperty(p, newDesc);
         }
@@ -1170,10 +969,8 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/#sec-createdataproperty
         /// </summary>
-        internal bool CreateDataPropertyOrThrow(JsValue p, JsValue v)
-        {
-            if (!CreateDataProperty(p, v))
-            {
+        internal bool CreateDataPropertyOrThrow(JsValue p, JsValue v) {
+            if (!CreateDataProperty(p, v)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
 
@@ -1181,16 +978,13 @@ namespace Anura.JavaScript.Native.Object
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ICallable GetMethod(JsValue property)
-        {
+        internal ICallable GetMethod(JsValue property) {
             return GetMethod(_engine, this, property);
         }
 
-        internal static ICallable GetMethod(Engine engine, JsValue v, JsValue p)
-        {
+        internal static ICallable GetMethod(Engine engine, JsValue v, JsValue p) {
             var jsValue = v.Get(p);
-            if (jsValue.IsNullOrUndefined())
-            {
+            if (jsValue.IsNullOrUndefined()) {
                 return null;
             }
 
@@ -1199,55 +993,41 @@ namespace Anura.JavaScript.Native.Object
 
         internal void CopyDataProperties(
             ObjectInstance target,
-            HashSet<JsValue> processedProperties)
-        {
+            HashSet<JsValue> processedProperties) {
             var keys = GetOwnPropertyKeys();
-            for (var i = 0; i < keys.Count; i++)
-            {
+            for (var i = 0; i < keys.Count; i++) {
                 var key = keys[i];
-                if (processedProperties == null || !processedProperties.Contains(key))
-                {
+                if (processedProperties == null || !processedProperties.Contains(key)) {
                     var desc = GetOwnProperty(key);
-                    if (desc.Enumerable)
-                    {
+                    if (desc.Enumerable) {
                         target.CreateDataProperty(key, UnwrapJsValue(desc, this));
                     }
                 }
             }
         }
 
-        internal JsValue EnumerableOwnPropertyNames(EnumerableOwnPropertyNamesKind kind)
-        {
+        internal JsValue EnumerableOwnPropertyNames(EnumerableOwnPropertyNamesKind kind) {
             var ownKeys = GetOwnPropertyKeys(Types.String);
 
-            var array = Engine.Array.ConstructFast((uint) ownKeys.Count);
+            var array = Engine.Array.ConstructFast((uint)ownKeys.Count);
             uint index = 0;
 
-            for (var i = 0; i < ownKeys.Count; i++)
-            {
+            for (var i = 0; i < ownKeys.Count; i++) {
                 var property = ownKeys[i];
 
-                if (!property.IsString())
-                {
+                if (!property.IsString()) {
                     continue;
                 }
-                
+
                 var desc = GetOwnProperty(property);
-                if (desc != PropertyDescriptor.Undefined && desc.Enumerable)
-                {
-                    if (kind == EnumerableOwnPropertyNamesKind.Key)
-                    {
+                if (desc != PropertyDescriptor.Undefined && desc.Enumerable) {
+                    if (kind == EnumerableOwnPropertyNamesKind.Key) {
                         array.SetIndexValue(index, property, updateLength: false);
-                    }
-                    else
-                    {
+                    } else {
                         var value = Get(property);
-                        if (kind == EnumerableOwnPropertyNamesKind.Value)
-                        {
+                        if (kind == EnumerableOwnPropertyNamesKind.Value) {
                             array.SetIndexValue(index, value, updateLength: false);
-                        }
-                        else
-                        {
+                        } else {
                             array.SetIndexValue(index, _engine.Array.Construct(new[]
                             {
                                 property,
@@ -1271,41 +1051,33 @@ namespace Anura.JavaScript.Native.Object
             KeyValue
         }
 
-        internal ObjectInstance AssertThisIsObjectInstance(JsValue value, string methodName)
-        {
+        internal ObjectInstance AssertThisIsObjectInstance(JsValue value, string methodName) {
             return value as ObjectInstance ?? ThrowIncompatibleReceiver<ObjectInstance>(value, methodName);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private T ThrowIncompatibleReceiver<T>(JsValue value, string methodName)
-        {
+        private T ThrowIncompatibleReceiver<T>(JsValue value, string methodName) {
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<T>(_engine, $"Method {methodName} called on incompatible receiver {value}");
         }
 
-        public override bool Equals(JsValue obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
+        public override bool Equals(JsValue obj) {
+            if (ReferenceEquals(null, obj)) {
                 return false;
             }
 
-            if (!(obj is ObjectInstance s))
-            {
+            if (!(obj is ObjectInstance s)) {
                 return false;
             }
 
             return Equals(s);
         }
 
-        public bool Equals(ObjectInstance other)
-        {
-            if (ReferenceEquals(null, other))
-            {
+        public bool Equals(ObjectInstance other) {
+            if (ReferenceEquals(null, other)) {
                 return false;
             }
 
-            if (ReferenceEquals(this, other))
-            {
+            if (ReferenceEquals(this, other)) {
                 return true;
             }
 

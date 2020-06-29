@@ -15,14 +15,12 @@ namespace Anura.JavaScript.Native.Map
         private static readonly JsString _functionName = new JsString("Map");
 
         private MapConstructor(Engine engine)
-            : base(engine, _functionName, strict: false)
-        {
+            : base(engine, _functionName, strict: false) {
         }
 
         public MapPrototype PrototypeObject { get; private set; }
 
-        public static MapConstructor CreateMapConstructor(Engine engine)
-        {
+        public static MapConstructor CreateMapConstructor(Engine engine) {
             var obj = new MapConstructor(engine)
             {
                 _prototype = engine.Function.PrototypeObject
@@ -39,8 +37,7 @@ namespace Anura.JavaScript.Native.Map
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var symbols = new SymbolDictionary(1)
             {
                 [GlobalSymbolRegistry.Species] = new GetSetPropertyDescriptor(get: new ClrFunctionInstance(_engine, "get [Symbol.species]", Species, 0, PropertyFlag.Configurable), set: Undefined, PropertyFlag.Configurable)
@@ -48,30 +45,25 @@ namespace Anura.JavaScript.Native.Map
             SetSymbols(symbols);
         }
 
-        private static JsValue Species(JsValue thisObject, JsValue[] arguments)
-        {
+        private static JsValue Species(JsValue thisObject, JsValue[] arguments) {
             return thisObject;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
-            if (thisObject.IsUndefined())
-            {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
+            if (thisObject.IsUndefined()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Constructor Map requires 'new'");
             }
 
             return Construct(arguments, thisObject);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             var map = new MapInstance(Engine)
             {
                 _prototype = PrototypeObject
             };
 
-            if (arguments.Length > 0 && !arguments[0].IsNullOrUndefined())
-            {
+            if (arguments.Length > 0 && !arguments[0].IsNullOrUndefined()) {
                 var adder = map.Get("set");
                 var iterator = arguments.At(0).GetIterator(_engine);
 

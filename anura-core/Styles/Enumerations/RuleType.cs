@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum RuleType : byte {
+namespace Anura.Styles
+{
+    public enum RuleType : byte
+    {
         Unknown,
         Style,
         Charset,

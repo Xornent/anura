@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class AnimationDirectionProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class AnimationDirectionProperty : Property
+    {
         private static readonly IValueConverter ListConverter =
-            Converters.AnimationDirectionConverter.FromList ().OrDefault (AnimationDirection.Normal);
+            Converters.AnimationDirectionConverter.FromList().OrDefault(AnimationDirection.Normal);
 
-        internal AnimationDirectionProperty () : base (PropertyNames.AnimationDirection) { }
+        internal AnimationDirectionProperty() : base(PropertyNames.AnimationDirection) { }
 
         internal override IValueConverter Converter => ListConverter;
     }

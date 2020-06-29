@@ -1,11 +1,11 @@
-﻿using System;
-using System.Globalization;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
+using System;
+using System.Globalization;
 
 namespace Anura.JavaScript.Native.Date
 {
@@ -54,12 +54,10 @@ namespace Anura.JavaScript.Native.Date
 
         private static readonly JsString _functionName = new JsString("Date");
 
-        public DateConstructor(Engine engine) : base(engine, _functionName, strict: false)
-        {
+        public DateConstructor(Engine engine) : base(engine, _functionName, strict: false) {
         }
 
-        public static DateConstructor CreateDateConstructor(Engine engine)
-        {
+        public static DateConstructor CreateDateConstructor(Engine engine) {
             var obj = new DateConstructor(engine)
             {
                 _prototype = engine.Function.PrototypeObject
@@ -76,8 +74,7 @@ namespace Anura.JavaScript.Native.Date
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             const PropertyFlag lengthFlags = PropertyFlag.Configurable;
             const PropertyFlag propertyFlags = PropertyFlag.Configurable | PropertyFlag.Writable;
 
@@ -90,18 +87,13 @@ namespace Anura.JavaScript.Native.Date
             SetProperties(properties);
         }
 
-        private JsValue Parse(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Parse(JsValue thisObj, JsValue[] arguments) {
             var date = TypeConverter.ToString(arguments.At(0));
 
-            if (!DateTime.TryParseExact(date, DefaultFormats, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var result))
-            {
-                if (!DateTime.TryParseExact(date, SecondaryFormats, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out result))
-                {
-                    if (!DateTime.TryParse(date, Engine.Options._Culture, DateTimeStyles.AdjustToUniversal, out result))
-                    {
-                        if (!DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out result))
-                        {
+            if (!DateTime.TryParseExact(date, DefaultFormats, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var result)) {
+                if (!DateTime.TryParseExact(date, SecondaryFormats, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out result)) {
+                    if (!DateTime.TryParse(date, Engine.Options._Culture, DateTimeStyles.AdjustToUniversal, out result)) {
+                        if (!DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out result)) {
                             // unrecognized dates should return NaN (15.9.4.2)
                             return JsNumber.DoubleNaN;
                         }
@@ -112,8 +104,7 @@ namespace Anura.JavaScript.Native.Date
             return FromDateTime(result);
         }
 
-        private JsValue Utc(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Utc(JsValue thisObj, JsValue[] arguments) {
             var y = TypeConverter.ToNumber(arguments.At(0));
             var m = TypeConverter.ToNumber(arguments.At(1, JsNumber.PositiveZero));
             var dt = TypeConverter.ToNumber(arguments.At(2, JsNumber.One));
@@ -123,9 +114,8 @@ namespace Anura.JavaScript.Native.Date
             var milli = TypeConverter.ToNumber(arguments.At(6, JsNumber.PositiveZero));
 
             var yInteger = TypeConverter.ToInteger(y);
-            if (!double.IsNaN(y) && 0 <= yInteger && yInteger <= 99)
-            {
-                y  = yInteger + 1900;
+            if (!double.IsNaN(y) && 0 <= yInteger && yInteger <= 99) {
+                y = yInteger + 1900;
             }
 
             var finalDate = DatePrototype.MakeDate(
@@ -135,42 +125,32 @@ namespace Anura.JavaScript.Native.Date
             return TimeClip(finalDate);
         }
 
-        private static JsValue Now(JsValue thisObj, JsValue[] arguments)
-        {
+        private static JsValue Now(JsValue thisObj, JsValue[] arguments) {
             return System.Math.Floor((DateTime.UtcNow - Epoch).TotalMilliseconds);
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             return PrototypeObject.ToString(Construct(Arguments.Empty, thisObject), Arguments.Empty);
         }
 
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.3
         /// </summary>
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
-            if (arguments.Length == 0)
-            {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
+            if (arguments.Length == 0) {
                 return Construct(DateTime.UtcNow);
-            }
-            else if (arguments.Length == 1)
-            {
-                if (arguments[0] is DateInstance date)
-                {
+            } else if (arguments.Length == 1) {
+                if (arguments[0] is DateInstance date) {
                     return Construct(date.PrimitiveValue);
                 }
-                
+
                 var v = TypeConverter.ToPrimitive(arguments[0]);
-                if (v.IsString())
-                {
-                    return Construct(((JsNumber) Parse(Undefined, Arguments.From(v)))._value);
+                if (v.IsString()) {
+                    return Construct(((JsNumber)Parse(Undefined, Arguments.From(v)))._value);
                 }
 
                 return Construct(TimeClip(TypeConverter.ToNumber(v)));
-            }
-            else
-            {
+            } else {
                 var y = TypeConverter.ToNumber(arguments.At(0));
                 var m = TypeConverter.ToNumber(arguments.At(1));
                 var dt = TypeConverter.ToNumber(arguments.At(2, JsNumber.One));
@@ -180,8 +160,7 @@ namespace Anura.JavaScript.Native.Date
                 var milli = TypeConverter.ToNumber(arguments.At(6, JsNumber.PositiveZero));
 
                 var yInteger = TypeConverter.ToInteger(y);
-                if (!double.IsNaN(y) && 0 <= yInteger && yInteger <= 99)
-                {
+                if (!double.IsNaN(y) && 0 <= yInteger && yInteger <= 99) {
                     y += 1900;
                 }
 
@@ -195,13 +174,11 @@ namespace Anura.JavaScript.Native.Date
 
         public DatePrototype PrototypeObject { get; private set; }
 
-        public DateInstance Construct(DateTimeOffset value)
-        {
+        public DateInstance Construct(DateTimeOffset value) {
             return Construct(value.UtcDateTime);
         }
 
-        public DateInstance Construct(DateTime value)
-        {
+        public DateInstance Construct(DateTime value) {
             var instance = new DateInstance(Engine)
             {
                 _prototype = PrototypeObject,
@@ -211,8 +188,7 @@ namespace Anura.JavaScript.Native.Date
             return instance;
         }
 
-        public DateInstance Construct(double time)
-        {
+        public DateInstance Construct(double time) {
             var instance = new DateInstance(Engine)
             {
                 _prototype = PrototypeObject,
@@ -222,23 +198,19 @@ namespace Anura.JavaScript.Native.Date
             return instance;
         }
 
-        public static double TimeClip(double time)
-        {
-            if (double.IsInfinity(time) || double.IsNaN(time))
-            {
+        public static double TimeClip(double time) {
+            if (double.IsInfinity(time) || double.IsNaN(time)) {
                 return double.NaN;
             }
 
-            if (System.Math.Abs(time) > 8640000000000000)
-            {
+            if (System.Math.Abs(time) > 8640000000000000) {
                 return double.NaN;
             }
 
             return TypeConverter.ToInteger(time) + 0;
         }
 
-        public double FromDateTime(DateTime dt)
-        {
+        public double FromDateTime(DateTime dt) {
             var convertToUtcAfter = (dt.Kind == DateTimeKind.Unspecified);
 
             var dateAsUtc = dt.Kind == DateTimeKind.Local
@@ -247,8 +219,7 @@ namespace Anura.JavaScript.Native.Date
 
             var result = (dateAsUtc - Epoch).TotalMilliseconds;
 
-            if (convertToUtcAfter)
-            {
+            if (convertToUtcAfter) {
                 result = PrototypeObject.Utc(result);
             }
 

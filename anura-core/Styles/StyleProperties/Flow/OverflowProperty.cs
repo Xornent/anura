@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class OverflowProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class OverflowProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.OverflowModeConverter.OrDefault (Overflow.Visible);
+            Converters.OverflowModeConverter.OrDefault(Overflow.Visible);
 
-        internal OverflowProperty () : base (PropertyNames.Overflow) { }
+        internal OverflowProperty() : base(PropertyNames.Overflow) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

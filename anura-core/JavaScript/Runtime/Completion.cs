@@ -1,6 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Anura.JavaScript.Native;
 using Esprima;
-using Anura.JavaScript.Native;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Runtime
 {
@@ -18,8 +18,7 @@ namespace Anura.JavaScript.Runtime
     /// </summary>
     public readonly struct Completion
     {
-        public Completion(CompletionType type, JsValue value, string identifier, Location location)
-        {
+        public Completion(CompletionType type, JsValue value, string identifier, Location location) {
             Type = type;
             Value = value;
             Identifier = identifier;
@@ -32,14 +31,12 @@ namespace Anura.JavaScript.Runtime
         public readonly Location Location;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public JsValue GetValueOrDefault()
-        {
+        public JsValue GetValueOrDefault() {
             return Value ?? Undefined.Instance;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsAbrupt()
-        {
+        public bool IsAbrupt() {
             return Type != CompletionType.Normal;
         }
     }

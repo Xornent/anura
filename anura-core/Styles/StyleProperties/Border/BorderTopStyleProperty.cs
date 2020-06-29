@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class BorderTopStyleProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.LineStyleConverter.OrDefault (LineStyle.None);
+namespace Anura.Styles
+{
+    internal sealed class BorderTopStyleProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.LineStyleConverter.OrDefault(LineStyle.None);
 
-        internal BorderTopStyleProperty () : base (PropertyNames.BorderTopStyle) { }
+        internal BorderTopStyleProperty() : base(PropertyNames.BorderTopStyle) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

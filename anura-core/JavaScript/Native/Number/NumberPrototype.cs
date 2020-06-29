@@ -1,12 +1,12 @@
-﻿using System.Diagnostics;
-using System.Globalization;
-using System.Text;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Number.Dtoa;
 using Anura.JavaScript.Pooling;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
 
 namespace Anura.JavaScript.Native.Number
 {
@@ -18,12 +18,10 @@ namespace Anura.JavaScript.Native.Number
         private NumberConstructor _numberConstructor;
 
         private NumberPrototype(Engine engine)
-            : base(engine)
-        {
+            : base(engine) {
         }
 
-        public static NumberPrototype CreatePrototypeObject(Engine engine, NumberConstructor numberConstructor)
-        {
+        public static NumberPrototype CreatePrototypeObject(Engine engine, NumberConstructor numberConstructor) {
             var obj = new NumberPrototype(engine)
             {
                 _prototype = engine.Object.PrototypeObject,
@@ -35,8 +33,7 @@ namespace Anura.JavaScript.Native.Number
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(8, checkExistingKeys: false)
             {
                 ["constructor"] = new PropertyDescriptor(_numberConstructor, true, false, true),
@@ -50,52 +47,42 @@ namespace Anura.JavaScript.Native.Number
             SetProperties(properties);
         }
 
-        private JsValue ToLocaleString(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!thisObject.IsNumber() && ReferenceEquals(thisObject.TryCast<NumberInstance>(), null))
-            {
+        private JsValue ToLocaleString(JsValue thisObject, JsValue[] arguments) {
+            if (!thisObject.IsNumber() && ReferenceEquals(thisObject.TryCast<NumberInstance>(), null)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
             var m = TypeConverter.ToNumber(thisObject);
 
-            if (double.IsNaN(m))
-            {
+            if (double.IsNaN(m)) {
                 return "NaN";
             }
 
-            if (m == 0)
-            {
+            if (m == 0) {
                 return JsString.NumberZeroString;
             }
 
-            if (m < 0)
-            {
+            if (m < 0) {
                 return "-" + ToLocaleString(-m, arguments);
             }
 
-            if (double.IsPositiveInfinity(m) || m >= double.MaxValue)
-            {
+            if (double.IsPositiveInfinity(m) || m >= double.MaxValue) {
                 return "Infinity";
             }
 
-            if (double.IsNegativeInfinity(m) || m <= -double.MaxValue)
-            {
+            if (double.IsNegativeInfinity(m) || m <= -double.MaxValue) {
                 return "-Infinity";
             }
 
             return m.ToString("n", Engine.Options._Culture);
         }
 
-        private JsValue ValueOf(JsValue thisObj, JsValue[] arguments)
-        {
-            if (thisObj is NumberInstance ni)
-            {
+        private JsValue ValueOf(JsValue thisObj, JsValue[] arguments) {
+            if (thisObj is NumberInstance ni) {
                 return ni.NumberData;
             }
 
-            if (thisObj is JsNumber)
-            {
+            if (thisObj is JsNumber) {
                 return thisObj;
             }
 
@@ -104,36 +91,30 @@ namespace Anura.JavaScript.Native.Number
 
         private const double Ten21 = 1e21;
 
-        private JsValue ToFixed(JsValue thisObj, JsValue[] arguments)
-        {
-            var f = (int) TypeConverter.ToInteger(arguments.At(0, 0));
-            if (f < 0 || f > 100)
-            {
+        private JsValue ToFixed(JsValue thisObj, JsValue[] arguments) {
+            var f = (int)TypeConverter.ToInteger(arguments.At(0, 0));
+            if (f < 0 || f > 100) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "fractionDigits argument must be between 0 and 100");
             }
 
             // limitation with .NET, max is 99
-            if (f == 100)
-            {
+            if (f == 100) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "100 fraction digits is not supported due to .NET format specifier limitation");
             }
 
             var x = TypeConverter.ToNumber(thisObj);
 
-            if (double.IsNaN(x))
-            {
+            if (double.IsNaN(x)) {
                 return "NaN";
             }
 
-            if (x >= Ten21)
-            {
+            if (x >= Ten21) {
                 return ToNumberString(x);
             }
 
             // handle non-decimal with greater precision
-            if (System.Math.Abs(x - (long) x) < JsNumber.DoubleIsIntegerTolerance)
-            {
-                return ((long) x).ToString("f" + f, CultureInfo.InvariantCulture);
+            if (System.Math.Abs(x - (long)x) < JsNumber.DoubleIsIntegerTolerance) {
+                return ((long)x).ToString("f" + f, CultureInfo.InvariantCulture);
             }
 
             return x.ToString("f" + f, CultureInfo.InvariantCulture);
@@ -142,53 +123,44 @@ namespace Anura.JavaScript.Native.Number
         /// <summary>
         /// https://www.ecma-international.org/ecma-262/6.0/#sec-number.prototype.toexponential
         /// </summary>
-        private JsValue ToExponential(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!thisObj.IsNumber() && ReferenceEquals(thisObj.TryCast<NumberInstance>(), null))
-            {
+        private JsValue ToExponential(JsValue thisObj, JsValue[] arguments) {
+            if (!thisObj.IsNumber() && ReferenceEquals(thisObj.TryCast<NumberInstance>(), null)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
             var x = TypeConverter.ToNumber(thisObj);
             var fractionDigits = arguments.At(0);
-            if (fractionDigits.IsUndefined())
-            {
+            if (fractionDigits.IsUndefined()) {
                 fractionDigits = JsNumber.PositiveZero;
             }
 
-            var f = (int) TypeConverter.ToInteger(fractionDigits);
+            var f = (int)TypeConverter.ToInteger(fractionDigits);
 
-            if (double.IsNaN(x))
-            {
+            if (double.IsNaN(x)) {
                 return "NaN";
             }
 
-            if (double.IsInfinity(x))
-            {
+            if (double.IsInfinity(x)) {
                 return thisObj.ToString();
             }
 
-            if (f < 0 || f > 100)
-            {
+            if (f < 0 || f > 100) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "fractionDigits argument must be between 0 and 100");
             }
 
-            if (arguments.At(0).IsUndefined())
-            {
+            if (arguments.At(0).IsUndefined()) {
                 f = -1;
             }
 
             bool negative = false;
-            if (x < 0)
-            {
+            if (x < 0) {
                 x = -x;
                 negative = true;
             }
 
             int decimalPoint;
             DtoaBuilder dtoaBuilder;
-            if (f == -1)
-            {
+            if (f == -1) {
                 dtoaBuilder = new DtoaBuilder();
                 DtoaNumberFormatter.DoubleToAscii(
                     dtoaBuilder,
@@ -198,9 +170,7 @@ namespace Anura.JavaScript.Native.Number
                     out _,
                     out decimalPoint);
                 f = dtoaBuilder.Length - 1;
-            }
-            else
-            {
+            } else {
                 dtoaBuilder = new DtoaBuilder(101);
                 DtoaNumberFormatter.DoubleToAscii(
                     dtoaBuilder,
@@ -215,39 +185,33 @@ namespace Anura.JavaScript.Native.Number
             Debug.Assert(dtoaBuilder.Length <= f + 1);
 
             int exponent = decimalPoint - 1;
-            var result = CreateExponentialRepresentation(dtoaBuilder, exponent, negative, f+1);
+            var result = CreateExponentialRepresentation(dtoaBuilder, exponent, negative, f + 1);
             return result;
         }
 
-        private JsValue ToPrecision(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!thisObj.IsNumber() && ReferenceEquals(thisObj.TryCast<NumberInstance>(), null))
-            {
+        private JsValue ToPrecision(JsValue thisObj, JsValue[] arguments) {
+            if (!thisObj.IsNumber() && ReferenceEquals(thisObj.TryCast<NumberInstance>(), null)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(Engine);
             }
 
             var x = TypeConverter.ToNumber(thisObj);
             var precisionArgument = arguments.At(0);
 
-            if (precisionArgument.IsUndefined())
-            {
+            if (precisionArgument.IsUndefined()) {
                 return TypeConverter.ToString(x);
             }
 
-            var p = (int) TypeConverter.ToInteger(precisionArgument);
+            var p = (int)TypeConverter.ToInteger(precisionArgument);
 
-            if (double.IsNaN(x))
-            {
+            if (double.IsNaN(x)) {
                 return "NaN";
             }
 
-            if (double.IsInfinity(x))
-            {
+            if (double.IsInfinity(x)) {
                 return thisObj.ToString();
             }
 
-            if (p < 1 || p > 100)
-            {
+            if (p < 1 || p > 100) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "precision must be between 1 and 100");
             }
 
@@ -262,37 +226,29 @@ namespace Anura.JavaScript.Native.Number
 
 
             int exponent = decimalPoint - 1;
-            if (exponent < -6 || exponent >= p)
-            {
+            if (exponent < -6 || exponent >= p) {
                 return CreateExponentialRepresentation(dtoaBuilder, exponent, negative, p);
             }
 
-            using (var builder = StringBuilderPool.Rent())
-            {
+            using (var builder = StringBuilderPool.Rent()) {
                 // Use fixed notation.
-                if (negative)
-                {
+                if (negative) {
                     builder.Builder.Append('-');
                 }
 
-                if (decimalPoint <= 0)
-                {
+                if (decimalPoint <= 0) {
                     builder.Builder.Append("0.");
                     builder.Builder.Append('0', -decimalPoint);
                     builder.Builder.Append(dtoaBuilder._chars, 0, dtoaBuilder.Length);
                     builder.Builder.Append('0', p - dtoaBuilder.Length);
-                }
-                else
-                {
+                } else {
                     int m = System.Math.Min(dtoaBuilder.Length, decimalPoint);
                     builder.Builder.Append(dtoaBuilder._chars, 0, m);
                     builder.Builder.Append('0', System.Math.Max(0, decimalPoint - dtoaBuilder.Length));
-                    if (decimalPoint < p)
-                    {
+                    if (decimalPoint < p) {
                         builder.Builder.Append('.');
                         var extra = negative ? 2 : 1;
-                        if (dtoaBuilder.Length > decimalPoint)
-                        {
+                        if (dtoaBuilder.Length > decimalPoint) {
                             int len = dtoaBuilder.Length - decimalPoint;
                             int n = System.Math.Min(len, p - (builder.Builder.Length - extra));
                             builder.Builder.Append(dtoaBuilder._chars, decimalPoint, n);
@@ -310,24 +266,19 @@ namespace Anura.JavaScript.Native.Number
             DtoaBuilder buffer,
             int exponent,
             bool negative,
-            int significantDigits)
-        {
+            int significantDigits) {
             bool negativeExponent = false;
-            if (exponent < 0)
-            {
+            if (exponent < 0) {
                 negativeExponent = true;
                 exponent = -exponent;
             }
 
-            using (var builder = StringBuilderPool.Rent())
-            {
-                if (negative)
-                {
+            using (var builder = StringBuilderPool.Rent()) {
+                if (negative) {
                     builder.Builder.Append('-');
                 }
                 builder.Builder.Append(buffer._chars[0]);
-                if (significantDigits != 1)
-                {
+                if (significantDigits != 1) {
                     builder.Builder.Append('.');
                     builder.Builder.Append(buffer._chars, 1, buffer.Length - 1);
                     int length = buffer.Length;
@@ -341,74 +292,61 @@ namespace Anura.JavaScript.Native.Number
             }
         }
 
-        private JsValue ToNumberString(JsValue thisObject, JsValue[] arguments)
-        {
-            if (!thisObject.IsNumber() && (ReferenceEquals(thisObject.TryCast<NumberInstance>(), null)))
-            {
+        private JsValue ToNumberString(JsValue thisObject, JsValue[] arguments) {
+            if (!thisObject.IsNumber() && (ReferenceEquals(thisObject.TryCast<NumberInstance>(), null))) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
 
             var radix = arguments.At(0).IsUndefined()
                 ? 10
-                : (int) TypeConverter.ToInteger(arguments.At(0));
+                : (int)TypeConverter.ToInteger(arguments.At(0));
 
-            if (radix < 2 || radix > 36)
-            {
+            if (radix < 2 || radix > 36) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError(_engine, "radix must be between 2 and 36");
             }
 
             var x = TypeConverter.ToNumber(thisObject);
 
-            if (double.IsNaN(x))
-            {
+            if (double.IsNaN(x)) {
                 return "NaN";
             }
 
-            if (x == 0)
-            {
+            if (x == 0) {
                 return JsString.NumberZeroString;
             }
 
-            if (double.IsPositiveInfinity(x) || x >= double.MaxValue)
-            {
+            if (double.IsPositiveInfinity(x) || x >= double.MaxValue) {
                 return "Infinity";
             }
 
-            if (x < 0)
-            {
+            if (x < 0) {
                 return "-" + ToNumberString(-x, arguments);
             }
 
-            if (radix == 10)
-            {
+            if (radix == 10) {
                 return ToNumberString(x);
             }
 
-            var integer = (long) x;
-            var fraction = x -  integer;
+            var integer = (long)x;
+            var fraction = x - integer;
 
             string result = ToBase(integer, radix);
-            if (fraction != 0)
-            {
+            if (fraction != 0) {
                 result += "." + ToFractionBase(fraction, radix);
             }
 
             return result;
         }
 
-        public string ToBase(long n, int radix)
-        {
+        public string ToBase(long n, int radix) {
             const string digits = "0123456789abcdefghijklmnopqrstuvwxyz";
-            if (n == 0)
-            {
+            if (n == 0) {
                 return "0";
             }
 
-            using (var result = StringBuilderPool.Rent())
-            {
-                while (n > 0)
-                {
-                    var digit = (int) (n % radix);
+            using (var result = StringBuilderPool.Rent()) {
+                while (n > 0) {
+                    var digit = (int)(n % radix);
                     n = n / radix;
                     result.Builder.Insert(0, digits[digit]);
                 }
@@ -417,23 +355,20 @@ namespace Anura.JavaScript.Native.Number
             }
         }
 
-        public string ToFractionBase(double n, int radix)
-        {
+        public string ToFractionBase(double n, int radix) {
             // based on the repeated multiplication method
             // http://www.mathpath.org/concepts/Num/frac.htm
 
             const string digits = "0123456789abcdefghijklmnopqrstuvwxyz";
-            if (n == 0)
-            {
+            if (n == 0) {
                 return "0";
             }
 
-            using (var result = StringBuilderPool.Rent())
-            {
+            using (var result = StringBuilderPool.Rent()) {
                 while (n > 0 && result.Length < 50) // arbitrary limit
                 {
-                    var c = n*radix;
-                    var d = (int) c;
+                    var c = n * radix;
+                    var d = (int)c;
                     n = c - d;
 
                     result.Builder.Append(digits[d]);
@@ -443,10 +378,8 @@ namespace Anura.JavaScript.Native.Number
             }
         }
 
-        private string ToNumberString(double m)
-        {
-            using (var stringBuilder = StringBuilderPool.Rent())
-            {
+        private string ToNumberString(double m) {
+            using (var stringBuilder = StringBuilderPool.Rent()) {
                 return NumberToString(m, new DtoaBuilder(), stringBuilder.Builder);
             }
         }
@@ -454,25 +387,20 @@ namespace Anura.JavaScript.Native.Number
         internal static string NumberToString(
             double m,
             DtoaBuilder builder,
-            StringBuilder stringBuilder)
-        {
-            if (double.IsNaN(m))
-            {
+            StringBuilder stringBuilder) {
+            if (double.IsNaN(m)) {
                 return "NaN";
             }
 
-            if (m == 0)
-            {
+            if (m == 0) {
                 return "0";
             }
 
-            if (double.IsPositiveInfinity(m))
-            {
+            if (double.IsPositiveInfinity(m)) {
                 return "Infinity";
             }
 
-            if (double.IsNegativeInfinity(m))
-            {
+            if (double.IsNegativeInfinity(m)) {
                 return "-Infinity";
             }
 
@@ -484,37 +412,28 @@ namespace Anura.JavaScript.Native.Number
                 out var negative,
                 out var decimal_point);
 
-            if (negative)
-            {
+            if (negative) {
                 stringBuilder.Append('-');
             }
 
-            if (builder.Length <= decimal_point && decimal_point <= 21)
-            {
+            if (builder.Length <= decimal_point && decimal_point <= 21) {
                 // ECMA-262 section 9.8.1 step 6.
                 stringBuilder.Append(builder._chars, 0, builder.Length);
                 stringBuilder.Append('0', decimal_point - builder.Length);
-            }
-            else if (0 < decimal_point && decimal_point <= 21)
-            {
+            } else if (0 < decimal_point && decimal_point <= 21) {
                 // ECMA-262 section 9.8.1 step 7.
                 stringBuilder.Append(builder._chars, 0, decimal_point);
                 stringBuilder.Append('.');
                 stringBuilder.Append(builder._chars, decimal_point, builder.Length - decimal_point);
-            }
-            else if (decimal_point <= 0 && decimal_point > -6)
-            {
+            } else if (decimal_point <= 0 && decimal_point > -6) {
                 // ECMA-262 section 9.8.1 step 8.
                 stringBuilder.Append("0.");
                 stringBuilder.Append('0', -decimal_point);
                 stringBuilder.Append(builder._chars, 0, builder.Length);
-            }
-            else
-            {
+            } else {
                 // ECMA-262 section 9.8.1 step 9 and 10 combined.
                 stringBuilder.Append(builder._chars[0]);
-                if (builder.Length != 1)
-                {
+                if (builder.Length != 1) {
                     stringBuilder.Append('.');
                     stringBuilder.Append(builder._chars, 1, builder.Length - 1);
                 }
@@ -522,8 +441,7 @@ namespace Anura.JavaScript.Native.Number
                 stringBuilder.Append('e');
                 stringBuilder.Append((decimal_point >= 0) ? '+' : '-');
                 int exponent = decimal_point - 1;
-                if (exponent < 0)
-                {
+                if (exponent < 0) {
                     exponent = -exponent;
                 }
 

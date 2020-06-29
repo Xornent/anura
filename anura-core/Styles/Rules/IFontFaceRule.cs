@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public interface IFontFaceRule : IRule, IProperties {
+namespace Anura.Styles
+{
+    public interface IFontFaceRule : IRule, IProperties
+    {
         string Family { get; set; }
         string Source { get; set; }
         string Style { get; set; }

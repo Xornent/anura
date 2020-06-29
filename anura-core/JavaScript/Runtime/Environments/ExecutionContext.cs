@@ -4,8 +4,7 @@ namespace Anura.JavaScript.Runtime.Environments
 {
     public readonly struct ExecutionContext
     {
-        public ExecutionContext(LexicalEnvironment lexicalEnvironment, LexicalEnvironment variableEnvironment, JsValue thisBinding)
-        {
+        public ExecutionContext(LexicalEnvironment lexicalEnvironment, LexicalEnvironment variableEnvironment, JsValue thisBinding) {
             LexicalEnvironment = lexicalEnvironment;
             VariableEnvironment = variableEnvironment;
             ThisBinding = thisBinding;
@@ -15,8 +14,7 @@ namespace Anura.JavaScript.Runtime.Environments
         public readonly LexicalEnvironment VariableEnvironment;
         public readonly JsValue ThisBinding;
 
-        public ExecutionContext UpdateLexicalEnvironment(LexicalEnvironment newEnv)
-        {
+        public ExecutionContext UpdateLexicalEnvironment(LexicalEnvironment newEnv) {
             return new ExecutionContext(newEnv, VariableEnvironment, ThisBinding);
         }
     }

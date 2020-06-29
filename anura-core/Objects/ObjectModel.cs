@@ -16,15 +16,19 @@ namespace Anura.Objects
     {
         public static int GlobalCapacity = 40;
 
-        public static void CreateConstructors(JavaScript.Engine engine) {
+        public static void CreateConstructors(JavaScript.Engine engine)
+        {
 
         }
 
-        public static void Configure(JavaScript.Engine engine) {
-            foreach (var item in ExtensionWebAPIs) {
-                switch (item.config) {
+        public static void Configure(JavaScript.Engine engine)
+        {
+            foreach (var item in ExtensionWebAPIs)
+            {
+                switch (item.config)
+                {
                     case 0:
-                        IPrototypeObjectModel constr = item.obj as IPrototypeObjectModel;
+                        IPrototypeObjectModel constr = item.obj;
                         constr.Configure();
                         (constr.PrototypeObject as IPrototypeObjectModel).Configure();
                         break;
@@ -33,8 +37,9 @@ namespace Anura.Objects
         }
 
         public static void RegisterGlobalObjects(JavaScript.Collections.PropertyDictionary inst,
-            JavaScript.Runtime.Descriptors.PropertyFlag defaultFlag) {
-            
+            JavaScript.Runtime.Descriptors.PropertyFlag defaultFlag)
+        {
+
         }
 
         public static List<(int config, IPrototypeObjectModel obj)> ExtensionWebAPIs = new List<(int config, IPrototypeObjectModel obj)>();

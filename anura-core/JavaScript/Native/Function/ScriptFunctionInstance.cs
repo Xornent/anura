@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
-using Esprima.Ast;
-using Anura.JavaScript.Native.Object;
+﻿using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.Interpreter;
+using Esprima.Ast;
+using System.Collections.Generic;
 
 namespace Anura.JavaScript.Native.Function
 {
@@ -20,8 +20,7 @@ namespace Anura.JavaScript.Native.Function
             IFunction functionDeclaration,
             LexicalEnvironment scope,
             bool strict)
-            : this(engine, new JintFunctionDefinition(engine, functionDeclaration), scope, strict)
-        {
+            : this(engine, new JintFunctionDefinition(engine, functionDeclaration), scope, strict) {
         }
 
         internal ScriptFunctionInstance(
@@ -29,8 +28,7 @@ namespace Anura.JavaScript.Native.Function
             JintFunctionDefinition function,
             LexicalEnvironment scope,
             bool strict)
-            : base(engine, function._name, function._parameterNames, scope, strict)
-        {
+            : base(engine, function._name, function._parameterNames, scope, strict) {
             _function = function;
 
             _prototype = _engine.Function.PrototypeObject;
@@ -44,8 +42,7 @@ namespace Anura.JavaScript.Native.Function
 
             _prototypeDescriptor = new PropertyDescriptor(proto, PropertyFlag.OnlyWritable);
 
-            if (strict)
-            {
+            if (strict) {
                 DefineOwnProperty(CommonProperties.Caller, engine._getSetThrower);
                 DefineOwnProperty(CommonProperties.Arguments, engine._getSetThrower);
             }
@@ -60,27 +57,18 @@ namespace Anura.JavaScript.Native.Function
         /// <param name="thisArg"></param>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        public override JsValue Call(JsValue thisArg, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisArg, JsValue[] arguments) {
             var strict = _strict || _engine._isStrict;
-            using (new StrictModeScope(strict, true))
-            {
+            using (new StrictModeScope(strict, true)) {
                 // setup new execution context http://www.ecma-international.org/ecma-262/5.1/#sec-10.4.3
                 JsValue thisBinding;
-                if (StrictModeScope.IsStrictModeCode)
-                {
+                if (StrictModeScope.IsStrictModeCode) {
                     thisBinding = thisArg;
-                }
-                else if (thisArg.IsNullOrUndefined())
-                {
+                } else if (thisArg.IsNullOrUndefined()) {
                     thisBinding = _engine.Global;
-                }
-                else if (!thisArg.IsObject())
-                {
+                } else if (!thisArg.IsObject()) {
                     thisBinding = TypeConverter.ToObject(_engine, thisArg);
-                }
-                else
-                {
+                } else {
                     thisBinding = thisArg;
                 }
 
@@ -88,8 +76,7 @@ namespace Anura.JavaScript.Native.Function
 
                 _engine.EnterExecutionContext(localEnv, localEnv, thisBinding);
 
-                try
-                {
+                try {
                     var argumentsInstance = _engine.DeclarationBindingInstantiation(
                         DeclarationBindingType.FunctionCode,
                         _function._hoistingScope,
@@ -102,18 +89,14 @@ namespace Anura.JavaScript.Native.Function
 
                     argumentsInstance?.FunctionWasCalled();
 
-                    if (result.Type == CompletionType.Throw)
-                    {
+                    if (result.Type == CompletionType.Throw) {
                         Anura.JavaScript.Runtime.ExceptionHelper.ThrowJavaScriptException(_engine, value, result);
                     }
 
-                    if (result.Type == CompletionType.Return)
-                    {
+                    if (result.Type == CompletionType.Return) {
                         return value;
                     }
-                }
-                finally
-                {
+                } finally {
                     _engine.LeaveExecutionContext();
                 }
 
@@ -124,13 +107,11 @@ namespace Anura.JavaScript.Native.Function
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-13.2.2
         /// </summary>
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             var thisArgument = OrdinaryCreateFromConstructor(TypeConverter.ToObject(_engine, newTarget), _engine.Object.PrototypeObject);
 
             var result = Call(thisArgument, arguments).TryCast<ObjectInstance>();
-            if (!ReferenceEquals(result, null))
-            {
+            if (!ReferenceEquals(result, null)) {
                 return result;
             }
 
@@ -141,64 +122,48 @@ namespace Anura.JavaScript.Native.Function
         {
             private PropertyDescriptor _constructor;
 
-            public ObjectInstanceWithConstructor(Engine engine, ObjectInstance thisObj) : base(engine)
-            {
+            public ObjectInstanceWithConstructor(Engine engine, ObjectInstance thisObj) : base(engine) {
                 _constructor = new PropertyDescriptor(thisObj, PropertyFlag.NonEnumerable);
             }
 
-            public override IEnumerable<KeyValuePair<JsValue, PropertyDescriptor>> GetOwnProperties()
-            {
-                if (_constructor != null)
-                {
+            public override IEnumerable<KeyValuePair<JsValue, PropertyDescriptor>> GetOwnProperties() {
+                if (_constructor != null) {
                     yield return new KeyValuePair<JsValue, PropertyDescriptor>(CommonProperties.Constructor, _constructor);
                 }
 
-                foreach (var entry in base.GetOwnProperties())
-                {
+                foreach (var entry in base.GetOwnProperties()) {
                     yield return entry;
                 }
             }
 
-            public override PropertyDescriptor GetOwnProperty(JsValue property)
-            {
-                if (property == CommonProperties.Constructor)
-                {
+            public override PropertyDescriptor GetOwnProperty(JsValue property) {
+                if (property == CommonProperties.Constructor) {
                     return _constructor ?? PropertyDescriptor.Undefined;
                 }
 
                 return base.GetOwnProperty(property);
             }
 
-            protected internal override void SetOwnProperty(JsValue property, PropertyDescriptor desc)
-            {
-                if (property == CommonProperties.Constructor)
-                {
+            protected internal override void SetOwnProperty(JsValue property, PropertyDescriptor desc) {
+                if (property == CommonProperties.Constructor) {
                     _constructor = desc;
-                }
-                else
-                {
+                } else {
                     base.SetOwnProperty(property, desc);
                 }
             }
 
-            public override bool HasOwnProperty(JsValue property)
-            {
-                if (property == CommonProperties.Constructor)
-                {
+            public override bool HasOwnProperty(JsValue property) {
+                if (property == CommonProperties.Constructor) {
                     return _constructor != null;
                 }
 
                 return base.HasOwnProperty(property);
             }
 
-            public override void RemoveOwnProperty(JsValue property)
-            {
-                if (property == CommonProperties.Constructor)
-                {
+            public override void RemoveOwnProperty(JsValue property) {
+                if (property == CommonProperties.Constructor) {
                     _constructor = null;
-                }
-                else
-                {
+                } else {
                     base.RemoveOwnProperty(property);
                 }
             }

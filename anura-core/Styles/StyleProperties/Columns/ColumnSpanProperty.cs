@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class ColumnSpanProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.ColumnSpanConverter.OrDefault (false);
+namespace Anura.Styles
+{
+    internal sealed class ColumnSpanProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.ColumnSpanConverter.OrDefault(false);
 
-        internal ColumnSpanProperty () : base (PropertyNames.ColumnSpan) { }
+        internal ColumnSpanProperty() : base(PropertyNames.ColumnSpan) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

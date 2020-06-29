@@ -9,8 +9,7 @@ namespace Esprima.Ast
         private readonly NodeList<INode> _params;
 
         public ArrowParameterPlaceHolder(in NodeList<INode> parameters, bool async) :
-            base(Nodes.ArrowParameterPlaceHolder)
-        {
+            base(Nodes.ArrowParameterPlaceHolder) {
             Async = async;
             _params = parameters;
         }

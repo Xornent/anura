@@ -9,8 +9,7 @@ namespace Esprima.Ast
         public readonly string Name;
 
         public Identifier(string name) :
-            base(Nodes.Identifier)
-        {
+            base(Nodes.Identifier) {
             Name = name;
         }
 

@@ -41,23 +41,20 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         internal const ulong KSignificandMask = 0x000FFFFFFFFFFFFFL;
         private const ulong KHiddenBit = 0x0010000000000000L;
 
-        private static DiyFp AsDiyFp(ulong d64)
-        {
+        private static DiyFp AsDiyFp(ulong d64) {
             Debug.Assert(!IsSpecial(d64));
             return new DiyFp(Significand(d64), Exponent(d64));
         }
 
         // this->Significand() must not be 0.
-        internal static DiyFp AsNormalizedDiyFp(ulong d64)
-        {
+        internal static DiyFp AsNormalizedDiyFp(ulong d64) {
             ulong f = Significand(d64);
             int e = Exponent(d64);
 
             Debug.Assert(f != 0);
 
             // The current double could be a denormal.
-            while ((f & KHiddenBit) == 0)
-            {
+            while ((f & KHiddenBit) == 0) {
                 f <<= 1;
                 e--;
             }
@@ -67,30 +64,25 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             return new DiyFp(f, e);
         }
 
-        internal static int Exponent(ulong d64)
-        {
+        internal static int Exponent(ulong d64) {
             if (IsDenormal(d64)) return KDenormalExponent;
 
-            int biasedE = (int) ((d64 & KExponentMask).UnsignedShift(KSignificandSize) & 0xffffffffL);
+            int biasedE = (int)((d64 & KExponentMask).UnsignedShift(KSignificandSize) & 0xffffffffL);
             return biasedE - KExponentBias;
         }
 
-        internal static int NormalizedExponent(ulong significand, int exponent)
-        {
+        internal static int NormalizedExponent(ulong significand, int exponent) {
             Debug.Assert(significand != 0);
-            while ((significand & KHiddenBit) == 0)
-            {
+            while ((significand & KHiddenBit) == 0) {
                 significand = significand << 1;
                 exponent = exponent - 1;
             }
             return exponent;
         }
 
-        internal static ulong Significand(ulong d64)
-        {
+        internal static ulong Significand(ulong d64) {
             ulong significand = d64 & KSignificandMask;
-            if (!IsDenormal(d64))
-            {
+            if (!IsDenormal(d64)) {
                 return significand + KHiddenBit;
             }
 
@@ -98,22 +90,19 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         }
 
         // Returns true if the double is a denormal.
-        private static bool IsDenormal(ulong d64)
-        {
+        private static bool IsDenormal(ulong d64) {
             return (d64 & KExponentMask) == 0L;
         }
 
         // We consider denormals not to be special.
         // Hence only Infinity and NaN are special.
-        private static bool IsSpecial(ulong d64)
-        {
+        private static bool IsSpecial(ulong d64) {
             return (d64 & KExponentMask) == KExponentMask;
         }
 
         internal readonly struct NormalizedBoundariesResult
         {
-            public NormalizedBoundariesResult(DiyFp minus, DiyFp plus)
-            {
+            public NormalizedBoundariesResult(DiyFp minus, DiyFp plus) {
                 Minus = minus;
                 Plus = plus;
             }
@@ -125,14 +114,12 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         // Returns the two boundaries of first argument.
         // The bigger boundary (m_plus) is normalized. The lower boundary has the same
         // exponent as m_plus.
-        internal static NormalizedBoundariesResult NormalizedBoundaries(ulong d64)
-        {
+        internal static NormalizedBoundariesResult NormalizedBoundaries(ulong d64) {
             DiyFp v = AsDiyFp(d64);
             bool significandIsZero = (v.F == KHiddenBit);
             var mPlus = DiyFp.Normalize((v.F << 1) + 1, v.E - 1);
             DiyFp mMinus;
-            if (significandIsZero && v.E != KDenormalExponent)
-            {
+            if (significandIsZero && v.E != KDenormalExponent) {
                 // The boundary is closer. Think of v = 1000e10 and v- = 9999e9.
                 // Then the boundary (== (v - v-)/2) is not just at a distance of 1e9 but
                 // at a distance of 1e8.
@@ -140,9 +127,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 // at the same distance as its successor.
                 // Note: denormals have the same exponent as the smallest normals.
                 mMinus = new DiyFp((v.F << 2) - 1, v.E - 2);
-            }
-            else
-            {
+            } else {
                 mMinus = new DiyFp((v.F << 1) - 1, v.E - 1);
             }
             mMinus = new DiyFp(mMinus.F << (mMinus.E - mPlus.E), mPlus.E);

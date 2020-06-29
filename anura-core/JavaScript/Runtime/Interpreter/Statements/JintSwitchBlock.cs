@@ -1,7 +1,7 @@
-using Esprima;
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -12,25 +12,20 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
         private JintSwitchCase[] _jintSwitchBlock;
         private bool _initialized;
 
-        public JintSwitchBlock(Engine engine, NodeList<SwitchCase> switchBlock)
-        {
+        public JintSwitchBlock(Engine engine, NodeList<SwitchCase> switchBlock) {
             _engine = engine;
             _switchBlock = switchBlock;
         }
 
-        private void Initialize()
-        {
+        private void Initialize() {
             _jintSwitchBlock = new JintSwitchCase[_switchBlock.Count];
-            for (var i = 0; i < _jintSwitchBlock.Length; i++)
-            {
+            for (var i = 0; i < _jintSwitchBlock.Length; i++) {
                 _jintSwitchBlock[i] = new JintSwitchCase(_engine, _switchBlock[i]);
             }
         }
 
-        public Completion Execute(JsValue input)
-        {
-            if (!_initialized)
-            {
+        public Completion Execute(JsValue input) {
+            if (!_initialized) {
                 Initialize();
                 _initialized = true;
             }
@@ -40,27 +35,20 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
             JintSwitchCase defaultCase = null;
             bool hit = false;
 
-            for (var i = 0; i < (uint) _jintSwitchBlock.Length; i++)
-            {
+            for (var i = 0; i < (uint)_jintSwitchBlock.Length; i++) {
                 var clause = _jintSwitchBlock[i];
-                if (clause.Test == null)
-                {
+                if (clause.Test == null) {
                     defaultCase = clause;
-                }
-                else
-                {
+                } else {
                     var clauseSelector = clause.Test.GetValue();
-                    if (JintBinaryExpression.StrictlyEqual(clauseSelector, input))
-                    {
+                    if (JintBinaryExpression.StrictlyEqual(clauseSelector, input)) {
                         hit = true;
                     }
                 }
 
-                if (hit && clause.Consequent != null)
-                {
+                if (hit && clause.Consequent != null) {
                     var r = clause.Consequent.Execute();
-                    if (r.Type != CompletionType.Normal)
-                    {
+                    if (r.Type != CompletionType.Normal) {
                         return r;
                     }
 
@@ -70,11 +58,9 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
             }
 
             // do we need to execute the default case ?
-            if (hit == false && defaultCase != null)
-            {
+            if (hit == false && defaultCase != null) {
                 var r = defaultCase.Consequent.Execute();
-                if (r.Type != CompletionType.Normal)
-                {
+                if (r.Type != CompletionType.Normal) {
                     return r;
                 }
 
@@ -90,12 +76,10 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
             internal readonly JintStatementList Consequent;
             internal readonly JintExpression Test;
 
-            public JintSwitchCase(Engine engine, SwitchCase switchCase)
-            {
+            public JintSwitchCase(Engine engine, SwitchCase switchCase) {
                 Consequent = new JintStatementList(engine, null, switchCase.Consequent);
 
-                if (switchCase.Test != null)
-                {
+                if (switchCase.Test != null) {
                     Test = JintExpression.Build(engine, switchCase.Test);
                 }
             }

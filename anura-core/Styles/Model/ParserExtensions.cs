@@ -1,65 +1,67 @@
 using System;
 using System.Collections.Generic;
 
-namespace Anura.Styles {
-    internal static class ParserExtensions {
+namespace Anura.Styles
+{
+    internal static class ParserExtensions
+    {
         private static readonly Dictionary<string, Func<string, DocumentFunction>> FunctionTypes =
-            new Dictionary<string, Func<string, DocumentFunction>> (StringComparer.OrdinalIgnoreCase) { { FunctionNames.Url, url => new UrlFunction (url) }, { FunctionNames.Domain, url => new DomainFunction (url) }, { FunctionNames.UrlPrefix, url => new UrlPrefixFunction (url) }
+            new Dictionary<string, Func<string, DocumentFunction>>(StringComparer.OrdinalIgnoreCase) { { FunctionNames.Url, url => new UrlFunction (url) }, { FunctionNames.Domain, url => new DomainFunction (url) }, { FunctionNames.UrlPrefix, url => new UrlPrefixFunction (url) }
             };
 
         private static readonly Dictionary<string, Func<IEnumerable<IConditionFunction>, IConditionFunction>>
             GroupCreators =
-            new Dictionary<string, Func<IEnumerable<IConditionFunction>, IConditionFunction>> (
+            new Dictionary<string, Func<IEnumerable<IConditionFunction>, IConditionFunction>>(
                 StringComparer.OrdinalIgnoreCase) { { Keywords.And, CreateAndCondition }, { Keywords.Or, CreateOrCondition }
             };
 
-        private static IConditionFunction CreateAndCondition (IEnumerable<IConditionFunction> conditions) {
-            var andCondition = new AndCondition ();
+        private static IConditionFunction CreateAndCondition(IEnumerable<IConditionFunction> conditions) {
+            var andCondition = new AndCondition();
             foreach (var condition in conditions) {
-                andCondition.AppendChild (condition);
+                andCondition.AppendChild(condition);
             }
             return andCondition;
         }
 
-        private static IConditionFunction CreateOrCondition (IEnumerable<IConditionFunction> conditions) {
-            var orCondition = new OrCondition ();
+        private static IConditionFunction CreateOrCondition(IEnumerable<IConditionFunction> conditions) {
+            var orCondition = new OrCondition();
             foreach (var condition in conditions) {
-                orCondition.AppendChild (condition);
+                orCondition.AppendChild(condition);
             }
             return orCondition;
         }
 
-        public static TokenType GetTypeFromName (this string functionName) {
+        public static TokenType GetTypeFromName(this string functionName) {
             Func<string, DocumentFunction> creator;
-            return FunctionTypes.TryGetValue (functionName, out creator) ? TokenType.Url : TokenType.Function;
+            return FunctionTypes.TryGetValue(functionName, out creator) ? TokenType.Url : TokenType.Function;
         }
 
-        public static Func<IEnumerable<IConditionFunction>, IConditionFunction> GetCreator (this string conjunction) {
+        public static Func<IEnumerable<IConditionFunction>, IConditionFunction> GetCreator(this string conjunction) {
             Func<IEnumerable<IConditionFunction>, IConditionFunction> creator;
-            GroupCreators.TryGetValue (conjunction, out creator);
+            GroupCreators.TryGetValue(conjunction, out creator);
             return creator;
         }
 
-        public static int GetCode (this ParseError code) {
-            return (int) code;
+        public static int GetCode(this ParseError code) {
+            return (int)code;
         }
 
-        public static bool Is (this Token token, TokenType a, TokenType b) {
+        public static bool Is(this Token token, TokenType a, TokenType b) {
             var type = token.Type;
             return (type == a) || (type == b);
         }
 
-        public static bool IsNot (this Token token, TokenType a, TokenType b) {
+        public static bool IsNot(this Token token, TokenType a, TokenType b) {
             var type = token.Type;
             return (type != a) && (type != b);
         }
 
-        public static bool IsNot (this Token token, TokenType a, TokenType b, TokenType c) {
+        public static bool IsNot(this Token token, TokenType a, TokenType b, TokenType c) {
             var type = token.Type;
             return (type != a) && (type != b) && (type != c);
         }
 
-        public static bool IsDeclarationName (this Token token) {
+        public static bool IsDeclarationName(this Token token) {
             return (token.Type != TokenType.EndOfFile) &&
                 (token.Type != TokenType.Colon) &&
                 (token.Type != TokenType.Whitespace) &&
@@ -68,50 +70,50 @@ namespace Anura.Styles {
                 (token.Type != TokenType.Semicolon);
         }
 
-        public static DocumentFunction ToDocumentFunction (this Token token) {
+        public static DocumentFunction ToDocumentFunction(this Token token) {
             if (token.Type == TokenType.Url) {
                 Func<string, DocumentFunction> creator;
-                var functionName = ((UrlToken) token).FunctionName;
-                FunctionTypes.TryGetValue (functionName, out creator);
-                return creator (token.Data);
+                var functionName = ((UrlToken)token).FunctionName;
+                FunctionTypes.TryGetValue(functionName, out creator);
+                return creator(token.Data);
             }
 
-            if ((token.Type == TokenType.Function) && token.Data.Isi (FunctionNames.Regexp)) {
-                var css = ((FunctionToken) token).ArgumentTokens.ToCssString ();
+            if ((token.Type == TokenType.Function) && token.Data.Isi(FunctionNames.Regexp)) {
+                var css = ((FunctionToken)token).ArgumentTokens.ToCssString();
                 if (css != null) {
-                    return new RegexpFunction (css);
+                    return new RegexpFunction(css);
                 }
             }
 
             return null;
         }
 
-        public static Rule CreateRule (this StylesheetParser parser, RuleType type) {
+        public static Rule CreateRule(this StylesheetParser parser, RuleType type) {
             switch (type) {
                 case RuleType.Charset:
-                    return new CharsetRule (parser);
+                    return new CharsetRule(parser);
                 case RuleType.Document:
-                    return new DocumentRule (parser);
+                    return new DocumentRule(parser);
                 case RuleType.FontFace:
-                    return new FontFaceRule (parser);
+                    return new FontFaceRule(parser);
                 case RuleType.Import:
-                    return new ImportRule (parser);
+                    return new ImportRule(parser);
                 case RuleType.Keyframe:
-                    return new KeyframeRule (parser);
+                    return new KeyframeRule(parser);
                 case RuleType.Keyframes:
-                    return new KeyframesRule (parser);
+                    return new KeyframesRule(parser);
                 case RuleType.Media:
-                    return new MediaRule (parser);
+                    return new MediaRule(parser);
                 case RuleType.Namespace:
-                    return new NamespaceRule (parser);
+                    return new NamespaceRule(parser);
                 case RuleType.Page:
-                    return new PageRule (parser);
+                    return new PageRule(parser);
                 case RuleType.Style:
-                    return new StyleRule (parser);
+                    return new StyleRule(parser);
                 case RuleType.Supports:
-                    return new SupportsRule (parser);
+                    return new SupportsRule(parser);
                 case RuleType.Viewport:
-                    return new ViewportRule (parser);
+                    return new ViewportRule(parser);
                 case RuleType.Unknown:
                 case RuleType.RegionStyle:
                 case RuleType.FontFeatureValues:

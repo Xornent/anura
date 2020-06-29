@@ -1,26 +1,28 @@
 using System.IO;
 using System.Linq;
 
-namespace Anura.Styles {
-    internal sealed class OrCondition : StylesheetNode, IConditionFunction {
-        public bool Check () {
-            var conditions = Children.OfType<IConditionFunction> ();
+namespace Anura.Styles
+{
+    internal sealed class OrCondition : StylesheetNode, IConditionFunction
+    {
+        public bool Check() {
+            var conditions = Children.OfType<IConditionFunction>();
 
-            return conditions.Any (condition => condition.Check ());
+            return conditions.Any(condition => condition.Check());
         }
 
-        public override void ToCss (TextWriter writer, IStyleFormatter formatter) {
-            var conditions = Children.OfType<IConditionFunction> ();
+        public override void ToCss(TextWriter writer, IStyleFormatter formatter) {
+            var conditions = Children.OfType<IConditionFunction>();
             var first = true;
 
             foreach (var condition in conditions) {
                 if (first) {
                     first = false;
                 } else {
-                    writer.Write (" or ");
+                    writer.Write(" or ");
                 }
 
-                condition.ToCss (writer, formatter);
+                condition.ToCss(writer, formatter);
             }
         }
     }

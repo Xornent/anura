@@ -9,8 +9,7 @@ namespace Esprima.Ast
         public readonly Statement Body;
 
         public ForOfStatement(INode left, Expression right, Statement body) :
-            base(Nodes.ForOfStatement)
-        {
+            base(Nodes.ForOfStatement) {
             Left = left;
             Right = right;
             Body = body;

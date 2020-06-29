@@ -1,20 +1,22 @@
-namespace Anura.Styles {
+namespace Anura.Styles
+{
     using static Converters;
 
-    internal sealed class BorderProperty : ShorthandProperty {
-        private static readonly IValueConverter StyleConverter = WithAny (
-            LineWidthConverter.Option ()
-            .For (PropertyNames.BorderTopWidth, PropertyNames.BorderRightWidth, PropertyNames.BorderBottomWidth,
+    internal sealed class BorderProperty : ShorthandProperty
+    {
+        private static readonly IValueConverter StyleConverter = WithAny(
+            LineWidthConverter.Option()
+            .For(PropertyNames.BorderTopWidth, PropertyNames.BorderRightWidth, PropertyNames.BorderBottomWidth,
                 PropertyNames.BorderLeftWidth),
-            LineStyleConverter.Option ()
-            .For (PropertyNames.BorderTopStyle, PropertyNames.BorderRightStyle, PropertyNames.BorderBottomStyle,
+            LineStyleConverter.Option()
+            .For(PropertyNames.BorderTopStyle, PropertyNames.BorderRightStyle, PropertyNames.BorderBottomStyle,
                 PropertyNames.BorderLeftStyle),
-            CurrentColorConverter.Option ()
-            .For (PropertyNames.BorderTopColor, PropertyNames.BorderRightColor, PropertyNames.BorderBottomColor,
+            CurrentColorConverter.Option()
+            .For(PropertyNames.BorderTopColor, PropertyNames.BorderRightColor, PropertyNames.BorderBottomColor,
                 PropertyNames.BorderLeftColor)
-        ).OrDefault ();
+        ).OrDefault();
 
-        internal BorderProperty () : base (PropertyNames.Border, PropertyFlags.Animatable) { }
+        internal BorderProperty() : base(PropertyNames.Border, PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

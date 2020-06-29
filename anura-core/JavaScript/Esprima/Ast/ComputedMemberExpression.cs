@@ -2,8 +2,7 @@
 {
     public class ComputedMemberExpression : MemberExpression
     {
-        public ComputedMemberExpression(Expression obj, Expression property) : base(obj, property, true)
-        {
+        public ComputedMemberExpression(Expression obj, Expression property) : base(obj, property, true) {
         }
     }
 }

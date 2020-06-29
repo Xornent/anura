@@ -6,8 +6,7 @@ namespace Esprima.Ast
     {
         public readonly Expression Argument;
 
-        public AwaitExpression(Expression argument) : base(Nodes.AwaitExpression)
-        {
+        public AwaitExpression(Expression argument) : base(Nodes.AwaitExpression) {
             Argument = argument;
         }
 

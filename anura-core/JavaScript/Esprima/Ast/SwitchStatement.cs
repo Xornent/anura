@@ -9,8 +9,7 @@ namespace Esprima.Ast
         public readonly Expression Discriminant;
 
         public SwitchStatement(Expression discriminant, in NodeList<SwitchCase> cases) :
-            base(Nodes.SwitchStatement)
-        {
+            base(Nodes.SwitchStatement) {
             Discriminant = discriminant;
             _cases = cases;
         }

@@ -1,5 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Pooling
 {
@@ -13,45 +13,36 @@ namespace Anura.JavaScript.Pooling
         private readonly ObjectPool<JsValue[]> _poolArray2;
         private readonly ObjectPool<JsValue[]> _poolArray3;
 
-        public JsValueArrayPool()
-        {
+        public JsValueArrayPool() {
             _poolArray1 = new ObjectPool<JsValue[]>(Factory1, PoolSize);
             _poolArray2 = new ObjectPool<JsValue[]>(Factory2, PoolSize);
             _poolArray3 = new ObjectPool<JsValue[]>(Factory3, PoolSize);
         }
 
-        private static JsValue[] Factory1()
-        {
+        private static JsValue[] Factory1() {
             return new JsValue[1];
         }
 
-        private static JsValue[] Factory2()
-        {
+        private static JsValue[] Factory2() {
             return new JsValue[2];
         }
 
-        private static JsValue[] Factory3()
-        {
+        private static JsValue[] Factory3() {
             return new JsValue[3];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public JsValue[] RentArray(int size)
-        {
-            if (size == 0)
-            {
+        public JsValue[] RentArray(int size) {
+            if (size == 0) {
                 return System.Array.Empty<JsValue>();
             }
-            if (size == 1)
-            {
+            if (size == 1) {
                 return _poolArray1.Allocate();
             }
-            if (size == 2)
-            {
+            if (size == 2) {
                 return _poolArray2.Allocate();
             }
-            if (size == 3)
-            {
+            if (size == 3) {
                 return _poolArray3.Allocate();
             }
 
@@ -59,18 +50,12 @@ namespace Anura.JavaScript.Pooling
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ReturnArray(JsValue[] array)
-        {
-            if (array.Length == 1)
-            {
+        public void ReturnArray(JsValue[] array) {
+            if (array.Length == 1) {
                 _poolArray1.Free(array);
-            }
-            else if (array.Length == 2)
-            {
+            } else if (array.Length == 2) {
                 _poolArray2.Free(array);
-            }
-            else if (array.Length == 3)
-            {
+            } else if (array.Length == 3) {
                 _poolArray3.Free(array);
             }
         }

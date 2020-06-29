@@ -10,12 +10,10 @@ namespace Anura.JavaScript.Native.Iterator
     {
         private string _name;
 
-        private IteratorPrototype(Engine engine) : base(engine)
-        {
+        private IteratorPrototype(Engine engine) : base(engine) {
         }
 
-        public static IteratorPrototype CreatePrototypeObject(Engine engine, string name, IteratorConstructor iteratorConstructor)
-        {
+        public static IteratorPrototype CreatePrototypeObject(Engine engine, string name, IteratorConstructor iteratorConstructor) {
             var obj = new IteratorPrototype(engine)
             {
                 _prototype = engine.Object.PrototypeObject,
@@ -25,8 +23,7 @@ namespace Anura.JavaScript.Native.Iterator
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(2, checkExistingKeys: false)
             {
                 ["name"] = new PropertyDescriptor("Map", PropertyFlag.Configurable),
@@ -34,8 +31,7 @@ namespace Anura.JavaScript.Native.Iterator
             };
             SetProperties(properties);
 
-            if (_name != null)
-            {
+            if (_name != null) {
                 var symbols = new SymbolDictionary(1)
                 {
                     [GlobalSymbolRegistry.ToStringTag] = new PropertyDescriptor(_name, PropertyFlag.Configurable)
@@ -44,10 +40,8 @@ namespace Anura.JavaScript.Native.Iterator
             }
         }
 
-        private JsValue Next(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!(thisObj is IteratorInstance iterator))
-            {
+        private JsValue Next(JsValue thisObj, JsValue[] arguments) {
+            if (!(thisObj is IteratorInstance iterator)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine);
             }
 

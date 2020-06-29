@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum BlendMode : byte {
+namespace Anura.Styles
+{
+    public enum BlendMode : byte
+    {
         Normal,
         Multiply,
         Screen,

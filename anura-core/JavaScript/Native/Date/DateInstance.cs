@@ -1,7 +1,7 @@
-﻿using System;
-using System.Globalization;
-using Anura.JavaScript.Native.Object;
+﻿using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
+using System;
+using System.Globalization;
 
 namespace Anura.JavaScript.Native.Date
 {
@@ -14,14 +14,12 @@ namespace Anura.JavaScript.Native.Date
         private static readonly double Min = -(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc) - DateTime.MinValue).TotalMilliseconds;
 
         public DateInstance(Engine engine)
-            : base(engine, ObjectClass.Date)
-        {
+            : base(engine, ObjectClass.Date) {
             PrimitiveValue = double.NaN;
         }
 
-        public DateTime ToDateTime()
-        {
-            return DateTimeRangeValid 
+        public DateTime ToDateTime() {
+            return DateTimeRangeValid
                 ? DateConstructor.Epoch.AddMilliseconds(PrimitiveValue)
                 : Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError<DateTime>(Engine);
         }
@@ -30,15 +28,12 @@ namespace Anura.JavaScript.Native.Date
 
         internal bool DateTimeRangeValid => !double.IsNaN(PrimitiveValue) && PrimitiveValue <= Max && PrimitiveValue >= Min;
 
-        public override string ToString()
-        {
-            if (double.IsNaN(PrimitiveValue))
-            {
+        public override string ToString() {
+            if (double.IsNaN(PrimitiveValue)) {
                 return "NaN";
             }
 
-            if (double.IsInfinity(PrimitiveValue))
-            {
+            if (double.IsInfinity(PrimitiveValue)) {
                 return "Infinity";
             }
 

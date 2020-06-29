@@ -1,5 +1,5 @@
-using Esprima.Ast;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -11,18 +11,15 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
         private readonly JintSwitchBlock _switchBlock;
         private readonly JintExpression _discriminant;
 
-        public JintSwitchStatement(Engine engine, SwitchStatement statement) : base(engine, statement)
-        {
+        public JintSwitchStatement(Engine engine, SwitchStatement statement) : base(engine, statement) {
             _switchBlock = new JintSwitchBlock(engine, _statement.Cases);
             _discriminant = JintExpression.Build(engine, _statement.Discriminant);
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             var jsValue = _discriminant.GetValue();
             var r = _switchBlock.Execute(jsValue);
-            if (r.Type == CompletionType.Break && r.Identifier == _statement.LabelSet?.Name)
-            {
+            if (r.Type == CompletionType.Break && r.Identifier == _statement.LabelSet?.Name) {
                 return new Completion(CompletionType.Normal, r.Value, null, Location);
             }
 

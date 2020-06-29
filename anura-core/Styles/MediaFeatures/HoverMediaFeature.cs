@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class HoverMediaFeature : MediaFeature {
-        private static readonly IValueConverter TheConverter = Map.HoverAbilities.ToConverter ();
+namespace Anura.Styles
+{
+    internal sealed class HoverMediaFeature : MediaFeature
+    {
+        private static readonly IValueConverter TheConverter = Map.HoverAbilities.ToConverter();
 
-        public HoverMediaFeature () : base (FeatureNames.Hover) { }
+        public HoverMediaFeature() : base(FeatureNames.Hover) { }
 
         internal override IValueConverter Converter => TheConverter;
     }

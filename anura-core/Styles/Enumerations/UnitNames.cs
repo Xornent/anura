@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public static class UnitNames {
+namespace Anura.Styles
+{
+    public static class UnitNames
+    {
         public static readonly string Khz = "khz";
         public static readonly string Hz = "hz";
         public static readonly string Ms = "ms";

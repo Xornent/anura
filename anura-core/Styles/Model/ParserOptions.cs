@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    internal struct ParserOptions {
+namespace Anura.Styles
+{
+    internal struct ParserOptions
+    {
         public bool IncludeUnknownRules { get; set; }
         public bool IncludeUnknownDeclarations { get; set; }
         public bool AllowInvalidSelectors { get; set; }

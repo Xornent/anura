@@ -1,43 +1,35 @@
-﻿using System;
-using Anura.JavaScript.Runtime;
+﻿using Anura.JavaScript.Runtime;
+using System;
 
 namespace Anura.JavaScript.Native
 {
     public sealed class JsNull : JsValue, IEquatable<JsNull>
     {
-        internal JsNull() : base(Types.Null)
-        {
+        internal JsNull() : base(Types.Null) {
         }
 
-        public override object ToObject()
-        {
+        public override object ToObject() {
             return null;
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return "null";
         }
 
-        public override bool Equals(JsValue obj)
-        {
-            if (ReferenceEquals(this, obj))
-            {
+        public override bool Equals(JsValue obj) {
+            if (ReferenceEquals(this, obj)) {
                 return true;
             }
 
-            if (!(obj is JsNull s))
-            {
+            if (!(obj is JsNull s)) {
                 return false;
             }
 
             return Equals(s);
         }
 
-        public bool Equals(JsNull other)
-        {
-            if (ReferenceEquals(null, other))
-            {
+        public bool Equals(JsNull other) {
+            if (ReferenceEquals(null, other)) {
                 return false;
             }
 

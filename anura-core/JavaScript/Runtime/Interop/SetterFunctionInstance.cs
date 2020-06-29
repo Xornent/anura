@@ -1,6 +1,6 @@
-﻿using System;
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Function;
+using System;
 
 namespace Anura.JavaScript.Runtime.Interop
 {
@@ -12,13 +12,11 @@ namespace Anura.JavaScript.Runtime.Interop
         private readonly Action<JsValue, JsValue> _setter;
 
         public SetterFunctionInstance(Engine engine, Action<JsValue, JsValue> setter)
-            : base(engine, "set", null, null, false)
-        {
+            : base(engine, "set", null, null, false) {
             _setter = setter;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             _setter(thisObject, arguments[0]);
 
             return Null;

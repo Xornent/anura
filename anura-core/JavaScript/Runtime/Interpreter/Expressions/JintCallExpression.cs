@@ -1,8 +1,8 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.References;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -17,50 +17,42 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private readonly JintExpression _calleeExpression;
         private bool _hasSpreads;
 
-        public JintCallExpression(Engine engine, CallExpression expression) : base(engine, expression)
-        {
+        public JintCallExpression(Engine engine, CallExpression expression) : base(engine, expression) {
             _initialized = false;
             _isDebugMode = engine.Options.IsDebugMode;
             _maxRecursionDepth = engine.Options.MaxRecursionDepth;
             _calleeExpression = Build(engine, expression.Callee);
         }
 
-        protected override void Initialize()
-        {
-            var expression = (CallExpression) _expression;
+        protected override void Initialize() {
+            var expression = (CallExpression)_expression;
             var cachedArgumentsHolder = new CachedArgumentsHolder
             {
                 JintArguments = new JintExpression[expression.Arguments.Count]
             };
 
-            bool CanSpread(INode e)
-            {
+            bool CanSpread(INode e) {
                 return e?.Type == Nodes.SpreadElement
                     || e is AssignmentExpression ae && ae.Right?.Type == Nodes.SpreadElement;
             }
 
             bool cacheable = true;
-            for (var i = 0; i < expression.Arguments.Count; i++)
-            {
-                var expressionArgument = (Expression) expression.Arguments[i];
+            for (var i = 0; i < expression.Arguments.Count; i++) {
+                var expressionArgument = (Expression)expression.Arguments[i];
                 cachedArgumentsHolder.JintArguments[i] = Build(_engine, expressionArgument);
                 cacheable &= expressionArgument is Literal;
                 _hasSpreads |= CanSpread(expressionArgument);
-                if (expressionArgument is ArrayExpression ae)
-                {
-                    for (var elementIndex = 0; elementIndex < ae.Elements.Count; elementIndex++)
-                    {
+                if (expressionArgument is ArrayExpression ae) {
+                    for (var elementIndex = 0; elementIndex < ae.Elements.Count; elementIndex++) {
                         _hasSpreads |= CanSpread(ae.Elements[elementIndex]);
                     }
                 }
             }
 
-            if (cacheable)
-            {
+            if (cacheable) {
                 _cached = true;
                 var arguments = System.Array.Empty<JsValue>();
-                if (cachedArgumentsHolder.JintArguments.Length > 0)
-                {
+                if (cachedArgumentsHolder.JintArguments.Length > 0) {
                     arguments = new JsValue[cachedArgumentsHolder.JintArguments.Length];
                     BuildArguments(cachedArgumentsHolder.JintArguments, arguments);
                 }
@@ -71,13 +63,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             _cachedArguments = cachedArgumentsHolder;
         }
 
-        protected override object EvaluateInternal()
-        {
+        protected override object EvaluateInternal() {
             var callee = _calleeExpression.Evaluate();
-            var expression = (CallExpression) _expression;
+            var expression = (CallExpression)_expression;
 
-            if (_isDebugMode)
-            {
+            if (_isDebugMode) {
                 _engine.DebugHandler.AddToDebugCallStack(expression);
             }
 
@@ -85,20 +75,13 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
             var cachedArguments = _cachedArguments;
             var arguments = System.Array.Empty<JsValue>();
-            if (_cached)
-            {
+            if (_cached) {
                 arguments = cachedArguments.CachedArguments;
-            }
-            else
-            {
-                if (cachedArguments.JintArguments.Length > 0)
-                {
-                    if (_hasSpreads)
-                    {
+            } else {
+                if (cachedArguments.JintArguments.Length > 0) {
+                    if (_hasSpreads) {
                         arguments = BuildArgumentsWithSpreads(cachedArguments.JintArguments);
-                    }
-                    else
-                    {
+                    } else {
                         arguments = _engine._jsValueArrayPool.RentArray(cachedArguments.JintArguments.Length);
                         BuildArguments(cachedArguments.JintArguments, arguments);
                     }
@@ -109,56 +92,45 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             var func = _engine.GetValue(callee, false);
             var r = callee as Reference;
 
-            if (_maxRecursionDepth >= 0)
-            {
+            if (_maxRecursionDepth >= 0) {
                 var stackItem = new CallStackElement(expression, func, r?.GetReferencedName()?.ToString() ?? "anonymous function");
 
                 var recursionDepth = _engine.CallStack.Push(stackItem);
 
-                if (recursionDepth > _maxRecursionDepth)
-                {
+                if (recursionDepth > _maxRecursionDepth) {
                     _engine.CallStack.Pop();
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowRecursionDepthOverflowException(_engine.CallStack, stackItem.ToString());
                 }
             }
 
-            if (func._type == InternalTypes.Undefined)
-            {
+            if (func._type == InternalTypes.Undefined) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, r == null ? "" : $"Object has no method '{r.GetReferencedName()}'");
             }
 
-            if (!func.IsObject())
-            {
-                if (_engine._referenceResolver == null || !_engine._referenceResolver.TryGetCallable(_engine, callee, out func))
-                {
+            if (!func.IsObject()) {
+                if (_engine._referenceResolver == null || !_engine._referenceResolver.TryGetCallable(_engine, callee, out func)) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine,
                         r == null ? "" : $"Property '{r.GetReferencedName()}' of object is not a function");
                 }
             }
 
-            if (!(func is ICallable callable))
-            {
+            if (!(func is ICallable callable)) {
                 var message = $"{r?.GetReferencedName() ?? ""} is not a function";
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<object>(_engine, message);
             }
 
             var thisObject = Undefined.Instance;
-            if (r != null)
-            {
+            if (r != null) {
                 var baseValue = r.GetBase();
-                if ((baseValue._type & InternalTypes.ObjectEnvironmentRecord) == 0)
-                {
+                if ((baseValue._type & InternalTypes.ObjectEnvironmentRecord) == 0) {
                     thisObject = baseValue;
-                }
-                else
-                {
-                    var env = (EnvironmentRecord) baseValue;
+                } else {
+                    var env = (EnvironmentRecord)baseValue;
                     thisObject = env.ImplicitThisValue();
                 }
 
                 // is it a direct call to eval ? http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1.1
-                if (r.GetReferencedName() == CommonProperties.Eval && callable is EvalFunctionInstance instance)
-                {
+                if (r.GetReferencedName() == CommonProperties.Eval && callable is EvalFunctionInstance instance) {
                     var value = instance.Call(thisObject, arguments, true);
                     _engine._referencePool.Return(r);
                     return value;
@@ -167,18 +139,15 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 
             var result = callable.Call(thisObject, arguments);
 
-            if (_isDebugMode)
-            {
+            if (_isDebugMode) {
                 _engine.DebugHandler.PopDebugCallStack();
             }
 
-            if (_maxRecursionDepth >= 0)
-            {
+            if (_maxRecursionDepth >= 0) {
                 _engine.CallStack.Pop();
             }
 
-            if (!_cached && arguments.Length > 0)
-            {
+            if (!_cached && arguments.Length > 0) {
                 _engine._jsValueArrayPool.ReturnArray(arguments);
             }
 

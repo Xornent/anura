@@ -1,7 +1,7 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using Anura.JavaScript.Native.Object;
+﻿using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Native.Number
 {
@@ -10,8 +10,7 @@ namespace Anura.JavaScript.Native.Number
         private static readonly long NegativeZeroBits = BitConverter.DoubleToInt64Bits(-0.0);
 
         public NumberInstance(Engine engine)
-            : base(engine, ObjectClass.Number)
-        {
+            : base(engine, ObjectClass.Number) {
         }
 
         Types IPrimitiveInstance.Type => Types.Number;
@@ -21,14 +20,12 @@ namespace Anura.JavaScript.Native.Number
         public JsNumber NumberData { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNegativeZero(double x)
-        {
+        public static bool IsNegativeZero(double x) {
             return x == 0 && BitConverter.DoubleToInt64Bits(x) == NegativeZeroBits;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsPositiveZero(double x)
-        {
+        public static bool IsPositiveZero(double x) {
             return x == 0 && BitConverter.DoubleToInt64Bits(x) != NegativeZeroBits;
         }
     }

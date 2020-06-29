@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class LeftProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class LeftProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.AutoLengthOrPercentConverter.OrDefault (Keywords.Auto);
+            Converters.AutoLengthOrPercentConverter.OrDefault(Keywords.Auto);
 
-        internal LeftProperty () : base (PropertyNames.Left, PropertyFlags.Unitless | PropertyFlags.Animatable) { }
+        internal LeftProperty() : base(PropertyNames.Left, PropertyFlags.Unitless | PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

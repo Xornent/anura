@@ -1,9 +1,9 @@
-using System.Runtime.CompilerServices;
-using Esprima.Ast;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.Interpreter;
+using Esprima.Ast;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Native.Function
 {
@@ -20,8 +20,7 @@ namespace Anura.JavaScript.Native.Function
             IFunction functionDeclaration,
             LexicalEnvironment scope,
             bool strict)
-            : this(engine, new JintFunctionDefinition(engine, functionDeclaration), scope, strict)
-        {
+            : this(engine, new JintFunctionDefinition(engine, functionDeclaration), scope, strict) {
         }
 
         internal ArrowFunctionInstance(
@@ -29,8 +28,7 @@ namespace Anura.JavaScript.Native.Function
             JintFunctionDefinition function,
             LexicalEnvironment scope,
             bool strict)
-            : base(engine, (string) null, function._parameterNames, scope, strict)
-        {
+            : base(engine, (string)null, function._parameterNames, scope, strict) {
             _function = function;
 
             PreventExtensions();
@@ -49,20 +47,17 @@ namespace Anura.JavaScript.Native.Function
         /// <param name="thisArg"></param>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        public override JsValue Call(JsValue thisArg, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisArg, JsValue[] arguments) {
             var localEnv = LexicalEnvironment.NewDeclarativeEnvironment(_engine, _scope);
 
             var strict = Strict || _engine._isStrict;
-            using (new StrictModeScope(strict, true))
-            {
+            using (new StrictModeScope(strict, true)) {
                 _engine.EnterExecutionContext(
                     localEnv,
                     localEnv,
                     _thisBinding);
 
-                try
-                {
+                try {
                     _engine.DeclarationBindingInstantiation(
                         DeclarationBindingType.FunctionCode,
                         _function._hoistingScope,
@@ -73,18 +68,14 @@ namespace Anura.JavaScript.Native.Function
 
                     var value = result.GetValueOrDefault().Clone();
 
-                    if (result.Type == CompletionType.Throw)
-                    {
+                    if (result.Type == CompletionType.Throw) {
                         Anura.JavaScript.Runtime.ExceptionHelper.ThrowJavaScriptException(_engine, value, result);
                     }
 
-                    if (result.Type == CompletionType.Return)
-                    {
+                    if (result.Type == CompletionType.Return) {
                         return value;
                     }
-                }
-                finally
-                {
+                } finally {
                     _engine.LeaveExecutionContext();
                 }
 
@@ -92,25 +83,21 @@ namespace Anura.JavaScript.Native.Function
             }
         }
 
-        public override bool Set(JsValue property, JsValue value, JsValue receiver)
-        {
+        public override bool Set(JsValue property, JsValue value, JsValue receiver) {
             AssertValidPropertyName(property);
             return base.Set(property, value, receiver);
         }
 
-        public override JsValue Get(JsValue property, JsValue receiver)
-        {
+        public override JsValue Get(JsValue property, JsValue receiver) {
             AssertValidPropertyName(property);
             return base.Get(property, receiver);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AssertValidPropertyName(JsValue property)
-        {
+        private void AssertValidPropertyName(JsValue property) {
             if (property == CommonProperties.Caller
-                || property ==  CommonProperties.Callee
-                || property == CommonProperties.Arguments)
-            {
+                || property == CommonProperties.Callee
+                || property == CommonProperties.Arguments) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them");
             }
         }

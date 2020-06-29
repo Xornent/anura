@@ -1,15 +1,17 @@
 using System;
 
-namespace Anura.Styles {
-    internal sealed class DomainFunction : DocumentFunction {
+namespace Anura.Styles
+{
+    internal sealed class DomainFunction : DocumentFunction
+    {
         readonly string _subdomain;
-        public DomainFunction (string url) : base (FunctionNames.Domain, url) {
+        public DomainFunction(string url) : base(FunctionNames.Domain, url) {
             _subdomain = "." + url;
         }
 
-        public override bool Matches (Url url) {
+        public override bool Matches(Url url) {
             var domain = url.HostName;
-            return domain.Isi (Data) || domain.EndsWith (_subdomain, StringComparison.OrdinalIgnoreCase);
+            return domain.Isi(Data) || domain.EndsWith(_subdomain, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

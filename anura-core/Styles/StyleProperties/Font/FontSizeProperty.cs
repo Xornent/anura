@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class FontSizeProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class FontSizeProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.FontSizeConverter.OrDefault (FontSize.Medium.ToLength ());
+            Converters.FontSizeConverter.OrDefault(FontSize.Medium.ToLength());
 
-        internal FontSizeProperty () : base (PropertyNames.FontSize, PropertyFlags.Inherited | PropertyFlags.Unitless | PropertyFlags.Animatable) { }
+        internal FontSizeProperty() : base(PropertyNames.FontSize, PropertyFlags.Inherited | PropertyFlags.Unitless | PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

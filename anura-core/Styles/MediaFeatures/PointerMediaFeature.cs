@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class PointerMediaFeature : MediaFeature {
-        private static readonly IValueConverter TheConverter = Map.PointerAccuracies.ToConverter ();
+namespace Anura.Styles
+{
+    internal sealed class PointerMediaFeature : MediaFeature
+    {
+        private static readonly IValueConverter TheConverter = Map.PointerAccuracies.ToConverter();
 
-        public PointerMediaFeature () : base (FeatureNames.Pointer) { }
+        public PointerMediaFeature() : base(FeatureNames.Pointer) { }
 
         internal override IValueConverter Converter => TheConverter;
     }

@@ -12,7 +12,7 @@ using System.Runtime.CompilerServices;
 namespace Anura.JavaScript.Collections
 {
     /// <summary>
-    /// DictionarySlim<string, TValue> is similar to Dictionary<TKey, TValue> but optimized in three ways:
+    /// <seealso cref="DictionarySlim{Key, TValue}"/> is similar to<seealso cref="Dictionary{Key, TValue}"/> but optimized in three ways:
     /// 1) It allows access to the value by ref replacing the common TryGetValue and Add pattern.
     /// 2) It does not store the hash code (assumes it is cheap to equate values).
     /// 3) It does not accept an equality comparer (assumes Object.GetHashCode() and Object.Equals() or overridden implementation are cheap and sufficient).
@@ -44,14 +44,12 @@ namespace Anura.JavaScript.Collections
             public int next;
         }
 
-        public StringDictionarySlim()
-        {
+        public StringDictionarySlim() {
             _buckets = HashHelpers.SizeOneIntArray;
             _entries = InitialEntries;
         }
 
-        public StringDictionarySlim(int capacity)
-        {
+        public StringDictionarySlim(int capacity) {
             if (capacity < 2)
                 capacity = 2; // 1 would indicate the dummy array
             capacity = HashHelpers.PowerOf2(capacity);
@@ -59,8 +57,7 @@ namespace Anura.JavaScript.Collections
             _entries = new Entry[capacity];
         }
 
-        public int Count
-        {
+        public int Count {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _count;
         }
@@ -68,20 +65,17 @@ namespace Anura.JavaScript.Collections
         /// <summary>
         /// Clears the dictionary. Note that this invalidates any active enumerators.
         /// </summary>
-        public void Clear()
-        {
+        public void Clear() {
             _count = 0;
             _freeList = -1;
             _buckets = HashHelpers.SizeOneIntArray;
             _entries = InitialEntries;
         }
 
-        public bool ContainsKey(in Key key)
-        {
+        public bool ContainsKey(in Key key) {
             Entry[] entries = _entries;
-            for (int i = _buckets[key.HashCode & (_buckets.Length-1)] - 1;
-                (uint)i < (uint)entries.Length; i = entries[i].next)
-            {
+            for (int i = _buckets[key.HashCode & (_buckets.Length - 1)] - 1;
+                (uint)i < (uint)entries.Length; i = entries[i].next) {
                 if (key.Name == entries[i].key.Name)
                     return true;
             }
@@ -89,14 +83,11 @@ namespace Anura.JavaScript.Collections
             return false;
         }
 
-        public bool TryGetValue(in Key key, out TValue value)
-        {
+        public bool TryGetValue(in Key key, out TValue value) {
             Entry[] entries = _entries;
             for (int i = _buckets[key.HashCode & (_buckets.Length - 1)] - 1;
-                (uint)i < (uint)entries.Length; i = entries[i].next)
-            {
-                if (key.Name == entries[i].key.Name)
-                {
+                (uint)i < (uint)entries.Length; i = entries[i].next) {
+                if (key.Name == entries[i].key.Name) {
                     value = entries[i].value;
                     return true;
                 }
@@ -106,24 +97,18 @@ namespace Anura.JavaScript.Collections
             return false;
         }
 
-        public bool Remove(in Key key)
-        {
+        public bool Remove(in Key key) {
             Entry[] entries = _entries;
             int bucketIndex = key.HashCode & (_buckets.Length - 1);
             int entryIndex = _buckets[bucketIndex] - 1;
 
             int lastIndex = -1;
-            while (entryIndex != -1)
-            {
+            while (entryIndex != -1) {
                 Entry candidate = entries[entryIndex];
-                if (candidate.key == key)
-                {
-                    if (lastIndex != -1)
-                    {   // Fixup preceding element in chain to point to next (if any)
+                if (candidate.key == key) {
+                    if (lastIndex != -1) {   // Fixup preceding element in chain to point to next (if any)
                         entries[lastIndex].next = candidate.next;
-                    }
-                    else
-                    {   // Fixup bucket to new head (if any)
+                    } else {   // Fixup bucket to new head (if any)
                         _buckets[bucketIndex] = candidate.next + 1;
                     }
 
@@ -142,7 +127,7 @@ namespace Anura.JavaScript.Collections
             return false;
         }
 
-       // Not safe for concurrent _reads_ (at least, if either of them add)
+        // Not safe for concurrent _reads_ (at least, if either of them add)
         // For concurrent reads, prefer TryGetValue(key, out value)
         /// <summary>
         /// Gets the value for the specified key, or, if the key is not present,
@@ -151,13 +136,11 @@ namespace Anura.JavaScript.Collections
         /// </summary>
         /// <param name="key">Key to look for</param>
         /// <returns>Reference to the new or existing value</returns>
-        public ref TValue GetOrAddValueRef(in Key key)
-        {
+        public ref TValue GetOrAddValueRef(in Key key) {
             Entry[] entries = _entries;
             int bucketIndex = key.HashCode & (_buckets.Length - 1);
             for (int i = _buckets[bucketIndex] - 1;
-                    (uint)i < (uint)entries.Length; i = entries[i].next)
-            {
+                    (uint)i < (uint)entries.Length; i = entries[i].next) {
                 if (key.Name == entries[i].key.Name)
                     return ref entries[i].value;
             }
@@ -165,26 +148,20 @@ namespace Anura.JavaScript.Collections
             return ref AddKey(key, bucketIndex);
         }
 
-        public ref TValue this[in Key key]
-        {
+        public ref TValue this[in Key key] {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref GetOrAddValueRef(key);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private ref TValue AddKey(in Key key, int bucketIndex)
-        {
+        private ref TValue AddKey(in Key key, int bucketIndex) {
             Entry[] entries = _entries;
             int entryIndex;
-            if (_freeList != -1)
-            {
+            if (_freeList != -1) {
                 entryIndex = _freeList;
                 _freeList = -3 - entries[_freeList].next;
-            }
-            else
-            {
-                if (_count == entries.Length || entries.Length == 1)
-                {
+            } else {
+                if (_count == entries.Length || entries.Length == 1) {
                     entries = Resize();
                     bucketIndex = key.HashCode & (_buckets.Length - 1);
                     // entry indexes were not changed by Resize
@@ -199,20 +176,18 @@ namespace Anura.JavaScript.Collections
             return ref entries[entryIndex].value;
         }
 
-        private Entry[] Resize()
-        {
+        private Entry[] Resize() {
             Debug.Assert(_entries.Length == _count || _entries.Length == 1); // We only copy _count, so if it's longer we will miss some
             int count = _count;
             int newSize = _entries.Length * 2;
-            if ((uint)newSize > (uint)int.MaxValue) // uint cast handles overflow
+            if ((uint)newSize > int.MaxValue) // uint cast handles overflow
                 throw new InvalidOperationException("Capacity Overflow");
 
             var entries = new Entry[newSize];
             Array.Copy(_entries, 0, entries, 0, count);
 
             var newBuckets = new int[entries.Length];
-            while (count-- > 0)
-            {
+            while (count-- > 0) {
                 int bucketIndex = entries[count].key.HashCode & (newBuckets.Length - 1);
                 entries[count].next = newBuckets[bucketIndex] - 1;
                 newBuckets[bucketIndex] = count + 1;
@@ -223,22 +198,27 @@ namespace Anura.JavaScript.Collections
 
             return entries;
         }
-        
-        /// <summary>
-        /// Gets an enumerator over the dictionary
-        /// </summary>
-        public Enumerator GetEnumerator() => new Enumerator(this); // avoid boxing
 
         /// <summary>
         /// Gets an enumerator over the dictionary
         /// </summary>
-        IEnumerator<KeyValuePair<Key, TValue>> IEnumerable<KeyValuePair<Key, TValue>>.GetEnumerator() =>
-            new Enumerator(this);
+        public Enumerator GetEnumerator() {
+            return new Enumerator(this); // avoid boxing
+        }
 
         /// <summary>
         /// Gets an enumerator over the dictionary
         /// </summary>
-        IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
+        IEnumerator<KeyValuePair<Key, TValue>> IEnumerable<KeyValuePair<Key, TValue>>.GetEnumerator() {
+            return new Enumerator(this);
+        }
+
+        /// <summary>
+        /// Gets an enumerator over the dictionary
+        /// </summary>
+        IEnumerator IEnumerable.GetEnumerator() {
+            return new Enumerator(this);
+        }
 
         public struct Enumerator : IEnumerator<KeyValuePair<Key, TValue>>
         {
@@ -247,18 +227,15 @@ namespace Anura.JavaScript.Collections
             private int _count;
             private KeyValuePair<Key, TValue> _current;
 
-            internal Enumerator(StringDictionarySlim<TValue> dictionary)
-            {
+            internal Enumerator(StringDictionarySlim<TValue> dictionary) {
                 _dictionary = dictionary;
                 _index = 0;
                 _count = _dictionary._count;
                 _current = default;
             }
 
-            public bool MoveNext()
-            {
-                if (_count == 0)
-                {
+            public bool MoveNext() {
+                if (_count == 0) {
                     _current = default;
                     return false;
                 }
@@ -278,8 +255,7 @@ namespace Anura.JavaScript.Collections
 
             object IEnumerator.Current => _current;
 
-            void IEnumerator.Reset()
-            {
+            void IEnumerator.Reset() {
                 _index = 0;
                 _count = _dictionary._count;
                 _current = default;
@@ -287,13 +263,12 @@ namespace Anura.JavaScript.Collections
 
             public void Dispose() { }
         }
-        
+
         internal static class HashHelpers
         {
             internal static readonly int[] SizeOneIntArray = new int[1];
 
-            internal static int PowerOf2(int v)
-            {
+            internal static int PowerOf2(int v) {
                 if ((v & (v - 1)) == 0) return v;
                 int i = 2;
                 while (i < v) i <<= 1;
@@ -305,8 +280,7 @@ namespace Anura.JavaScript.Collections
         {
             private readonly StringDictionarySlim<V> _dictionary;
 
-            public DictionarySlimDebugView(StringDictionarySlim<V> dictionary)
-            {
+            public DictionarySlimDebugView(StringDictionarySlim<V> dictionary) {
                 _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
             }
 

@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    internal static class Keywords {
+namespace Anura.Styles
+{
+    internal static class Keywords
+    {
         public static readonly string Important = "important";
         public static readonly string Inherit = "inherit";
         public static readonly string Initial = "initial";

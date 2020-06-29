@@ -1,25 +1,28 @@
 using System.Collections.Generic;
 
-namespace Anura.Styles {
-    internal sealed class AnyValueConverter : IValueConverter {
-        public IPropertyValue Convert (IEnumerable<Token> value) {
-            return new AnyValue (value);
+namespace Anura.Styles
+{
+    internal sealed class AnyValueConverter : IValueConverter
+    {
+        public IPropertyValue Convert(IEnumerable<Token> value) {
+            return new AnyValue(value);
         }
 
-        public IPropertyValue Construct (Property[] properties) {
-            return properties.Guard<AnyValue> ();
+        public IPropertyValue Construct(Property[] properties) {
+            return properties.Guard<AnyValue>();
         }
 
-        private sealed class AnyValue : IPropertyValue {
-            public AnyValue (IEnumerable<Token> tokens) {
-                Original = new TokenValue (tokens);
+        private sealed class AnyValue : IPropertyValue
+        {
+            public AnyValue(IEnumerable<Token> tokens) {
+                Original = new TokenValue(tokens);
             }
 
-            public string CssText => Original.ToText ();
+            public string CssText => Original.ToText();
 
             public TokenValue Original { get; }
 
-            public TokenValue ExtractFor (string name) {
+            public TokenValue ExtractFor(string name) {
                 return Original;
             }
         }

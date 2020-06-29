@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum ClearMode : byte {
+namespace Anura.Styles
+{
+    public enum ClearMode : byte
+    {
         None,
         Left,
         Right,

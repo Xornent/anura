@@ -7,8 +7,7 @@ namespace Esprima.Ast
         private readonly NodeList<IStatementListItem> _body;
 
         public BlockStatement(in NodeList<IStatementListItem> body) :
-            base(Nodes.BlockStatement)
-        {
+            base(Nodes.BlockStatement) {
             _body = body;
         }
 

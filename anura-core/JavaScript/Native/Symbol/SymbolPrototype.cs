@@ -15,12 +15,10 @@ namespace Anura.JavaScript.Native.Symbol
         private SymbolConstructor _symbolConstructor;
 
         private SymbolPrototype(Engine engine)
-            : base(engine)
-        {
+            : base(engine) {
         }
 
-        public static SymbolPrototype CreatePrototypeObject(Engine engine, SymbolConstructor symbolConstructor)
-        {
+        public static SymbolPrototype CreatePrototypeObject(Engine engine, SymbolConstructor symbolConstructor) {
             var obj = new SymbolPrototype(engine)
             {
                 _prototype = engine.Object.PrototypeObject,
@@ -30,8 +28,7 @@ namespace Anura.JavaScript.Native.Symbol
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             const PropertyFlag lengthFlags = PropertyFlag.Configurable;
             const PropertyFlag propertyFlags = PropertyFlag.Configurable;
             SetProperties(new PropertyDictionary(5, checkExistingKeys: false)
@@ -44,45 +41,41 @@ namespace Anura.JavaScript.Native.Symbol
             });
 
             SetSymbols(new SymbolDictionary(1)
-                {
-                    [GlobalSymbolRegistry.ToPrimitive] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "[Symbol.toPrimitive]", ToPrimitive, 1, lengthFlags), propertyFlags), [GlobalSymbolRegistry.ToStringTag] = new PropertyDescriptor(new JsString("Symbol"), propertyFlags)
-                }
+            {
+                [GlobalSymbolRegistry.ToPrimitive] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "[Symbol.toPrimitive]", ToPrimitive, 1, lengthFlags), propertyFlags),
+                [GlobalSymbolRegistry.ToStringTag] = new PropertyDescriptor(new JsString("Symbol"), propertyFlags)
+            }
             );
         }
 
-        private JsValue Description(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue Description(JsValue thisObject, JsValue[] arguments) {
             var sym = ThisSymbolValue(thisObject);
             return sym._value;
         }
 
-        private JsValue ToSymbolString(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue ToSymbolString(JsValue thisObject, JsValue[] arguments) {
             var sym = ThisSymbolValue(thisObject);
             return new JsString(SymbolDescriptiveString(sym));
         }
 
-        private JsValue ValueOf(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue ValueOf(JsValue thisObject, JsValue[] arguments) {
             return ThisSymbolValue(thisObject);
         }
 
-        private JsValue ToPrimitive(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue ToPrimitive(JsValue thisObject, JsValue[] arguments) {
             return ThisSymbolValue(thisObject);
         }
 
-        private static string SymbolDescriptiveString(JsSymbol symbol) => symbol.ToString();
+        private static string SymbolDescriptiveString(JsSymbol symbol) {
+            return symbol.ToString();
+        }
 
-        private JsSymbol ThisSymbolValue(JsValue thisObject)
-        {
-            if (thisObject is JsSymbol s)
-            {
+        private JsSymbol ThisSymbolValue(JsValue thisObject) {
+            if (thisObject is JsSymbol s) {
                 return s;
             }
 
-            if (thisObject is SymbolInstance instance)
-            {
+            if (thisObject is SymbolInstance instance) {
                 return instance.SymbolData;
             }
 

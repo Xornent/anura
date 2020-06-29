@@ -5,8 +5,7 @@
     /// </summary>
     internal sealed class RangeErrorException : JintException
     {
-        public RangeErrorException(string message) : base(message)
-        {
+        public RangeErrorException(string message) : base(message) {
         }
     }
 }

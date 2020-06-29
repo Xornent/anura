@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum LineStyle : byte {
+namespace Anura.Styles
+{
+    public enum LineStyle : byte
+    {
         None,
         Hidden,
         Dotted,

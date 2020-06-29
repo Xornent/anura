@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class MinHeightProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class MinHeightProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.LengthOrPercentConverter.OrDefault (Length.Zero);
+            Converters.LengthOrPercentConverter.OrDefault(Length.Zero);
 
-        internal MinHeightProperty () : base (PropertyNames.MinHeight, PropertyFlags.Animatable) { }
+        internal MinHeightProperty() : base(PropertyNames.MinHeight, PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

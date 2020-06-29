@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Anura.Styles {
-    public sealed class RadialGradient : IImageSource {
-        public enum SizeMode : byte {
+namespace Anura.Styles
+{
+    public sealed class RadialGradient : IImageSource
+    {
+        public enum SizeMode : byte
+        {
             None,
             ClosestCorner,
             ClosestSide,
@@ -11,7 +14,7 @@ namespace Anura.Styles {
             FarthestSide
         }
 
-        public RadialGradient (bool circle, Point pt, Length width, Length height, SizeMode sizeMode,
+        public RadialGradient(bool circle, Point pt, Length width, Length height, SizeMode sizeMode,
             GradientStop[] stops, bool repeating = false) {
             _stops = stops;
             Position = pt;
@@ -30,9 +33,7 @@ namespace Anura.Styles {
         public Point Position { get; }
         public Length MajorRadius { get; }
         public Length MinorRadius { get; }
-        public IEnumerable<GradientStop> Stops {
-            get { return _stops.AsEnumerable (); }
-        }
+        public IEnumerable<GradientStop> Stops => _stops.AsEnumerable();
         public bool IsRepeating { get; }
     }
 }

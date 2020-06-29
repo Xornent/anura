@@ -8,15 +8,13 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private readonly JintExpression _consequent;
         private readonly JintExpression _alternate;
 
-        public JintConditionalExpression(Engine engine, ConditionalExpression expression) : base(engine, expression)
-        {
+        public JintConditionalExpression(Engine engine, ConditionalExpression expression) : base(engine, expression) {
             _test = Build(engine, expression.Test);
             _consequent = Build(engine, expression.Consequent);
             _alternate = Build(engine, expression.Alternate);
         }
 
-        protected override object EvaluateInternal()
-        {
+        protected override object EvaluateInternal() {
             return TypeConverter.ToBoolean(_test.GetValue())
                 ? _consequent.GetValue()
                 : _alternate.GetValue();

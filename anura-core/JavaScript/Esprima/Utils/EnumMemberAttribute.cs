@@ -33,11 +33,9 @@ namespace Esprima.Utils // System.Runtime.Serialization;
     {
         private string _value;
 
-        public string Value
-        {
+        public string Value {
             get => _value;
-            set
-            {
+            set {
                 _value = value;
                 IsValueSetExplicitly = true;
             }

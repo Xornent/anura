@@ -10,8 +10,7 @@ namespace Esprima.Ast
         public readonly bool Each;
 
         public ForInStatement(INode left, Expression right, Statement body) :
-            base(Nodes.ForInStatement)
-        {
+            base(Nodes.ForInStatement) {
             Left = left;
             Right = right;
             Body = body;

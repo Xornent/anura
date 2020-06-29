@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Anura.JavaScript.Native;
+using System;
 using System.Globalization;
 using System.Reflection;
-using Anura.JavaScript.Native;
 
 namespace Anura.JavaScript.Runtime.Descriptors.Specialized
 {
@@ -13,50 +13,42 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
         private readonly PropertyInfo _indexer;
         private readonly MethodInfo _containsKey;
 
-        public IndexDescriptor(Engine engine, Type targetType, string key, object target) : base(PropertyFlag.CustomJsValue)
-        {
+        public IndexDescriptor(Engine engine, Type targetType, string key, object target) : base(PropertyFlag.CustomJsValue) {
             _engine = engine;
             _target = target;
 
-            if (!TryFindIndexer(engine, targetType, key, out _indexer, out _containsKey, out _key))
-            {
+            if (!TryFindIndexer(engine, targetType, key, out _indexer, out _containsKey, out _key)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException("invalid indexing configuration, target indexer not found");
             }
 
             Writable = engine.Options._IsClrWriteAllowed;
         }
-        
+
         public IndexDescriptor(Engine engine, string key, object item)
-            : this(engine, item.GetType(), key, item)
-        {
+            : this(engine, item.GetType(), key, item) {
         }
 
         internal static bool TryFindIndexer(
             Engine engine,
             Type targetType,
-            string propertyName, 
+            string propertyName,
             out PropertyInfo indexerProperty,
-            out MethodInfo containsKeyMethod, 
-            out object indexerKey)
-        {
+            out MethodInfo containsKeyMethod,
+            out object indexerKey) {
             // get all instance indexers with exactly 1 argument
             var paramTypeArray = new Type[1];
 
             // try to find first indexer having either public getter or setter with matching argument type
-            foreach (var candidate in targetType.GetProperties())
-            {
+            foreach (var candidate in targetType.GetProperties()) {
                 var indexParameters = candidate.GetIndexParameters();
-                if (indexParameters.Length != 1)
-                {
+                if (indexParameters.Length != 1) {
                     continue;
                 }
 
-                if (candidate.GetGetMethod() != null || candidate.GetSetMethod() != null)
-                {
+                if (candidate.GetGetMethod() != null || candidate.GetSetMethod() != null) {
                     var paramType = indexParameters[0].ParameterType;
 
-                    if (engine.ClrTypeConverter.TryConvert(propertyName, paramType, CultureInfo.InvariantCulture, out indexerKey))
-                    {
+                    if (engine.ClrTypeConverter.TryConvert(propertyName, paramType, CultureInfo.InvariantCulture, out indexerKey)) {
                         indexerProperty = candidate;
                         // get contains key method to avoid index exception being thrown in dictionaries
                         paramTypeArray[0] = paramType;
@@ -72,46 +64,36 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
             return false;
         }
 
-        protected internal override JsValue CustomValue
-        {
-            get
-            {
+        protected internal override JsValue CustomValue {
+            get {
                 var getter = _indexer.GetGetMethod();
 
-                if (getter == null)
-                {
+                if (getter == null) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowInvalidOperationException("Indexer has no public getter.");
                 }
 
-                object[] parameters = {_key};
+                object[] parameters = { _key };
 
-                if (_containsKey != null)
-                {
-                    if ((_containsKey.Invoke(_target, parameters) as bool?) != true)
-                    {
+                if (_containsKey != null) {
+                    if ((_containsKey.Invoke(_target, parameters) as bool?) != true) {
                         return JsValue.Undefined;
                     }
                 }
 
-                try
-                {
+                try {
                     return JsValue.FromObject(_engine, getter.Invoke(_target, parameters));
-                }
-                catch
-                {
+                } catch {
                     return JsValue.Undefined;
                 }
             }
 
-            set
-            {
+            set {
                 var setter = _indexer.GetSetMethod();
-                if (setter == null)
-                {
+                if (setter == null) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowInvalidOperationException("Indexer has no public setter.");
                 }
 
-                object[] parameters = {_key, value?.ToObject()};
+                object[] parameters = { _key, value?.ToObject() };
                 setter.Invoke(_target, parameters);
             }
         }

@@ -9,21 +9,17 @@ namespace Anura.JavaScript.Constraints
         private readonly TimeSpan _timeout;
         private CancellationTokenSource cts;
 
-        public TimeConstraint2(TimeSpan timeout)
-        {
+        public TimeConstraint2(TimeSpan timeout) {
             _timeout = timeout;
         }
 
-        public void Check()
-        {
-            if (cts.IsCancellationRequested)
-            {
+        public void Check() {
+            if (cts.IsCancellationRequested) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTimeoutException();
             }
         }
 
-        public void Reset()
-        {
+        public void Reset() {
             cts?.Dispose();
 
             // This cancellation token source is very likely not disposed property, but it only allocates a timer, so not a big deal.

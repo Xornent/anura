@@ -15,12 +15,10 @@ namespace Anura.JavaScript.Native.Set
     {
         private SetConstructor _mapConstructor;
 
-        private SetPrototype(Engine engine) : base(engine)
-        {
+        private SetPrototype(Engine engine) : base(engine) {
         }
 
-        public static SetPrototype CreatePrototypeObject(Engine engine, SetConstructor mapConstructor)
-        {
+        public static SetPrototype CreatePrototypeObject(Engine engine, SetConstructor mapConstructor) {
             var obj = new SetPrototype(engine)
             {
                 _prototype = engine.Object.PrototypeObject,
@@ -30,8 +28,7 @@ namespace Anura.JavaScript.Native.Set
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(12, checkExistingKeys: false)
             {
                 ["length"] = new PropertyDescriptor(0, PropertyFlag.Configurable),
@@ -55,51 +52,44 @@ namespace Anura.JavaScript.Native.Set
             };
             SetSymbols(symbols);
         }
-        
-        private JsValue Size(JsValue thisObj, JsValue[] arguments)
-        {
+
+        private JsValue Size(JsValue thisObj, JsValue[] arguments) {
             AssertSetInstance(thisObj);
             return JsNumber.Create(0);
         }
 
-        private JsValue Add(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Add(JsValue thisObj, JsValue[] arguments) {
             var set = AssertSetInstance(thisObj);
             set.Add(arguments[0]);
             return thisObj;
         }
 
-        private JsValue Clear(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Clear(JsValue thisObj, JsValue[] arguments) {
             var set = AssertSetInstance(thisObj);
             set.Clear();
             return Undefined;
         }
 
-        private JsValue Delete(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Delete(JsValue thisObj, JsValue[] arguments) {
             var set = AssertSetInstance(thisObj);
             return set.SetDelete(arguments[0])
                 ? JsBoolean.True
                 : JsBoolean.False;
         }
 
-        private JsValue Has(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Has(JsValue thisObj, JsValue[] arguments) {
             var set = AssertSetInstance(thisObj);
             return set.Has(arguments[0])
                 ? JsBoolean.True
                 : JsBoolean.False;
         }
 
-        private JsValue Entries(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Entries(JsValue thisObj, JsValue[] arguments) {
             var set = AssertSetInstance(thisObj);
             return set.Entries();
         }
 
-        private JsValue ForEach(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ForEach(JsValue thisObj, JsValue[] arguments) {
             var callbackfn = arguments.At(0);
             var thisArg = arguments.At(1);
 
@@ -111,16 +101,13 @@ namespace Anura.JavaScript.Native.Set
             return Undefined;
         }
 
-        private ObjectInstance Values(JsValue thisObj, JsValue[] arguments)
-        {
+        private ObjectInstance Values(JsValue thisObj, JsValue[] arguments) {
             var set = AssertSetInstance(thisObj);
             return set.Values();
         }
-        
-        private SetInstance AssertSetInstance(JsValue thisObj)
-        {
-            if (!(thisObj is SetInstance map))
-            {
+
+        private SetInstance AssertSetInstance(JsValue thisObj) {
+            if (!(thisObj is SetInstance map)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<SetInstance>(_engine, "object must be a Set");
             }
 

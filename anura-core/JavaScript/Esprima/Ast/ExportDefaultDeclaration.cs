@@ -7,8 +7,7 @@ namespace Esprima.Ast
         public readonly IDeclaration Declaration; //: BindingIdentifier | BindingPattern | ClassDeclaration | Expression | FunctionDeclaration;
 
         public ExportDefaultDeclaration(IDeclaration declaration) :
-            base(Nodes.ExportDefaultDeclaration)
-        {
+            base(Nodes.ExportDefaultDeclaration) {
             Declaration = declaration;
         }
 

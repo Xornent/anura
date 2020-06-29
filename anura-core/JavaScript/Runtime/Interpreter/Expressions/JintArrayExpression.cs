@@ -1,7 +1,7 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Iterator;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -10,21 +10,17 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private JintExpression[] _expressions;
         private bool _hasSpreads;
 
-        public JintArrayExpression(Engine engine, ArrayExpression expression) : base(engine, expression)
-        {
+        public JintArrayExpression(Engine engine, ArrayExpression expression) : base(engine, expression) {
             _initialized = false;
         }
 
-        protected override void Initialize()
-        {
-            var node = (ArrayExpression) _expression;
+        protected override void Initialize() {
+            var node = (ArrayExpression)_expression;
             _expressions = new JintExpression[node.Elements.Count];
-            for (var n = 0; n < _expressions.Length; n++)
-            {
+            for (var n = 0; n < _expressions.Length; n++) {
                 var expr = node.Elements[n];
-                if (expr != null)
-                {
-                    var expression = Build(_engine, (Expression) expr);
+                if (expr != null) {
+                    var expression = Build(_engine, (Expression)expr);
                     _expressions[n] = expression;
                     _hasSpreads |= expression is JintSpreadExpression;
                 }
@@ -34,50 +30,40 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             _initialized = true;
         }
 
-        protected override object EvaluateInternal()
-        {
-            var a = _engine.Array.ConstructFast(_hasSpreads ? 0 : (uint) _expressions.Length);
+        protected override object EvaluateInternal() {
+            var a = _engine.Array.ConstructFast(_hasSpreads ? 0 : (uint)_expressions.Length);
             var expressions = _expressions;
 
             uint arrayIndexCounter = 0;
-            for (uint i = 0; i < (uint) expressions.Length; i++)
-            {
+            for (uint i = 0; i < (uint)expressions.Length; i++) {
                 var expr = expressions[i];
-                if (expr == null)
-                {
+                if (expr == null) {
                     arrayIndexCounter++;
                     continue;
                 }
 
-                if (_hasSpreads && expr is JintSpreadExpression jse)
-                {
+                if (_hasSpreads && expr is JintSpreadExpression jse) {
                     jse.GetValueAndCheckIterator(out var objectInstance, out var iterator);
                     // optimize for array
-                    if (objectInstance is ArrayInstance ai)
-                    {
+                    if (objectInstance is ArrayInstance ai) {
                         var length = ai.GetLength();
                         var newLength = arrayIndexCounter + length;
                         a.EnsureCapacity(newLength);
                         a.CopyValues(ai, sourceStartIndex: 0, targetStartIndex: arrayIndexCounter, length);
                         arrayIndexCounter += length;
                         a.SetLength(newLength);
-                    }
-                    else
-                    {
+                    } else {
                         var protocol = new ArraySpreadProtocol(_engine, a, iterator, arrayIndexCounter);
                         protocol.Execute();
                         arrayIndexCounter += protocol._addedCount;
                     }
-                }
-                else
-                {
+                } else {
                     var value = expr.GetValue();
                     a.SetIndexValue(arrayIndexCounter++, value, updateLength: false);
                 }
             }
 
-            if (_hasSpreads)
-            {
+            if (_hasSpreads) {
                 a.SetLength(arrayIndexCounter);
             }
 
@@ -94,19 +80,17 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                 Engine engine,
                 ArrayInstance instance,
                 IIterator iterator,
-                long startIndex) : base(engine, iterator, 0)
-            {
+                long startIndex) : base(engine, iterator, 0) {
                 _instance = instance;
                 _index = startIndex - 1;
             }
 
-            protected override void ProcessItem(JsValue[] args, JsValue currentValue)
-            {
+            protected override void ProcessItem(JsValue[] args, JsValue currentValue) {
                 _index++;
                 _addedCount++;
                 var jsValue = ExtractValueFromIteratorInstance(currentValue);
 
-                _instance.SetIndexValue((uint) _index, jsValue, updateLength: false);
+                _instance.SetIndexValue((uint)_index, jsValue, updateLength: false);
             }
         }
     }

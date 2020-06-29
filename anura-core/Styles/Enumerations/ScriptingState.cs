@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum ScriptingState : byte {
+namespace Anura.Styles
+{
+    public enum ScriptingState : byte
+    {
         None,
         InitialOnly,
         Enabled

@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Anura.JavaScript.Native.Object;
+﻿using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Environments;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Native.Function
 {
@@ -26,8 +26,7 @@ namespace Anura.JavaScript.Native.Function
             string[] parameters,
             LexicalEnvironment scope,
             bool strict)
-            : this(engine, !string.IsNullOrWhiteSpace(name) ? new JsString(name) : null, parameters, scope, strict)
-        {
+            : this(engine, !string.IsNullOrWhiteSpace(name) ? new JsString(name) : null, parameters, scope, strict) {
         }
 
         internal FunctionInstance(
@@ -36,8 +35,7 @@ namespace Anura.JavaScript.Native.Function
             string[] parameters,
             LexicalEnvironment scope,
             bool strict)
-            : this(engine, name, strict)
-        {
+            : this(engine, name, strict) {
             _formalParameters = parameters;
             _scope = scope;
         }
@@ -47,8 +45,7 @@ namespace Anura.JavaScript.Native.Function
             JsString name,
             bool strict,
             ObjectClass objectClass = ObjectClass.Function)
-            : base(engine, objectClass)
-        {
+            : base(engine, objectClass) {
             _name = name;
             _strict = strict;
         }
@@ -67,30 +64,24 @@ namespace Anura.JavaScript.Native.Function
 
         public bool Strict => _strict;
 
-        public virtual bool HasInstance(JsValue v)
-        {
-            if (!(v is ObjectInstance o))
-            {
+        public virtual bool HasInstance(JsValue v) {
+            if (!(v is ObjectInstance o)) {
                 return false;
             }
 
             var p = Get(CommonProperties.Prototype, this);
-            if (!(p is ObjectInstance prototype))
-            {
+            if (!(p is ObjectInstance prototype)) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, $"Function has non-object prototype '{TypeConverter.ToString(p)}' in instanceof check");
             }
 
-            while (true)
-            {
+            while (true) {
                 o = o.Prototype;
 
-                if (o is null)
-                {
+                if (o is null) {
                     return false;
                 }
 
-                if (SameValue(p, o))
-                {
+                if (SameValue(p, o)) {
                     return true;
                 }
             }
@@ -99,53 +90,42 @@ namespace Anura.JavaScript.Native.Function
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.5.4
         /// </summary>
-        public override JsValue Get(JsValue property, JsValue receiver)
-        {
+        public override JsValue Get(JsValue property, JsValue receiver) {
             var v = base.Get(property, receiver);
 
             if (property == CommonProperties.Caller
-                && ((v.As<FunctionInstance>()?._strict).GetValueOrDefault()))
-            {
+                && ((v.As<FunctionInstance>()?._strict).GetValueOrDefault())) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
 
             return v;
         }
 
-        public override IEnumerable<KeyValuePair<JsValue, PropertyDescriptor>> GetOwnProperties()
-        {
-            if (_prototypeDescriptor != null)
-            {
+        public override IEnumerable<KeyValuePair<JsValue, PropertyDescriptor>> GetOwnProperties() {
+            if (_prototypeDescriptor != null) {
                 yield return new KeyValuePair<JsValue, PropertyDescriptor>(CommonProperties.Prototype, _prototypeDescriptor);
             }
-            if (_length != null)
-            {
+            if (_length != null) {
                 yield return new KeyValuePair<JsValue, PropertyDescriptor>(CommonProperties.Length, _length);
             }
-            if (!(_name is null))
-            {
+            if (!(_name is null)) {
                 yield return new KeyValuePair<JsValue, PropertyDescriptor>(CommonProperties.Name, GetOwnProperty(CommonProperties.Name));
             }
 
-            foreach (var entry in base.GetOwnProperties())
-            {
+            foreach (var entry in base.GetOwnProperties()) {
                 yield return entry;
             }
         }
 
-        public override List<JsValue> GetOwnPropertyKeys(Types types)
-        {
+        public override List<JsValue> GetOwnPropertyKeys(Types types) {
             var keys = new List<JsValue>();
-            if (_prototypeDescriptor != null)
-            {
+            if (_prototypeDescriptor != null) {
                 keys.Add(CommonProperties.Prototype);
             }
-            if (_length != null)
-            {
+            if (_length != null) {
                 keys.Add(CommonProperties.Length);
             }
-            if (!(_name is null))
-            {
+            if (!(_name is null)) {
                 keys.Add(CommonProperties.Name);
             }
 
@@ -154,77 +134,57 @@ namespace Anura.JavaScript.Native.Function
             return keys;
         }
 
-        public override PropertyDescriptor GetOwnProperty(JsValue property)
-        {
-            if (property == CommonProperties.Prototype)
-            {
+        public override PropertyDescriptor GetOwnProperty(JsValue property) {
+            if (property == CommonProperties.Prototype) {
                 return _prototypeDescriptor ?? PropertyDescriptor.Undefined;
             }
-            if (property == CommonProperties.Length)
-            {
+            if (property == CommonProperties.Length) {
                 return _length ?? PropertyDescriptor.Undefined;
             }
-            if (property == CommonProperties.Name)
-            {
+            if (property == CommonProperties.Name) {
                 return !(_name is null)
                     ? _nameDescriptor ??= new PropertyDescriptor(_name, PropertyFlag.Configurable)
-                    :  PropertyDescriptor.Undefined;
+                    : PropertyDescriptor.Undefined;
             }
 
             return base.GetOwnProperty(property);
         }
 
-        protected internal override void SetOwnProperty(JsValue property, PropertyDescriptor desc)
-        {
-            if (property == CommonProperties.Prototype)
-            {
+        protected internal override void SetOwnProperty(JsValue property, PropertyDescriptor desc) {
+            if (property == CommonProperties.Prototype) {
                 _prototypeDescriptor = desc;
-            }
-            else if (property == CommonProperties.Length)
-            {
+            } else if (property == CommonProperties.Length) {
                 _length = desc;
-            }
-            else if (property == CommonProperties.Name)
-            {
+            } else if (property == CommonProperties.Name) {
                 _name = desc._value;
                 _nameDescriptor = desc;
-            }
-            else
-            {
+            } else {
                 base.SetOwnProperty(property, desc);
             }
         }
 
-        public override bool HasOwnProperty(JsValue property)
-        {
-            if (property == CommonProperties.Prototype)
-            {
+        public override bool HasOwnProperty(JsValue property) {
+            if (property == CommonProperties.Prototype) {
                 return _prototypeDescriptor != null;
             }
-            if (property == CommonProperties.Length)
-            {
+            if (property == CommonProperties.Length) {
                 return _length != null;
             }
-            if (property == CommonProperties.Name)
-            {
+            if (property == CommonProperties.Name) {
                 return !(_name is null);
             }
 
             return base.HasOwnProperty(property);
         }
 
-        public override void RemoveOwnProperty(JsValue property)
-        {
-            if (property == CommonProperties.Prototype)
-            {
+        public override void RemoveOwnProperty(JsValue property) {
+            if (property == CommonProperties.Prototype) {
                 _prototypeDescriptor = null;
             }
-            if (property == CommonProperties.Length)
-            {
+            if (property == CommonProperties.Length) {
                 _length = null;
             }
-            if (property == CommonProperties.Name)
-            {
+            if (property == CommonProperties.Name) {
                 _name = null;
                 _nameDescriptor = null;
             }
@@ -232,32 +192,24 @@ namespace Anura.JavaScript.Native.Function
             base.RemoveOwnProperty(property);
         }
 
-        internal void SetFunctionName(JsValue name, bool throwIfExists = false)
-        {
-            if (_name is null)
-            {
+        internal void SetFunctionName(JsValue name, bool throwIfExists = false) {
+            if (_name is null) {
                 JsString value;
-                if (name is JsSymbol symbol)
-                {
+                if (name is JsSymbol symbol) {
                     value = new JsString(symbol._value.IsUndefined()
                         ? ""
                         : "[" + symbol._value + "]");
-                }
-                else
-                {
+                } else {
                     value = name as JsString ?? new JsString(name.ToString());
                 }
                 _name = value;
-            }
-            else if (throwIfExists)
-            {
+            } else if (throwIfExists) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowError(_engine, "cannot set name");
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ObjectInstance OrdinaryCreateFromConstructor(JsValue constructor, ObjectInstance intrinsicDefaultProto)
-        {
+        internal ObjectInstance OrdinaryCreateFromConstructor(JsValue constructor, ObjectInstance intrinsicDefaultProto) {
             var proto = GetPrototypeFromConstructor(constructor, intrinsicDefaultProto);
 
             var obj = new ObjectInstance(_engine)
@@ -268,8 +220,7 @@ namespace Anura.JavaScript.Native.Function
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ObjectInstance GetPrototypeFromConstructor(JsValue constructor, ObjectInstance intrinsicDefaultProto)
-        {
+        private static ObjectInstance GetPrototypeFromConstructor(JsValue constructor, ObjectInstance intrinsicDefaultProto) {
             var proto = constructor.Get(CommonProperties.Prototype, constructor) as ObjectInstance;
             // If Type(proto) is not Object, then
             //    Let realm be ? GetFunctionRealm(constructor).

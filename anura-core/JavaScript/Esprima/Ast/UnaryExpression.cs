@@ -1,6 +1,6 @@
+using Esprima.Utils;
 using System;
 using System.Collections.Generic;
-using Esprima.Utils;
 
 namespace Esprima.Ast
 {
@@ -33,10 +33,8 @@ namespace Esprima.Ast
         public readonly Expression Argument;
         public bool Prefix { get; protected set; }
 
-        public static UnaryOperator ParseUnaryOperator(string op)
-        {
-            switch (op)
-            {
+        public static UnaryOperator ParseUnaryOperator(string op) {
+            switch (op) {
                 case "+":
                     return UnaryOperator.Plus;
                 case "-":
@@ -63,11 +61,10 @@ namespace Esprima.Ast
         }
 
         public UnaryExpression(string op, Expression arg) :
-            this(Nodes.UnaryExpression, op, arg) {}
+            this(Nodes.UnaryExpression, op, arg) { }
 
         protected UnaryExpression(Nodes type, string op, Expression arg) :
-            base(type)
-        {
+            base(type) {
             Operator = ParseUnaryOperator(op);
             Argument = arg;
             Prefix = true;

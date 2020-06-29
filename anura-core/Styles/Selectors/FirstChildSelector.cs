@@ -1,7 +1,8 @@
 namespace Anura.Styles
 
 {
-    internal sealed class FirstChildSelector : ChildSelector {
-        public FirstChildSelector () : base (PseudoClassNames.NthChild) { }
+    internal sealed class FirstChildSelector : ChildSelector
+    {
+        public FirstChildSelector() : base(PseudoClassNames.NthChild) { }
     }
 }

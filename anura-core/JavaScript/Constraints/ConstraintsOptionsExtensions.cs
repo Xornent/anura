@@ -1,50 +1,42 @@
-﻿using System;
+﻿using Anura.JavaScript.Constraints;
+using System;
 using System.Threading;
-using Anura.JavaScript.Constraints;
 
 namespace Anura.JavaScript
 {
     public static class ConstraintsOptionsExtensions
     {
-        public static Options MaxStatements(this Options options, int maxStatements = 0)
-        {
+        public static Options MaxStatements(this Options options, int maxStatements = 0) {
             options.WithoutConstraint(x => x is MaxStatements);
 
-            if (maxStatements > 0 && maxStatements < int.MaxValue)
-            {
+            if (maxStatements > 0 && maxStatements < int.MaxValue) {
                 options.Constraint(new MaxStatements(maxStatements));
             }
             return options;
         }
 
-        public static Options LimitMemory(this Options options, long memoryLimit)
-        {
+        public static Options LimitMemory(this Options options, long memoryLimit) {
             options.WithoutConstraint(x => x is MemoryLimit);
 
-            if (memoryLimit > 0 && memoryLimit < int.MaxValue)
-            {
+            if (memoryLimit > 0 && memoryLimit < int.MaxValue) {
                 options.Constraint(new MemoryLimit(memoryLimit));
             }
             return options;
         }
 
-        public static Options TimeoutInterval(this Options options, TimeSpan timeoutInterval)
-        {
+        public static Options TimeoutInterval(this Options options, TimeSpan timeoutInterval) {
             options.WithoutConstraint(x => x is TimeConstraint);
 
-            if (timeoutInterval > TimeSpan.Zero && timeoutInterval < TimeSpan.MaxValue)
-            {
+            if (timeoutInterval > TimeSpan.Zero && timeoutInterval < TimeSpan.MaxValue) {
                 options.Constraint(new TimeConstraint2(timeoutInterval));
             }
             return options;
         }
 
-        public static Options CancellationToken(this Options options, CancellationToken cancellationToken)
-        {
+        public static Options CancellationToken(this Options options, CancellationToken cancellationToken) {
             options.WithoutConstraint(x => x is CancellationConstraint);
 
-            if (cancellationToken != default)
-            {
+            if (cancellationToken != default) {
                 options.Constraint(new CancellationConstraint(cancellationToken));
             }
             return options;

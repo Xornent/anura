@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class ObjectFitProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class ObjectFitProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.ObjectFittingConverter.OrDefault (ObjectFitting.Fill);
+            Converters.ObjectFittingConverter.OrDefault(ObjectFitting.Fill);
 
-        internal ObjectFitProperty () : base (PropertyNames.ObjectFit) { }
+        internal ObjectFitProperty() : base(PropertyNames.ObjectFit) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

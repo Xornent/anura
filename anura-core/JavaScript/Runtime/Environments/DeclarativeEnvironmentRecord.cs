@@ -1,13 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Esprima.Ast;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Argument;
 using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Iterator;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using Esprima.Ast;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Runtime.Environments
 {
@@ -19,23 +19,19 @@ namespace Anura.JavaScript.Runtime.Environments
     {
         private readonly HybridDictionary<Binding> _dictionary = new HybridDictionary<Binding>();
 
-        public DeclarativeEnvironmentRecord(Engine engine) : base(engine)
-        {
+        public DeclarativeEnvironmentRecord(Engine engine) : base(engine) {
         }
 
-        private bool ContainsKey(in Key key)
-        {
+        private bool ContainsKey(in Key key) {
             return _dictionary.ContainsKey(key);
         }
 
-        private bool TryGetValue(in Key key, out Binding value)
-        {
+        private bool TryGetValue(in Key key, out Binding value) {
             value = default;
             return _dictionary.TryGetValue(key, out value);
         }
 
-        public override bool HasBinding(string name)
-        {
+        public override bool HasBinding(string name) {
             return ContainsKey(name);
         }
 
@@ -43,49 +39,38 @@ namespace Anura.JavaScript.Runtime.Environments
             in Key name,
             bool strict,
             out Binding binding,
-            out JsValue value)
-        {
+            out JsValue value) {
             binding = default;
             var success = _dictionary.TryGetValue(name, out binding);
             value = success ? UnwrapBindingValue(strict, binding) : default;
             return success;
         }
 
-        public override void CreateMutableBinding(string name, JsValue value, bool canBeDeleted = false)
-        {
+        public override void CreateMutableBinding(string name, JsValue value, bool canBeDeleted = false) {
             _dictionary[name] = new Binding(value, canBeDeleted, mutable: true);
         }
 
-        public override void SetMutableBinding(string name, JsValue value, bool strict)
-        {
+        public override void SetMutableBinding(string name, JsValue value, bool strict) {
             var key = name;
             _dictionary.TryGetValue(key, out var binding);
-            if (binding.Mutable)
-            {
+            if (binding.Mutable) {
                 _dictionary[key] = binding.ChangeValue(value);
-            }
-            else
-            {
-                if (strict)
-                {
+            } else {
+                if (strict) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Can't update the value of an immutable binding.");
                 }
             }
         }
 
-        public override JsValue GetBindingValue(string name, bool strict)
-        {
+        public override JsValue GetBindingValue(string name, bool strict) {
             _dictionary.TryGetValue(name, out var binding);
             return UnwrapBindingValue(strict, binding);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private JsValue UnwrapBindingValue(bool strict, in Binding binding)
-        {
-            if (!binding.Mutable && !binding.IsInitialized())
-            {
-                if (strict)
-                {
+        private JsValue UnwrapBindingValue(bool strict, in Binding binding) {
+            if (!binding.Mutable && !binding.IsInitialized()) {
+                if (strict) {
                     ThrowUninitializedBindingException();
                 }
 
@@ -95,20 +80,16 @@ namespace Anura.JavaScript.Runtime.Environments
             return binding.Value;
         }
 
-        private void ThrowUninitializedBindingException()
-        {
+        private void ThrowUninitializedBindingException() {
             throw new JavaScriptException(_engine.ReferenceError, "Can't access an uninitialized immutable binding.");
         }
 
-        public override bool DeleteBinding(string name)
-        {
-            if (!_dictionary.TryGetValue(name, out var binding))
-            {
+        public override bool DeleteBinding(string name) {
+            if (!_dictionary.TryGetValue(name, out var binding)) {
                 return true;
             }
 
-            if (!binding.CanBeDeleted)
-            {
+            if (!binding.CanBeDeleted) {
                 return false;
             }
 
@@ -117,23 +98,19 @@ namespace Anura.JavaScript.Runtime.Environments
             return true;
         }
 
-        public override JsValue ImplicitThisValue()
-        {
+        public override JsValue ImplicitThisValue() {
             return Undefined;
         }
 
         /// <inheritdoc />
-        internal override string[] GetAllBindingNames()
-        {
-            if (_dictionary is null)
-            {
+        internal override string[] GetAllBindingNames() {
+            if (_dictionary is null) {
                 return System.Array.Empty<string>();
             }
 
             var keys = new string[_dictionary.Count];
             var n = 0;
-            foreach (var entry in _dictionary)
-            {
+            foreach (var entry in _dictionary) {
                 keys[n++] = entry.Key;
             }
 
@@ -143,18 +120,15 @@ namespace Anura.JavaScript.Runtime.Environments
         internal void AddFunctionParameters(
             JsValue[] arguments,
             ArgumentsInstance argumentsInstance,
-            IFunction functionDeclaration)
-        {
+            IFunction functionDeclaration) {
             bool empty = _dictionary.Count == 0;
-            if (!(argumentsInstance is null))
-            {
+            if (!(argumentsInstance is null)) {
                 _dictionary[KnownKeys.Arguments] = new Binding(argumentsInstance, canBeDeleted: false, mutable: true);
             }
 
             ref readonly var parameters = ref functionDeclaration.Params;
             var count = parameters.Count;
-            for (var i = 0; i < count; i++)
-            {
+            for (var i = 0; i < count; i++) {
                 SetFunctionParameter(parameters[i], arguments, i, empty);
             }
         }
@@ -164,15 +138,11 @@ namespace Anura.JavaScript.Runtime.Environments
             INode parameter,
             JsValue[] arguments,
             int index,
-            bool initiallyEmpty)
-        {
-            if (parameter is Identifier identifier)
-            {
-                var argument = (uint) index < (uint) arguments.Length ? arguments[index] : Undefined;
+            bool initiallyEmpty) {
+            if (parameter is Identifier identifier) {
+                var argument = (uint)index < (uint)arguments.Length ? arguments[index] : Undefined;
                 SetItemSafely(identifier.Name, argument, initiallyEmpty);
-            }
-            else
-            {
+            } else {
                 SetFunctionParameterUnlikely(parameter, arguments, index, initiallyEmpty);
             }
         }
@@ -181,58 +151,43 @@ namespace Anura.JavaScript.Runtime.Environments
             INode parameter,
             JsValue[] arguments,
             int index,
-            bool initiallyEmpty)
-        {
+            bool initiallyEmpty) {
             var argument = arguments.Length > index ? arguments[index] : Undefined;
 
-            if (parameter is RestElement restElement)
-            {
+            if (parameter is RestElement restElement) {
                 HandleRestElementArray(restElement, arguments, index, initiallyEmpty);
-            }
-            else if (parameter is ArrayPattern arrayPattern)
-            {
-                if (argument.IsNull())
-                {
+            } else if (parameter is ArrayPattern arrayPattern) {
+                if (argument.IsNull()) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Destructed parameter is null");
                 }
 
                 ArrayInstance array = null;
                 var arrayContents = System.Array.Empty<JsValue>();
-                if (argument.IsArray())
-                {
+                if (argument.IsArray()) {
                     array = argument.AsArray();
-                }
-                else if (argument.IsObject() && argument.TryGetIterator(_engine, out var iterator))
-                {
+                } else if (argument.IsObject() && argument.TryGetIterator(_engine, out var iterator)) {
                     array = _engine.Array.ConstructFast(0);
                     var protocol = new ArrayPatternProtocol(_engine, array, iterator, arrayPattern.Elements.Count);
                     protocol.Execute();
                 }
 
-                if (!ReferenceEquals(array, null))
-                {
+                if (!ReferenceEquals(array, null)) {
                     arrayContents = new JsValue[array.GetLength()];
 
-                    for (uint i = 0; i < (uint) arrayContents.Length; i++)
-                    {
+                    for (uint i = 0; i < (uint)arrayContents.Length; i++) {
                         arrayContents[i] = array.Get(i);
                     }
                 }
 
-                for (uint arrayIndex = 0; arrayIndex < arrayPattern.Elements.Count; arrayIndex++)
-                {
-                    SetFunctionParameter(arrayPattern.Elements[(int) arrayIndex], arrayContents, (int) arrayIndex, initiallyEmpty);
+                for (uint arrayIndex = 0; arrayIndex < arrayPattern.Elements.Count; arrayIndex++) {
+                    SetFunctionParameter(arrayPattern.Elements[(int)arrayIndex], arrayContents, (int)arrayIndex, initiallyEmpty);
                 }
-            }
-            else if (parameter is ObjectPattern objectPattern)
-            {
-                if (argument.IsNullOrUndefined())
-                {
+            } else if (parameter is ObjectPattern objectPattern) {
+                if (argument.IsNullOrUndefined()) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Destructed parameter is null or undefined");
                 }
 
-                if (!argument.IsObject())
-                {
+                if (!argument.IsObject()) {
                     return;
                 }
 
@@ -243,55 +198,37 @@ namespace Anura.JavaScript.Runtime.Environments
                     : null;
 
                 var jsValues = _engine._jsValueArrayPool.RentArray(1);
-                foreach (var property in objectPattern.Properties)
-                {
-                    if (property is Property p)
-                    {
+                foreach (var property in objectPattern.Properties) {
+                    if (property is Property p) {
                         JsString propertyName;
-                        if (p.Key is Identifier propertyIdentifier)
-                        {
+                        if (p.Key is Identifier propertyIdentifier) {
                             propertyName = JsString.Create(propertyIdentifier.Name);
-                        }
-                        else if (p.Key is Literal propertyLiteral)
-                        {
+                        } else if (p.Key is Literal propertyLiteral) {
                             propertyName = JsString.Create(propertyLiteral.Raw);
-                        }
-                        else if (p.Key is CallExpression callExpression)
-                        {
+                        } else if (p.Key is CallExpression callExpression) {
                             var jintCallExpression = JintExpression.Build(_engine, callExpression);
-                            propertyName = (JsString) jintCallExpression.GetValue();
-                        }
-                        else
-                        {
+                            propertyName = (JsString)jintCallExpression.GetValue();
+                        } else {
                             propertyName = Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentOutOfRangeException<JsString>("property", "unknown object pattern property type");
                         }
 
                         processedProperties?.Add(propertyName.AsStringWithoutTypeCheck());
                         jsValues[0] = argumentObject.Get(propertyName);
                         SetFunctionParameter(p.Value, jsValues, 0, initiallyEmpty);
-                    }
-                    else
-                    {
-                        if (((RestElement) property).Argument is Identifier restIdentifier)
-                        {
+                    } else {
+                        if (((RestElement)property).Argument is Identifier restIdentifier) {
                             var rest = _engine.Object.Construct(argumentObject.Properties.Count - processedProperties.Count);
                             argumentObject.CopyDataProperties(rest, processedProperties);
                             SetItemSafely(restIdentifier.Name, rest, initiallyEmpty);
-                        }
-                        else
-                        {
+                        } else {
                             Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, "Object rest parameter can only be objects");
                         }
                     }
                 }
                 _engine._jsValueArrayPool.ReturnArray(jsValues);
-            }
-            else if (parameter is AssignmentPattern assignmentPattern)
-            {
+            } else if (parameter is AssignmentPattern assignmentPattern) {
                 HandleAssignmentPatternOrExpression(assignmentPattern.Left, assignmentPattern.Right, argument, initiallyEmpty);
-            }
-            else if (parameter is AssignmentExpression assignmentExpression)
-            {
+            } else if (parameter is AssignmentExpression assignmentExpression) {
                 HandleAssignmentPatternOrExpression(assignmentExpression.Left, assignmentExpression.Right, argument, initiallyEmpty);
             }
         }
@@ -300,33 +237,26 @@ namespace Anura.JavaScript.Runtime.Environments
             RestElement restElement,
             JsValue[] arguments,
             int index,
-            bool initiallyEmpty)
-        {
+            bool initiallyEmpty) {
             // index + 1 == parameters.count because rest is last
             int restCount = arguments.Length - (index + 1) + 1;
-            uint count = restCount > 0 ? (uint) restCount : 0;
+            uint count = restCount > 0 ? (uint)restCount : 0;
 
             var rest = _engine.Array.ConstructFast(count);
 
             uint targetIndex = 0;
-            for (var argIndex = index; argIndex < arguments.Length; ++argIndex)
-            {
+            for (var argIndex = index; argIndex < arguments.Length; ++argIndex) {
                 rest.SetIndexValue(targetIndex++, arguments[argIndex], updateLength: false);
             }
 
-            if (restElement.Argument is Identifier restIdentifier)
-            {
+            if (restElement.Argument is Identifier restIdentifier) {
                 SetItemSafely(restIdentifier.Name, rest, initiallyEmpty);
-            }
-            else if (restElement.Argument is BindingPattern bindingPattern)
-            {
+            } else if (restElement.Argument is BindingPattern bindingPattern) {
                 SetFunctionParameter(bindingPattern, new JsValue[]
                 {
                     rest
                 }, index, initiallyEmpty);
-            }
-            else
-            {
+            } else {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine, "Rest parameters can only be identifiers or arrays");
             }
         }
@@ -335,20 +265,16 @@ namespace Anura.JavaScript.Runtime.Environments
             INode left,
             INode right,
             JsValue argument,
-            bool initiallyEmpty)
-        {
+            bool initiallyEmpty) {
             var idLeft = left as Identifier;
             if (idLeft != null
                 && right is Identifier idRight
-                && idLeft.Name == idRight.Name)
-            {
+                && idLeft.Name == idRight.Name) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowReferenceError(_engine, idRight.Name);
             }
 
-            if (argument.IsUndefined())
-            {
-                JsValue RunInNewParameterEnvironment(JintExpression exp)
-                {
+            if (argument.IsUndefined()) {
+                JsValue RunInNewParameterEnvironment(JintExpression exp) {
                     var oldEnv = _engine.ExecutionContext.LexicalEnvironment;
                     var paramVarEnv = LexicalEnvironment.NewDeclarativeEnvironment(_engine, oldEnv);
 
@@ -366,9 +292,8 @@ namespace Anura.JavaScript.Runtime.Environments
                     ? RunInNewParameterEnvironment(jintExpression)
                     : jintExpression.GetValue();
 
-                if (idLeft != null && right.IsFunctionWithName())
-                {
-                    ((FunctionInstance) argument).SetFunctionName(idLeft.Name);
+                if (idLeft != null && right.IsFunctionWithName()) {
+                    ((FunctionInstance)argument).SetFunctionName(idLeft.Name);
                 }
             }
 
@@ -378,40 +303,28 @@ namespace Anura.JavaScript.Runtime.Environments
             }, 0, initiallyEmpty);
         }
 
-        private void SetItemSafely(in Key name, JsValue argument, bool initiallyEmpty)
-        {
-            if (initiallyEmpty || !TryGetValue(name, out var existing))
-            {
+        private void SetItemSafely(in Key name, JsValue argument, bool initiallyEmpty) {
+            if (initiallyEmpty || !TryGetValue(name, out var existing)) {
                 _dictionary[name] = new Binding(argument, false, true);
-            }
-            else
-            {
-                if (existing.Mutable)
-                {
+            } else {
+                if (existing.Mutable) {
                     _dictionary[name] = existing.ChangeValue(argument);
-                }
-                else
-                {
+                } else {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Can't update the value of an immutable binding.");
                 }
             }
         }
 
-        internal void AddVariableDeclarations(ref NodeList<VariableDeclaration> variableDeclarations)
-        {
+        internal void AddVariableDeclarations(ref NodeList<VariableDeclaration> variableDeclarations) {
             var variableDeclarationsCount = variableDeclarations.Count;
-            for (var i = 0; i < variableDeclarationsCount; i++)
-            {
+            for (var i = 0; i < variableDeclarationsCount; i++) {
                 var variableDeclaration = variableDeclarations[i];
                 var declarationsCount = variableDeclaration.Declarations.Count;
-                for (var j = 0; j < declarationsCount; j++)
-                {
+                for (var j = 0; j < declarationsCount; j++) {
                     var d = variableDeclaration.Declarations[j];
-                    if (d.Id is Identifier id)
-                    {
+                    if (d.Id is Identifier id) {
                         Key dn = id.Name;
-                        if (!ContainsKey(dn))
-                        {
+                        if (!ContainsKey(dn)) {
                             var binding = new Binding(Undefined, canBeDeleted: false, mutable: true);
                             _dictionary[dn] = binding;
                         }
@@ -420,14 +333,12 @@ namespace Anura.JavaScript.Runtime.Environments
             }
         }
 
-        internal static JsValue HandleAssignmentPatternIfNeeded(IFunction functionDeclaration, JsValue jsValue, uint index)
-        {
+        internal static JsValue HandleAssignmentPatternIfNeeded(IFunction functionDeclaration, JsValue jsValue, uint index) {
             // TODO remove this method, overwrite with above SetFunctionParameter logic
             if (jsValue.IsUndefined()
                 && index < functionDeclaration?.Params.Count
-                && functionDeclaration.Params[(int) index] is AssignmentPattern ap
-                && ap.Right is Literal l)
-            {
+                && functionDeclaration.Params[(int)index] is AssignmentPattern ap
+                && ap.Right is Literal l) {
                 return JintLiteralExpression.ConvertToJsValue(l);
             }
 
@@ -444,26 +355,22 @@ namespace Anura.JavaScript.Runtime.Environments
                 Engine engine,
                 ArrayInstance instance,
                 IIterator iterator,
-                int max) : base(engine, iterator, 0)
-            {
+                int max) : base(engine, iterator, 0) {
                 _instance = instance;
                 _max = max;
             }
 
-            protected override void ProcessItem(JsValue[] args, JsValue currentValue)
-            {
+            protected override void ProcessItem(JsValue[] args, JsValue currentValue) {
                 _index++;
                 var jsValue = ExtractValueFromIteratorInstance(currentValue);
-                _instance.SetIndexValue((uint) _index, jsValue, updateLength: false);
+                _instance.SetIndexValue((uint)_index, jsValue, updateLength: false);
             }
 
             protected override bool ShouldContinue => _index < _max;
 
-            protected override void IterationEnd()
-            {
-                if (_index >= 0)
-                {
-                    _instance.SetLength((uint) _index);
+            protected override void IterationEnd() {
+                if (_index >= 0) {
+                    _instance.SetLength((uint)_index);
                     IteratorClose(CompletionType.Normal);
                 }
             }

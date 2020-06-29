@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly Expression Test;
 
         public DoWhileStatement(Statement body, Expression test) :
-            base(Nodes.DoWhileStatement)
-        {
+            base(Nodes.DoWhileStatement) {
             Body = body;
             Test = test;
         }

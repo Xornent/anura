@@ -9,20 +9,16 @@ namespace Anura.JavaScript.Runtime
     [Serializable]
     public abstract class JintException : Exception
     {
-        protected JintException()
-        {
+        protected JintException() {
         }
 
-        protected JintException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
+        protected JintException(SerializationInfo info, StreamingContext context) : base(info, context) {
         }
 
-        protected JintException(string message) : base(message)
-        {
+        protected JintException(string message) : base(message) {
         }
 
-        protected JintException(string message, Exception innerException) : base(message, innerException)
-        {
+        protected JintException(string message, Exception innerException) : base(message, innerException) {
         }
     }
 }

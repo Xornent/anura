@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 
-namespace Anura.Styles {
-    internal interface IValueConverter {
-        IPropertyValue Convert (IEnumerable<Token> value);
-        IPropertyValue Construct (Property[] properties);
+namespace Anura.Styles
+{
+    internal interface IValueConverter
+    {
+        IPropertyValue Convert(IEnumerable<Token> value);
+        IPropertyValue Construct(Property[] properties);
     }
 
-    internal static class PropertyExtensions {
-        public static IPropertyValue Guard<T> (this Property[] properties) {
+    internal static class PropertyExtensions
+    {
+        public static IPropertyValue Guard<T>(this Property[] properties) {
             if (properties.Length != 1) {
                 return null;
             }

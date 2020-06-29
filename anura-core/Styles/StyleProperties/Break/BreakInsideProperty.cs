@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class BreakInsideProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class BreakInsideProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.BreakInsideModeConverter.OrDefault (BreakMode.Auto);
+            Converters.BreakInsideModeConverter.OrDefault(BreakMode.Auto);
 
-        internal BreakInsideProperty () : base (PropertyNames.BreakInside) { }
+        internal BreakInsideProperty() : base(PropertyNames.BreakInside) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

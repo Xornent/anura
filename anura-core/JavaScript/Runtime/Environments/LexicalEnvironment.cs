@@ -15,8 +15,7 @@ namespace Anura.JavaScript.Runtime.Environments
         internal EnvironmentRecord _record;
         internal LexicalEnvironment _outer;
 
-        public LexicalEnvironment(Engine engine, EnvironmentRecord record, LexicalEnvironment outer)
-        {
+        public LexicalEnvironment(Engine engine, EnvironmentRecord record, LexicalEnvironment outer) {
             _engine = engine;
             _record = record;
             _outer = outer;
@@ -27,19 +26,16 @@ namespace Anura.JavaScript.Runtime.Environments
             in Key name,
             bool strict,
             out EnvironmentRecord record,
-            out JsValue value)
-        {
+            out JsValue value) {
             record = default;
             value = default;
 
-            while (lex != null)
-            {
+            while (lex != null) {
                 if (lex._record.TryGetBinding(
                     name,
                     strict,
                     out _,
-                    out value))
-                {
+                    out value)) {
                     record = lex._record;
                     return true;
                 }
@@ -50,8 +46,7 @@ namespace Anura.JavaScript.Runtime.Environments
             return false;
         }
 
-        public static LexicalEnvironment NewDeclarativeEnvironment(Engine engine, LexicalEnvironment outer = null)
-        {
+        public static LexicalEnvironment NewDeclarativeEnvironment(Engine engine, LexicalEnvironment outer = null) {
             var environment = new LexicalEnvironment(engine, null, null);
             environment._record = new DeclarativeEnvironmentRecord(engine);
             environment._outer = outer;
@@ -59,14 +54,12 @@ namespace Anura.JavaScript.Runtime.Environments
             return environment;
         }
 
-        internal static LexicalEnvironment NewGlobalEnvironment(Engine engine, GlobalObject objectInstance)
-        {
+        internal static LexicalEnvironment NewGlobalEnvironment(Engine engine, GlobalObject objectInstance) {
             return new LexicalEnvironment(engine, new GlobalEnvironmentRecord(engine, objectInstance), null);
         }
 
-        internal static LexicalEnvironment NewObjectEnvironment(Engine engine, ObjectInstance objectInstance, LexicalEnvironment outer, bool provideThis)
-        {
+        internal static LexicalEnvironment NewObjectEnvironment(Engine engine, ObjectInstance objectInstance, LexicalEnvironment outer, bool provideThis) {
             return new LexicalEnvironment(engine, new ObjectEnvironmentRecord(engine, objectInstance, provideThis), outer);
-        } 
+        }
     }
 }

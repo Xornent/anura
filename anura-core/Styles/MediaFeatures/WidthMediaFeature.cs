@@ -1,6 +1,8 @@
-namespace Anura.Styles {
-    internal sealed class WidthMediaFeature : MediaFeature {
-        public WidthMediaFeature (string name) : base (name) { }
+namespace Anura.Styles
+{
+    internal sealed class WidthMediaFeature : MediaFeature
+    {
+        public WidthMediaFeature(string name) : base(name) { }
 
         internal override IValueConverter Converter => Converters.LengthConverter;
 

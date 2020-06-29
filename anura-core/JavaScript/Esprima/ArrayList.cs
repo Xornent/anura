@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Esprima.Ast;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Esprima.Ast;
 using static Esprima.ExceptionHelper;
 
 namespace Esprima
@@ -73,10 +73,8 @@ namespace Esprima
         private int _localVersion;
 #endif
 
-        public ArrayList(int initialCapacity)
-        {
-            if (initialCapacity < 0)
-            {
+        public ArrayList(int initialCapacity) {
+            if (initialCapacity < 0) {
                 throw new ArgumentOutOfRangeException(nameof(initialCapacity));
             }
 
@@ -91,31 +89,26 @@ namespace Esprima
 
         private int Capacity => _items?.Length ?? 0;
 
-        public int Count
-        {
+        public int Count {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
+            get {
                 AssertUnchanged();
                 return _count;
             }
         }
 
-        internal void AddRange<TSource>(ArrayList<TSource> list) where TSource : T
-        {
+        internal void AddRange<TSource>(ArrayList<TSource> list) where TSource : T {
             AssertUnchanged();
 
             var listCount = list.Count;
-            if (listCount == 0)
-            {
+            if (listCount == 0) {
                 return;
             }
 
             var oldCount = _count;
             var newCount = oldCount + listCount;
 
-            if (Capacity < newCount)
-            {
+            if (Capacity < newCount) {
                 Resize(newCount);
             }
 
@@ -126,14 +119,12 @@ namespace Esprima
             OnChanged();
         }
 
-        internal void Add(T item)
-        {
+        internal void Add(T item) {
             AssertUnchanged();
 
             var capacity = Capacity;
 
-            if (_count == capacity)
-            {
+            if (_count == capacity) {
                 Resize(Math.Max(capacity * 2, 4));
             }
 
@@ -144,32 +135,27 @@ namespace Esprima
             OnChanged();
         }
 
-        internal void Resize(int size)
-        {
-            #if DEBUG
-            if (_sharedVersion == null)
-            {
+        internal void Resize(int size) {
+#if DEBUG
+            if (_sharedVersion == null) {
                 _sharedVersion = new[] { 1 };
             }
-            #endif
+#endif
 
             Array.Resize(ref _items, size);
         }
 
         [Conditional("DEBUG")]
-        private void AssertUnchanged()
-        {
+        private void AssertUnchanged() {
 #if DEBUG
-            if (_localVersion != (_sharedVersion?[0] ?? 0))
-            {
+            if (_localVersion != (_sharedVersion?[0] ?? 0)) {
                 throw new InvalidOperationException();
             }
 #endif
         }
 
         [Conditional("DEBUG")]
-        private void OnChanged()
-        {
+        private void OnChanged() {
 #if DEBUG
             ref var version = ref _sharedVersion[0];
             version++;
@@ -177,34 +163,28 @@ namespace Esprima
 #endif
         }
 
-        internal void RemoveAt(int index)
-        {
+        internal void RemoveAt(int index) {
             AssertUnchanged();
 
-            if (index < 0 || index >= _count)
-            {
+            if (index < 0 || index >= _count) {
                 throw new ArgumentOutOfRangeException(nameof(index), index, null);
             }
 
             _items[index] = default;
             _count--;
 
-            if (index < _count - 1)
-            {
+            if (index < _count - 1) {
                 Array.Copy(_items, index + 1, _items, index, Count - index);
             }
 
             OnChanged();
         }
 
-        public T this[int index]
-        {
+        public T this[int index] {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
+            get {
                 // Following trick can reduce the range check by one
-                if ((uint) index >= (uint) _count)
-                {
+                if ((uint)index >= (uint)_count) {
                     ThrowIndexOutOfRangeException();
                 }
 
@@ -213,10 +193,8 @@ namespace Esprima
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                if (index < 0 || index >= _count)
-                {
+            set {
+                if (index < 0 || index >= _count) {
                     ThrowIndexOutOfRangeException();
                 }
 
@@ -226,28 +204,26 @@ namespace Esprima
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Push(T item) => Add(item);
+        internal void Push(T item) {
+            Add(item);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal T Pop()
-        {
+        internal T Pop() {
             var lastIndex = _count - 1;
             var last = this[lastIndex];
             RemoveAt(lastIndex);
             return last;
         }
 
-        public void Yield(out T[] items, out int count)
-        {
+        public void Yield(out T[] items, out int count) {
             items = _items;
             count = _count;
             this = default;
         }
 
-        internal ArrayList<TResult> Select<TResult>(Func<T, TResult> selector)
-        {
-            if (selector == null)
-            {
+        internal ArrayList<TResult> Select<TResult>(Func<T, TResult> selector) {
+            if (selector == null) {
                 throw new ArgumentNullException(nameof(selector));
             }
 
@@ -257,23 +233,25 @@ namespace Esprima
                 _items = new TResult[Count]
             };
 
-            for (var i = 0; i < Count; i++)
-            {
+            for (var i = 0; i < Count; i++) {
                 list._items[i] = selector(_items[i]);
             }
 
             return list;
         }
 
-        public Enumerator GetEnumerator()
-        {
+        public Enumerator GetEnumerator() {
             AssertUnchanged();
             return new Enumerator(_items, _count);
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+            return GetEnumerator();
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
+        }
 
         /// <remarks>
         /// This implementation does not detect changes to the list
@@ -287,8 +265,7 @@ namespace Esprima
             private T[] _items; // Usually null when count is zero
             private int _count;
 
-            internal Enumerator(T[] items, int count) : this()
-            {
+            internal Enumerator(T[] items, int count) : this() {
                 _index = -1;
                 _items = items;
                 _count = count;
@@ -299,18 +276,15 @@ namespace Esprima
 
             private bool IsDisposed => _count < 0;
 
-            public void Dispose()
-            {
+            public void Dispose() {
                 _items = null;
                 _count = -1;
             }
 
-            public bool MoveNext()
-            {
+            public bool MoveNext() {
                 ThrowIfDisposed();
 
-                if (_index + 1 == _count)
-                {
+                if (_index + 1 == _count) {
                     return false;
                 }
 
@@ -318,16 +292,13 @@ namespace Esprima
                 return true;
             }
 
-            public void Reset()
-            {
+            public void Reset() {
                 ThrowIfDisposed();
                 _index = -1;
             }
 
-            public T Current
-            {
-                get
-                {
+            public T Current {
+                get {
                     ThrowIfDisposed();
                     return _index >= 0
                          ? _items[_index]
@@ -337,10 +308,8 @@ namespace Esprima
 
             object IEnumerator.Current => Current;
 
-            private void ThrowIfDisposed()
-            {
-                if (IsDisposed)
-                {
+            private void ThrowIfDisposed() {
+                if (IsDisposed) {
                     ThrowObjectDisposedException(nameof(Enumerator));
                 }
             }
@@ -352,8 +321,7 @@ namespace Esprima
         public static void AddRange<T>(
             ref this ArrayList<T> destination,
             in NodeList<T> source)
-            where T: class, INode
-        {
+            where T : class, INode {
             foreach (var item in source)
                 destination.Add(item);
         }

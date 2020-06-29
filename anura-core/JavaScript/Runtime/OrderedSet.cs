@@ -7,44 +7,38 @@ namespace Anura.JavaScript.Runtime
         internal readonly List<T> _list;
         private readonly HashSet<T> _set;
 
-        public OrderedSet()
-        {
+        public OrderedSet() {
             _list = new List<T>();
             _set = new HashSet<T>();
         }
 
-        public T this[int index]
-        {
+        public T this[int index] {
             get => _list[index];
-            set
-            {
-                if (_set.Add(value))
-                {
+            set {
+                if (_set.Add(value)) {
                     _list[index] = value;
                 }
             }
         }
 
-        public void Add(T item)
-        {
-            if (_set.Add(item))
-            {
+        public void Add(T item) {
+            if (_set.Add(item)) {
                 _list.Add(item);
             }
         }
 
-        public void Clear()
-        {
+        public void Clear() {
             _list.Clear();
             _set.Clear();
         }
 
-        public bool Contains(T item) => _set.Contains(item);
+        public bool Contains(T item) {
+            return _set.Contains(item);
+        }
 
         public int Count => _list.Count;
 
-        public bool Remove(T item)
-        {
+        public bool Remove(T item) {
             _set.Remove(item);
             return _list.Remove(item);
         }

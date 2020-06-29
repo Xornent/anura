@@ -1,6 +1,6 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Runtime.References;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -13,20 +13,14 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private readonly JintIdentifierExpression _leftIdentifier;
         private readonly bool _evalOrArguments;
 
-        public JintUpdateExpression(Engine engine, UpdateExpression expression) : base(engine, expression)
-        {
+        public JintUpdateExpression(Engine engine, UpdateExpression expression) : base(engine, expression) {
             _prefix = expression.Prefix;
             _argument = Build(engine, expression.Argument);
-            if (expression.Operator == UnaryOperator.Increment)
-            {
+            if (expression.Operator == UnaryOperator.Increment) {
                 _change = 1;
-            }
-            else if (expression.Operator == UnaryOperator.Decrement)
-            {
-                _change = - 1;
-            }
-            else
-            {
+            } else if (expression.Operator == UnaryOperator.Decrement) {
+                _change = -1;
+            } else {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowArgumentException();
             }
 
@@ -34,8 +28,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             _evalOrArguments = _leftIdentifier?.HasEvalOrArguments == true;
         }
 
-        protected override object EvaluateInternal()
-        {
+        protected override object EvaluateInternal() {
             var fastResult = _leftIdentifier != null
                 ? UpdateIdentifier()
                 : null;
@@ -43,10 +36,8 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             return fastResult ?? UpdateNonIdentifier();
         }
 
-        private object UpdateNonIdentifier()
-        {
-            if (!(_argument.Evaluate() is Reference reference))
-            {
+        private object UpdateNonIdentifier() {
+            if (!(_argument.Evaluate() is Reference reference)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<object>(_engine, "Invalid left-hand side expression");
             }
 
@@ -66,17 +57,14 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                 : (isInteger ? value : JsNumber.Create(TypeConverter.ToNumber(value)));
         }
 
-        private JsValue UpdateIdentifier()
-        {
+        private JsValue UpdateIdentifier() {
             var strict = StrictModeScope.IsStrictModeCode;
             var name = _leftIdentifier.ExpressionName;
             if (TryGetIdentifierEnvironmentWithBindingValue(
                 name,
                 out var environmentRecord,
-                out var value))
-            {
-                if (strict && _evalOrArguments)
-                {
+                out var value)) {
+                if (strict && _evalOrArguments) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(_engine);
                 }
 

@@ -17,11 +17,10 @@ namespace Esprima
 
     public readonly struct Position : IEquatable<Position>
     {
-        public int Line   { get; }
+        public int Line { get; }
         public int Column { get; }
 
-        public Position(int line, int column)
-        {
+        public Position(int line, int column) {
             Line = line >= 0 ? line
                  : ThrowArgumentOutOfRangeException(nameof(line), line);
 
@@ -32,30 +31,37 @@ namespace Esprima
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static int ThrowArgumentOutOfRangeException(string name, int column)
-        {
+        private static int ThrowArgumentOutOfRangeException(string name, int column) {
             throw new ArgumentOutOfRangeException(name, column, Exception<ArgumentOutOfRangeException>.DefaultMessage);
         }
 
-        public override bool Equals(object obj) =>
-            obj is Position other && Equals(other);
+        public override bool Equals(object obj) {
+            return obj is Position other && Equals(other);
+        }
 
-        public bool Equals(Position other) =>
-            Line == other.Line && Column == other.Column;
+        public bool Equals(Position other) {
+            return Line == other.Line && Column == other.Column;
+        }
 
-        public override int GetHashCode() =>
-            unchecked((Line * 397) ^ Column);
+        public override int GetHashCode() {
+            return unchecked((Line * 397) ^ Column);
+        }
 
-        public override string ToString()
-            => Line.ToString(CultureInfo.InvariantCulture)
-             + ","
-             + Column.ToString(CultureInfo.InvariantCulture);
+        public override string ToString() {
+            return Line.ToString(CultureInfo.InvariantCulture)
+                        + ","
+                        + Column.ToString(CultureInfo.InvariantCulture);
+        }
 
-        public static bool operator ==(Position left, Position right) => left.Equals(right);
-        public static bool operator !=(Position left, Position right) => !left.Equals(right);
+        public static bool operator ==(Position left, Position right) {
+            return left.Equals(right);
+        }
 
-        public void Deconstruct(out int line, out int column)
-        {
+        public static bool operator !=(Position left, Position right) {
+            return !left.Equals(right);
+        }
+
+        public void Deconstruct(out int line, out int column) {
             line = Line;
             column = Column;
         }

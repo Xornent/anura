@@ -10,12 +10,10 @@ namespace Anura.JavaScript.Native.Object
     {
         private ObjectConstructor _objectConstructor;
 
-        private ObjectPrototype(Engine engine) : base(engine)
-        {
+        private ObjectPrototype(Engine engine) : base(engine) {
         }
 
-        public static ObjectPrototype CreatePrototypeObject(Engine engine, ObjectConstructor objectConstructor)
-        {
+        public static ObjectPrototype CreatePrototypeObject(Engine engine, ObjectConstructor objectConstructor) {
             var obj = new ObjectPrototype(engine)
             {
                 _objectConstructor = objectConstructor
@@ -24,8 +22,7 @@ namespace Anura.JavaScript.Native.Object
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             const PropertyFlag propertyFlags = PropertyFlag.Configurable | PropertyFlag.Writable;
             const PropertyFlag lengthFlags = PropertyFlag.Configurable;
             var properties = new PropertyDictionary(8, checkExistingKeys: false)
@@ -41,54 +38,45 @@ namespace Anura.JavaScript.Native.Object
             SetProperties(properties);
         }
 
-        private JsValue PropertyIsEnumerable(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue PropertyIsEnumerable(JsValue thisObject, JsValue[] arguments) {
             var p = TypeConverter.ToPropertyKey(arguments[0]);
             var o = TypeConverter.ToObject(Engine, thisObject);
             var desc = o.GetOwnProperty(p);
-            if (desc == PropertyDescriptor.Undefined)
-            {
+            if (desc == PropertyDescriptor.Undefined) {
                 return false;
             }
             return desc.Enumerable;
         }
 
-        private JsValue ValueOf(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue ValueOf(JsValue thisObject, JsValue[] arguments) {
             var o = TypeConverter.ToObject(Engine, thisObject);
             return o;
         }
 
-        private JsValue IsPrototypeOf(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue IsPrototypeOf(JsValue thisObject, JsValue[] arguments) {
             var arg = arguments[0];
-            if (!arg.IsObject())
-            {
+            if (!arg.IsObject()) {
                 return false;
             }
 
             var v = arg.AsObject();
 
             var o = TypeConverter.ToObject(Engine, thisObject);
-            while (true)
-            {
+            while (true) {
                 v = v.Prototype;
 
-                if (ReferenceEquals(v, null))
-                {
+                if (ReferenceEquals(v, null)) {
                     return false;
                 }
 
-                if (ReferenceEquals(o, v))
-                {
+                if (ReferenceEquals(o, v)) {
                     return true;
                 }
 
             }
         }
 
-        private JsValue ToLocaleString(JsValue thisObject, JsValue[] arguments)
-        {
+        private JsValue ToLocaleString(JsValue thisObject, JsValue[] arguments) {
             var o = TypeConverter.ToObject(Engine, thisObject);
             var func = o.Get("toString");
             var callable = func as ICallable ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeErrorNoEngine<ICallable>("Can only invoke functions");
@@ -101,23 +89,19 @@ namespace Anura.JavaScript.Native.Object
         /// <param name="thisObject"></param>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        public JsValue ToObjectString(JsValue thisObject, JsValue[] arguments)
-        {
-            if (thisObject.IsUndefined())
-            {
+        public JsValue ToObjectString(JsValue thisObject, JsValue[] arguments) {
+            if (thisObject.IsUndefined()) {
                 return "[object Undefined]";
             }
 
-            if (thisObject.IsNull())
-            {
+            if (thisObject.IsNull()) {
                 return "[object Null]";
             }
 
             var o = TypeConverter.ToObject(Engine, thisObject);
 
             var tag = o.Get(GlobalSymbolRegistry.ToStringTag);
-            if (!tag.IsString())
-            {
+            if (!tag.IsString()) {
                 tag = o.Class.ToString();
             }
 
@@ -127,8 +111,7 @@ namespace Anura.JavaScript.Native.Object
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.5
         /// </summary>
-        public JsValue HasOwnProperty(JsValue thisObject, JsValue[] arguments)
-        {
+        public JsValue HasOwnProperty(JsValue thisObject, JsValue[] arguments) {
             var p = TypeConverter.ToPropertyKey(arguments[0]);
             var o = TypeConverter.ToObject(Engine, thisObject);
             var desc = o.GetOwnProperty(p);

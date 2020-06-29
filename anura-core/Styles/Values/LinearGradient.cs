@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Anura.Styles {
-    public sealed class LinearGradient : IGradient {
-        public LinearGradient (Angle angle, GradientStop[] stops, bool repeating = false) {
+namespace Anura.Styles
+{
+    public sealed class LinearGradient : IGradient
+    {
+        public LinearGradient(Angle angle, GradientStop[] stops, bool repeating = false) {
             _stops = stops;
             Angle = angle;
             IsRepeating = repeating;
@@ -12,7 +14,7 @@ namespace Anura.Styles {
         private readonly GradientStop[] _stops;
 
         public Angle Angle { get; }
-        public IEnumerable<GradientStop> Stops => _stops.AsEnumerable ();
+        public IEnumerable<GradientStop> Stops => _stops.AsEnumerable();
         public bool IsRepeating { get; }
     }
 }

@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public interface ISupportsRule : IConditionRule {
+namespace Anura.Styles
+{
+    public interface ISupportsRule : IConditionRule
+    {
         IConditionFunction Condition { get; }
     }
 }

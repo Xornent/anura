@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum StrokeLinejoin : byte {
+namespace Anura.Styles
+{
+    public enum StrokeLinejoin : byte
+    {
         Miter,
         Round,
         Bevel

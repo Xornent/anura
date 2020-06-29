@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
- 
+
 // define TRACE_LEAKS to get additional diagnostics that can lead to the leak sources. note: it will
 // make everything about 2-3x slower
 // 
 // #define TRACE_LEAKS
- 
+
 // define DETECT_LEAKS to detect possible leaks
 // #if DEBUG
 // #define DETECT_LEAKS  //for now always enable DETECT_LEAKS in debug.
@@ -43,23 +43,23 @@ namespace Anura.JavaScript.Pooling
         {
             internal T Value;
         }
- 
+
         /// <remarks>
         /// Not using System.Func{T} because this file is linked into the (debugger) Formatter,
         /// which does not have that type (since it compiles against .NET 2.0).
         /// </remarks>
         internal delegate T Factory();
- 
+
         // Storage for the pool objects. The first item is stored in a dedicated field because we
         // expect to be able to satisfy most requests from it.
         private T _firstItem;
         private readonly Element[] _items;
- 
+
         // factory is stored for the lifetime of the pool. We will call this only when pool needs to
         // expand. compared to "new T()", Func gives more flexibility to implementers and faster
         // than "new T()".
         private readonly Factory _factory;
- 
+
 #if DETECT_LEAKS
         private static readonly ConditionalWeakTable<T, LeakTracker> leakTrackers = new ConditionalWeakTable<T, LeakTracker>();
  
@@ -99,25 +99,22 @@ namespace Anura.JavaScript.Pooling
                 }
             }
         }
-#endif      
- 
+#endif
+
         internal ObjectPool(Factory factory)
-            : this(factory, Environment.ProcessorCount * 2)
-        { }
- 
-        internal ObjectPool(Factory factory, int size)
-        {
+            : this(factory, Environment.ProcessorCount * 2) { }
+
+        internal ObjectPool(Factory factory, int size) {
             Debug.Assert(size >= 1);
             _factory = factory;
             _items = new Element[size - 1];
         }
- 
-        private T CreateInstance()
-        {
+
+        private T CreateInstance() {
             var inst = _factory();
             return inst;
         }
- 
+
         /// <summary>
         /// Produces an instance.
         /// </summary>
@@ -126,15 +123,13 @@ namespace Anura.JavaScript.Pooling
         /// Note that Free will try to store recycled objects close to the start thus statistically 
         /// reducing how far we will typically search.
         /// </remarks>
-        internal T Allocate()
-        {
+        internal T Allocate() {
             // PERF: Examine the first element. If that fails, AllocateSlow will look at the remaining elements.
             // Note that the initial read is optimistically not synchronized. That is intentional. 
             // We will interlock only when we have a candidate. in a worst case we may miss some
             // recently returned objects. Not a big deal.
             T inst = _firstItem;
-            if (!ReferenceEquals(inst, null))
-            {
+            if (!ReferenceEquals(inst, null)) {
                 _firstItem = null;
                 return inst;
             }
@@ -153,23 +148,20 @@ namespace Anura.JavaScript.Pooling
             return inst;
         }
 
-        private T AllocateSlow()
-        {
+        private T AllocateSlow() {
             var items = _items;
- 
-            for (int i = 0; i < items.Length; i++)
-            {
+
+            for (int i = 0; i < items.Length; i++) {
                 T inst = items[i].Value;
-                if (!ReferenceEquals(inst, null))
-                {
+                if (!ReferenceEquals(inst, null)) {
                     items[i].Value = null;
                     return inst;
                 }
             }
- 
+
             return CreateInstance();
         }
- 
+
         /// <summary>
         /// Returns objects to the pool.
         /// </summary>
@@ -178,31 +170,24 @@ namespace Anura.JavaScript.Pooling
         /// Note that Free will try to store recycled objects close to the start thus statistically 
         /// reducing how far we will typically search in Allocate.
         /// </remarks>
-        internal void Free(T obj)
-        {
+        internal void Free(T obj) {
             Validate(obj);
             ForgetTrackedObject(obj);
- 
-            if (ReferenceEquals(_firstItem, null))
-            {
+
+            if (ReferenceEquals(_firstItem, null)) {
                 // Intentionally not using interlocked here. 
                 // In a worst case scenario two objects may be stored into same slot.
                 // It is very unlikely to happen and will only mean that one of the objects will get collected.
                 _firstItem = obj;
-            }
-            else
-            {
+            } else {
                 FreeSlow(obj);
             }
         }
- 
-        private void FreeSlow(T obj)
-        {
+
+        private void FreeSlow(T obj) {
             var items = _items;
-            for (int i = 0; i < items.Length; i++)
-            {
-                if (ReferenceEquals(items[i].Value, null))
-                {
+            for (int i = 0; i < items.Length; i++) {
+                if (ReferenceEquals(items[i].Value, null)) {
                     // Intentionally not using interlocked here. 
                     // In a worst case scenario two objects may be stored into same slot.
                     // It is very unlikely to happen and will only mean that one of the objects will get collected.
@@ -211,7 +196,7 @@ namespace Anura.JavaScript.Pooling
                 }
             }
         }
- 
+
         /// <summary>
         /// Removes an object from leak tracking.  
         /// 
@@ -221,8 +206,7 @@ namespace Anura.JavaScript.Pooling
         /// return a larger array to the pool than was originally allocated.
         /// </summary>
         [Conditional("DEBUG")]
-        internal void ForgetTrackedObject(T old, T replacement = null)
-        {
+        internal void ForgetTrackedObject(T old, T replacement = null) {
 #if DETECT_LEAKS
             LeakTracker tracker;
             if (leakTrackers.TryGetValue(old, out tracker))
@@ -243,7 +227,7 @@ namespace Anura.JavaScript.Pooling
             }
 #endif
         }
- 
+
 #if DETECT_LEAKS
         private static Lazy<Type> _stackTraceType = new Lazy<Type>(() => Type.GetType("System.Diagnostics.StackTrace"));
  
@@ -252,23 +236,20 @@ namespace Anura.JavaScript.Pooling
             return Activator.CreateInstance(_stackTraceType.Value);
         }
 #endif
- 
+
         [Conditional("DEBUG")]
-        private void Validate(object obj)
-        {
+        private void Validate(object obj) {
             Debug.Assert(obj != null, "freeing null?");
- 
+
             Debug.Assert(_firstItem != obj, "freeing twice?");
- 
+
             var items = _items;
-            for (int i = 0; i < items.Length; i++)
-            {
+            for (int i = 0; i < items.Length; i++) {
                 var value = items[i].Value;
-                if (ReferenceEquals(value, null))
-                {
+                if (ReferenceEquals(value, null)) {
                     return;
                 }
- 
+
                 Debug.Assert(value != obj, "freeing twice?");
             }
         }

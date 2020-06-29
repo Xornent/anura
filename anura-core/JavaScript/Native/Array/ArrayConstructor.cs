@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Iterator;
 using Anura.JavaScript.Native.Object;
@@ -10,6 +7,9 @@ using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Descriptors.Specialized;
 using Anura.JavaScript.Runtime.Interop;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Anura.JavaScript.Native.Array
 {
@@ -17,14 +17,12 @@ namespace Anura.JavaScript.Native.Array
     {
         private static readonly JsString _functionName = new JsString("Array");
 
-        private ArrayConstructor(Engine engine) :  base(engine, _functionName, false)
-        {
+        private ArrayConstructor(Engine engine) : base(engine, _functionName, false) {
         }
 
         public ArrayPrototype PrototypeObject { get; private set; }
 
-        public static ArrayConstructor CreateArrayConstructor(Engine engine)
-        {
+        public static ArrayConstructor CreateArrayConstructor(Engine engine) {
             var obj = new ArrayConstructor(engine)
             {
                 _prototype = engine.Function.PrototypeObject
@@ -41,8 +39,7 @@ namespace Anura.JavaScript.Native.Array
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(3, checkExistingKeys: false)
             {
                 ["from"] = new PropertyDescriptor(new PropertyDescriptor(new ClrFunctionInstance(Engine, "from", From, 1, PropertyFlag.Configurable), PropertyFlag.NonEnumerable)),
@@ -53,60 +50,49 @@ namespace Anura.JavaScript.Native.Array
 
             var symbols = new SymbolDictionary(1)
             {
-                [GlobalSymbolRegistry.Species] = new GetSetPropertyDescriptor(get: new ClrFunctionInstance(Engine, "get [Symbol.species]", Species, 0, PropertyFlag.Configurable), set: Undefined,PropertyFlag.Configurable),
+                [GlobalSymbolRegistry.Species] = new GetSetPropertyDescriptor(get: new ClrFunctionInstance(Engine, "get [Symbol.species]", Species, 0, PropertyFlag.Configurable), set: Undefined, PropertyFlag.Configurable),
             };
             SetSymbols(symbols);
         }
 
-        private JsValue From(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue From(JsValue thisObj, JsValue[] arguments) {
             var source = arguments.At(0);
             var mapFunction = arguments.At(1);
             var callable = !mapFunction.IsUndefined() ? GetCallable(mapFunction) : null;
             var thisArg = arguments.At(2);
 
-            if (source.IsNullOrUndefined())
-            {
+            if (source.IsNullOrUndefined()) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine, "Cannot convert undefined or null to object");
             }
 
-            if (source is JsString jsString)
-            {
-                var a = _engine.Array.ConstructFast((uint) jsString.Length);
-                for (int i = 0; i < jsString._value.Length; i++)
-                {
-                    a.SetIndexValue((uint) i, JsString.Create(jsString._value[i]), updateLength: false);
+            if (source is JsString jsString) {
+                var a = _engine.Array.ConstructFast((uint)jsString.Length);
+                for (int i = 0; i < jsString._value.Length; i++) {
+                    a.SetIndexValue((uint)i, JsString.Create(jsString._value[i]), updateLength: false);
                 }
                 return a;
             }
 
-            if (thisObj.IsNull() || !(source is ObjectInstance objectInstance))
-            {
+            if (thisObj.IsNull() || !(source is ObjectInstance objectInstance)) {
                 return _engine.Array.ConstructFast(0);
             }
 
-            if (objectInstance is IObjectWrapper wrapper && wrapper.Target is IEnumerable enumerable)
-            {
+            if (objectInstance is IObjectWrapper wrapper && wrapper.Target is IEnumerable enumerable) {
                 return ConstructArrayFromIEnumerable(enumerable);
             }
 
-            if (objectInstance.IsArrayLike)
-            {
+            if (objectInstance.IsArrayLike) {
                 return ConstructArrayFromArrayLike(thisObj, objectInstance, callable, thisArg);
             }
 
             ObjectInstance instance;
-            if (thisObj is IConstructor constructor)
-            {
+            if (thisObj is IConstructor constructor) {
                 instance = constructor.Construct(System.Array.Empty<JsValue>(), thisObj);
+            } else {
+                instance = _engine.Array.ConstructFast(0);
             }
-            else
-            {
-                instance = _engine.Array.ConstructFast(0);                
-            }
-            
-            if (objectInstance.TryGetIterator(_engine, out var iterator))
-            {
+
+            if (objectInstance.TryGetIterator(_engine, out var iterator)) {
                 var protocol = new ArrayProtocol(_engine, thisArg, instance, iterator, callable);
                 protocol.Execute();
             }
@@ -116,48 +102,40 @@ namespace Anura.JavaScript.Native.Array
 
         private ObjectInstance ConstructArrayFromArrayLike(
             JsValue thisObj,
-            ObjectInstance objectInstance, 
-            ICallable callable, 
-            JsValue thisArg)
-        {
+            ObjectInstance objectInstance,
+            ICallable callable,
+            JsValue thisArg) {
             var source = ArrayOperations.For(objectInstance);
             var length = source.GetLength();
 
             ObjectInstance a;
-            if (thisObj is IConstructor constructor)
-            {
+            if (thisObj is IConstructor constructor) {
                 var argumentsList = objectInstance.Get(GlobalSymbolRegistry.Iterator).IsNullOrUndefined()
                     ? new JsValue[] { length }
                     : null;
 
                 a = Construct(constructor, argumentsList);
+            } else {
+                a = _engine.Array.ConstructFast(length);
             }
-            else
-            {
-                a = _engine.Array.ConstructFast(length);                
-            }
-            
+
             var args = !ReferenceEquals(callable, null)
                 ? _engine._jsValueArrayPool.RentArray(2)
                 : null;
 
             var target = ArrayOperations.For(a);
             uint n = 0;
-            for (uint i = 0; i < length; i++)
-            {
+            for (uint i = 0; i < length; i++) {
                 JsValue jsValue;
                 source.TryGetValue(i, out var value);
-                if (!ReferenceEquals(callable, null))
-                {
+                if (!ReferenceEquals(callable, null)) {
                     args[0] = value;
                     args[1] = i;
                     jsValue = callable.Call(thisArg, args);
 
                     // function can alter data
                     length = source.GetLength();
-                }
-                else
-                {
+                } else {
                     jsValue = value;
                 }
 
@@ -165,8 +143,7 @@ namespace Anura.JavaScript.Native.Array
                 n++;
             }
 
-            if (!ReferenceEquals(callable, null))
-            {
+            if (!ReferenceEquals(callable, null)) {
                 _engine._jsValueArrayPool.ReturnArray(args);
             }
 
@@ -182,160 +159,128 @@ namespace Anura.JavaScript.Native.Array
             private long _index = -1;
 
             public ArrayProtocol(
-                Engine engine, 
+                Engine engine,
                 JsValue thisArg,
                 ObjectInstance instance,
                 IIterator iterator,
-                ICallable callable) : base(engine, iterator, 2)
-            {
+                ICallable callable) : base(engine, iterator, 2) {
                 _thisArg = thisArg;
                 _instance = ArrayOperations.For(instance);
                 _callable = callable;
             }
 
-            protected override void ProcessItem(JsValue[] args, JsValue currentValue)
-            {
+            protected override void ProcessItem(JsValue[] args, JsValue currentValue) {
                 _index++;
                 var sourceValue = ExtractValueFromIteratorInstance(currentValue);
                 JsValue jsValue;
-                if (!ReferenceEquals(_callable, null))
-                {
+                if (!ReferenceEquals(_callable, null)) {
                     args[0] = sourceValue;
-                    args[1] = _index; 
+                    args[1] = _index;
                     jsValue = _callable.Call(_thisArg, args);
-                }
-                else
-                {
+                } else {
                     jsValue = sourceValue;
                 }
 
-                _instance.Set((uint) _index, jsValue, updateLength: false, throwOnError: true);
+                _instance.Set((uint)_index, jsValue, updateLength: false, throwOnError: true);
             }
 
-            protected override void IterationEnd()
-            {
-                _instance.SetLength((ulong) (_index + 1));
+            protected override void IterationEnd() {
+                _instance.SetLength((ulong)(_index + 1));
             }
         }
 
-        private JsValue Of(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Of(JsValue thisObj, JsValue[] arguments) {
             var len = arguments.Length;
             ObjectInstance a;
-            if (thisObj.IsConstructor)
-            {
-                a = ((IConstructor) thisObj).Construct(new JsValue[] { len }, thisObj);
+            if (thisObj.IsConstructor) {
+                a = ((IConstructor)thisObj).Construct(new JsValue[] { len }, thisObj);
 
-                for (uint k = 0; k < arguments.Length; k++)
-                {
+                for (uint k = 0; k < arguments.Length; k++) {
                     var kValue = arguments[k];
                     var key = JsString.Create(k);
                     a.CreateDataPropertyOrThrow(key, kValue);
                 }
 
                 a.Set(CommonProperties.Length, len, true);
-            }
-            else
-            {
+            } else {
                 // faster for real arrays
                 ArrayInstance ai;
                 a = ai = _engine.Array.Construct(len);
 
-                for (uint k = 0; k < arguments.Length; k++)
-                {
+                for (uint k = 0; k < arguments.Length; k++) {
                     var kValue = arguments[k];
                     ai.SetIndexValue(k, kValue, updateLength: false);
                 }
 
-                ai.SetLength((uint) arguments.Length);
+                ai.SetLength((uint)arguments.Length);
             }
 
             return a;
         }
 
-        private static JsValue Species(JsValue thisObject, JsValue[] arguments)
-        {
+        private static JsValue Species(JsValue thisObject, JsValue[] arguments) {
             return thisObject;
         }
 
-        private static JsValue IsArray(JsValue thisObj, JsValue[] arguments)
-        {
+        private static JsValue IsArray(JsValue thisObj, JsValue[] arguments) {
             var o = arguments.At(0);
 
             return IsArray(o);
         }
 
-        private static JsValue IsArray(JsValue o)
-        {
-            if (!(o is ObjectInstance oi))
-            {
+        private static JsValue IsArray(JsValue o) {
+            if (!(o is ObjectInstance oi)) {
                 return JsBoolean.False;
             }
 
             return oi.IsArray();
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             return Construct(arguments, thisObject);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments)
-        {
+        public ObjectInstance Construct(JsValue[] arguments) {
             return Construct(arguments, this);
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             // check if we can figure out good size
-            var capacity = arguments.Length > 0 ? (uint) arguments.Length : 0;
-            if (arguments.Length == 1 && arguments[0].IsNumber())
-            {
-                var number = ((JsNumber) arguments[0])._value;
+            var capacity = arguments.Length > 0 ? (uint)arguments.Length : 0;
+            if (arguments.Length == 1 && arguments[0].IsNumber()) {
+                var number = ((JsNumber)arguments[0])._value;
                 ValidateLength(number);
-                capacity = (uint) number;
+                capacity = (uint)number;
             }
             return Construct(arguments, capacity);
         }
 
-        public ArrayInstance Construct(int capacity)
-        {
-            return Construct(System.Array.Empty<JsValue>(), (uint) capacity);
+        public ArrayInstance Construct(int capacity) {
+            return Construct(System.Array.Empty<JsValue>(), (uint)capacity);
         }
 
-        public ArrayInstance Construct(uint capacity)
-        {
+        public ArrayInstance Construct(uint capacity) {
             return Construct(System.Array.Empty<JsValue>(), capacity);
         }
 
-        public ArrayInstance Construct(JsValue[] arguments, uint capacity)
-        {
+        public ArrayInstance Construct(JsValue[] arguments, uint capacity) {
             var instance = new ArrayInstance(Engine, capacity);
             instance._prototype = PrototypeObject;
 
-            if (arguments.Length == 1 && arguments.At(0).IsNumber())
-            {
+            if (arguments.Length == 1 && arguments.At(0).IsNumber()) {
                 var length = TypeConverter.ToNumber(arguments.At(0));
                 ValidateLength(length);
                 instance._length = new PropertyDescriptor(length, PropertyFlag.OnlyWritable);
-            }
-            else if (arguments.Length == 1 && arguments[0] is IObjectWrapper objectWrapper)
-            {
-                if (objectWrapper.Target is IEnumerable enumerable)
-                {
+            } else if (arguments.Length == 1 && arguments[0] is IObjectWrapper objectWrapper) {
+                if (objectWrapper.Target is IEnumerable enumerable) {
                     return ConstructArrayFromIEnumerable(enumerable);
                 }
-            }
-            else if (arguments.Length == 1 && arguments[0] is ArrayInstance arrayInstance)
-            {
+            } else if (arguments.Length == 1 && arguments[0] is ArrayInstance arrayInstance) {
                 // direct copy
-                return (ArrayInstance) ConstructArrayFromArrayLike(Undefined, arrayInstance, null, this);
-            }
-            else
-            {
+                return (ArrayInstance)ConstructArrayFromArrayLike(Undefined, arrayInstance, null, this);
+            } else {
                 instance._length = new PropertyDescriptor(0, PropertyFlag.OnlyWritable);
-                if (arguments.Length > 0)
-                {
+                if (arguments.Length > 0) {
                     PrototypeObject.Push(instance, arguments);
                 }
             }
@@ -343,12 +288,10 @@ namespace Anura.JavaScript.Native.Array
             return instance;
         }
 
-        private ArrayInstance ConstructArrayFromIEnumerable(IEnumerable enumerable)
-        {
-            var jsArray = (ArrayInstance) Construct(Arguments.Empty);
+        private ArrayInstance ConstructArrayFromIEnumerable(IEnumerable enumerable) {
+            var jsArray = (ArrayInstance)Construct(Arguments.Empty);
             var tempArray = _engine._jsValueArrayPool.RentArray(1);
-            foreach (var item in enumerable)
-            {
+            foreach (var item in enumerable) {
                 var jsItem = FromObject(Engine, item);
                 tempArray[0] = jsItem;
                 Engine.Array.PrototypeObject.Push(jsArray, tempArray);
@@ -359,10 +302,9 @@ namespace Anura.JavaScript.Native.Array
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ArrayInstance ConstructFast(ulong length)
-        {
+        internal ArrayInstance ConstructFast(ulong length) {
             ValidateLength(length);
-            var instance = new ArrayInstance(Engine, (uint) length)
+            var instance = new ArrayInstance(Engine, (uint)length)
             {
                 _prototype = PrototypeObject,
                 _length = new PropertyDescriptor(length, PropertyFlag.OnlyWritable)
@@ -370,11 +312,9 @@ namespace Anura.JavaScript.Native.Array
             return instance;
         }
 
-        public ObjectInstance ArraySpeciesCreate(ObjectInstance originalArray, ulong length)
-        {
+        public ObjectInstance ArraySpeciesCreate(ObjectInstance originalArray, ulong length) {
             var isArray = originalArray.IsArray();
-            if (!isArray)
-            {
+            if (!isArray) {
                 return ConstructFast(length);
             }
 
@@ -386,46 +326,38 @@ namespace Anura.JavaScript.Native.Array
             // If thisRealm and realmC are not the same Realm Record, then
             // If SameValue(C, realmC.[[Intrinsics]].[[%Array%]]) is true, set C to undefined.
 
-            if (c is ObjectInstance oi)
-            {
+            if (c is ObjectInstance oi) {
                 c = oi.Get(GlobalSymbolRegistry.Species);
-                if (c.IsNull())
-                {
+                if (c.IsNull()) {
                     c = Undefined;
                 }
             }
 
-            if (c.IsUndefined())
-            {
+            if (c.IsUndefined()) {
                 return ConstructFast(length);
             }
 
-            if (!c.IsConstructor)
-            {
+            if (!c.IsConstructor) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
 
-            return ((IConstructor) c).Construct(new JsValue[] { JsNumber.Create(length) }, c);
+            return ((IConstructor)c).Construct(new JsValue[] { JsNumber.Create(length) }, c);
         }
 
-        internal JsValue CreateArrayFromList(List<JsValue> values)
-        {
-            var jsArray = ConstructFast((uint) values.Count);
+        internal JsValue CreateArrayFromList(List<JsValue> values) {
+            var jsArray = ConstructFast((uint)values.Count);
             var index = 0;
-            for (; index < values.Count; index++)
-            {
+            for (; index < values.Count; index++) {
                 var item = values[index];
-                jsArray.SetIndexValue((uint) index, item, false);
+                jsArray.SetIndexValue((uint)index, item, false);
             }
 
-            jsArray.SetLength((uint) index);
+            jsArray.SetLength((uint)index);
             return jsArray;
         }
 
-        private void ValidateLength(double length)
-        {
-            if (length < 0 || length > ArrayOperations.MaxArrayLength || ((long) length) != length)
-            {
+        private void ValidateLength(double length) {
+            if (length < 0 || length > ArrayOperations.MaxArrayLength || ((long)length) != length) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeError<object>(_engine, "Invalid array length");
             }
         }

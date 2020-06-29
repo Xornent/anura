@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text.RegularExpressions;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Number;
 using Anura.JavaScript.Native.Object;
@@ -13,6 +9,10 @@ using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Descriptors.Specialized;
 using Anura.JavaScript.Runtime.Interop;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Anura.JavaScript.Native.RegExp
 {
@@ -30,38 +30,31 @@ namespace Anura.JavaScript.Native.RegExp
         private RegExpConstructor _regExpConstructor;
         private readonly Func<JsValue, JsValue[], JsValue> _defaultExec;
 
-        private RegExpPrototype(Engine engine) : base(engine)
-        {
+        private RegExpPrototype(Engine engine) : base(engine) {
             _defaultExec = Exec;
         }
 
-        public static RegExpPrototype CreatePrototypeObject(Engine engine, RegExpConstructor regExpConstructor)
-        {
+        public static RegExpPrototype CreatePrototypeObject(Engine engine, RegExpConstructor regExpConstructor) {
             var obj = new RegExpPrototype(engine)
             {
-                _prototype = engine.Object.PrototypeObject, 
+                _prototype = engine.Object.PrototypeObject,
                 _regExpConstructor = regExpConstructor
             };
 
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             const PropertyFlag lengthFlags = PropertyFlag.Configurable;
 
-            GetSetPropertyDescriptor CreateGetAccessorDescriptor(string name, Func<RegExpInstance, JsValue> valueExtractor, JsValue protoValue = null)
-            {
+            GetSetPropertyDescriptor CreateGetAccessorDescriptor(string name, Func<RegExpInstance, JsValue> valueExtractor, JsValue protoValue = null) {
                 return new GetSetPropertyDescriptor(
-                    get: new ClrFunctionInstance(Engine, name, (thisObj, arguments) =>
-                    {
-                        if (ReferenceEquals(thisObj, this))
-                        {
+                    get: new ClrFunctionInstance(Engine, name, (thisObj, arguments) => {
+                        if (ReferenceEquals(thisObj, this)) {
                             return protoValue ?? Undefined;
                         }
 
-                        if (!(thisObj is RegExpInstance r))
-                        {
+                        if (!(thisObj is RegExpInstance r)) {
                             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine);
                         }
 
@@ -100,15 +93,12 @@ namespace Anura.JavaScript.Native.RegExp
             SetSymbols(symbols);
         }
 
-        private JsValue Source(JsValue thisObj, JsValue[] arguments)
-        {
-            if (ReferenceEquals(thisObj, this))
-            {
+        private JsValue Source(JsValue thisObj, JsValue[] arguments) {
+            if (ReferenceEquals(thisObj, this)) {
                 return DefaultSource;
             }
 
-            if (!(thisObj is RegExpInstance r))
-            {
+            if (!(thisObj is RegExpInstance r)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine);
             }
 
@@ -118,8 +108,7 @@ namespace Anura.JavaScript.Native.RegExp
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/#sec-regexp.prototype-@@replace
         /// </summary>
-        private JsValue Replace(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Replace(JsValue thisObj, JsValue[] arguments) {
             var rx = AssertThisIsObjectInstance(thisObj, "RegExp.prototype.replace");
             var s = TypeConverter.ToString(arguments.At(0));
             var lengthS = s.Length;
@@ -128,8 +117,7 @@ namespace Anura.JavaScript.Native.RegExp
 
             // we need heavier logic if we have named captures
             bool mayHaveNamedCaptures = false;
-            if (!functionalReplace)
-            {
+            if (!functionalReplace) {
                 var value = TypeConverter.ToString(replaceValue);
                 replaceValue = value;
                 mayHaveNamedCaptures = value.IndexOf('$') != -1;
@@ -138,8 +126,7 @@ namespace Anura.JavaScript.Native.RegExp
             var fullUnicode = false;
             var global = TypeConverter.ToBoolean(rx.Get(PropertyGlobal));
 
-            if (global)
-            {
+            if (global) {
                 fullUnicode = TypeConverter.ToBoolean(rx.Get("unicode"));
                 rx.Set(RegExpInstance.PropertyLastIndex, 0, true);
             }
@@ -148,20 +135,16 @@ namespace Anura.JavaScript.Native.RegExp
             if (!fullUnicode
                 && !mayHaveNamedCaptures
                 && !TypeConverter.ToBoolean(rx.Get(PropertySticky))
-                && rx is RegExpInstance rei && rei.TryGetDefaultRegExpExec(out _))
-            {
+                && rx is RegExpInstance rei && rei.TryGetDefaultRegExpExec(out _)) {
                 var count = global ? int.MaxValue : 1;
 
                 string result;
-                if (functionalReplace)
-                {
-                    string Evaluator(Match match)
-                    {
+                if (functionalReplace) {
+                    string Evaluator(Match match) {
                         var replacerArgs = new List<JsValue>(match.Groups.Count + 2);
                         replacerArgs.Add(match.Value);
 
-                        for (var i = 1; i < match.Groups.Count; i++)
-                        {
+                        for (var i = 1; i < match.Groups.Count; i++) {
                             var capture = match.Groups[i];
                             replacerArgs.Add(capture.Value);
                         }
@@ -174,9 +157,7 @@ namespace Anura.JavaScript.Native.RegExp
                     }
 
                     result = rei.Value.Replace(s, Evaluator, count);
-                }
-                else
-                {
+                } else {
                     result = rei.Value.Replace(s, TypeConverter.ToString(replaceValue), count);
                 }
 
@@ -186,24 +167,20 @@ namespace Anura.JavaScript.Native.RegExp
 
             var results = new List<ObjectInstance>();
 
-            while (true)
-            {
+            while (true) {
                 var result = RegExpExec(rx, s);
-                if (result.IsNull())
-                {
+                if (result.IsNull()) {
                     break;
                 }
 
-                results.Add((ObjectInstance) result);
-                if (!global)
-                {
+                results.Add((ObjectInstance)result);
+                if (!global) {
                     break;
                 }
 
                 var matchStr = TypeConverter.ToString(result.Get(0));
-                if (matchStr == "")
-                {
-                    var thisIndex = (int) TypeConverter.ToLength(rx.Get(RegExpInstance.PropertyLastIndex));
+                if (matchStr == "") {
+                    var thisIndex = (int)TypeConverter.ToLength(rx.Get(RegExpInstance.PropertyLastIndex));
                     var nextIndex = AdvanceStringIndex(s, thisIndex, fullUnicode);
                     rx.Set(RegExpInstance.PropertyLastIndex, nextIndex);
                 }
@@ -213,19 +190,17 @@ namespace Anura.JavaScript.Native.RegExp
             var nextSourcePosition = 0;
 
             var captures = new List<string>();
-            foreach (var result in results)
-            {
-                var nCaptures = (int) result.Length;
+            foreach (var result in results) {
+                var nCaptures = (int)result.Length;
                 nCaptures = System.Math.Max(nCaptures - 1, 0);
                 var matched = TypeConverter.ToString(result.Get(0));
                 var matchLength = matched.Length;
-                var position = (int) TypeConverter.ToInteger(result.Get(PropertyIndex));
+                var position = (int)TypeConverter.ToInteger(result.Get(PropertyIndex));
                 position = System.Math.Max(System.Math.Min(position, lengthS), 0);
                 uint n = 1;
 
                 captures.Clear();
-                while (n <= nCaptures)
-                {
+                while (n <= nCaptures) {
                     var capN = result.Get(n);
                     var value = !capN.IsUndefined() ? TypeConverter.ToString(capN) : "";
                     captures.Add(value);
@@ -234,35 +209,28 @@ namespace Anura.JavaScript.Native.RegExp
 
                 var namedCaptures = result.Get("groups");
                 string replacement;
-                if (functionalReplace)
-                {
+                if (functionalReplace) {
                     var replacerArgs = new List<JsValue>();
                     replacerArgs.Add(matched);
-                    foreach (var capture in captures)
-                    {
+                    foreach (var capture in captures) {
                         replacerArgs.Add(capture);
                     }
 
                     replacerArgs.Add(position);
                     replacerArgs.Add(s);
-                    if (!namedCaptures.IsUndefined())
-                    {
+                    if (!namedCaptures.IsUndefined()) {
                         replacerArgs.Add(namedCaptures);
                     }
                     replacement = CallFunctionalReplace(replaceValue, replacerArgs);
-                }
-                else
-                {
-                    if (!namedCaptures.IsUndefined())
-                    {
+                } else {
+                    if (!namedCaptures.IsUndefined()) {
                         namedCaptures = TypeConverter.ToObject(_engine, namedCaptures);
                     }
 
                     replacement = GetSubstitution(matched, s, position, captures.ToArray(), namedCaptures, TypeConverter.ToString(replaceValue));
                 }
 
-                if (position >= nextSourcePosition)
-                {
+                if (position >= nextSourcePosition) {
                     accumulatedResult = accumulatedResult +
                                         s.Substring(nextSourcePosition, position - nextSourcePosition) +
                                         replacement;
@@ -271,17 +239,15 @@ namespace Anura.JavaScript.Native.RegExp
                 }
             }
 
-            if (nextSourcePosition >= lengthS)
-            {
+            if (nextSourcePosition >= lengthS) {
                 return accumulatedResult;
             }
 
             return accumulatedResult + s.Substring(nextSourcePosition);
         }
 
-        private static string CallFunctionalReplace(JsValue replacer, List<JsValue> replacerArgs)
-        {
-            var result = ((ICallable) replacer).Call(Undefined, replacerArgs.ToArray());
+        private static string CallFunctionalReplace(JsValue replacer, List<JsValue> replacerArgs) {
+            var result = ((ICallable)replacer).Call(Undefined, replacerArgs.ToArray());
             return TypeConverter.ToString(result);
         }
 
@@ -291,11 +257,9 @@ namespace Anura.JavaScript.Native.RegExp
             int position,
             string[] captures,
             JsValue namedCaptures,
-            string replacement)
-        {
+            string replacement) {
             // If there is no pattern, replace the pattern as is.
-            if (replacement.IndexOf('$') < 0)
-            {
+            if (replacement.IndexOf('$') < 0) {
                 return replacement;
             }
 
@@ -305,16 +269,12 @@ namespace Anura.JavaScript.Native.RegExp
             // $`	Inserts the portion of the string that precedes the matched substring.
             // $'	Inserts the portion of the string that follows the matched substring.
             // $n or $nn	Where n or nn are decimal digits, inserts the nth parenthesized submatch string, provided the first argument was a RegExp object.
-            using (var replacementBuilder = StringBuilderPool.Rent())
-            {
-                for (int i = 0; i < replacement.Length; i++)
-                {
+            using (var replacementBuilder = StringBuilderPool.Rent()) {
+                for (int i = 0; i < replacement.Length; i++) {
                     char c = replacement[i];
-                    if (c == '$' && i < replacement.Length - 1)
-                    {
+                    if (c == '$' && i < replacement.Length - 1) {
                         c = replacement[++i];
-                        switch (c)
-                        {
+                        switch (c) {
                             case '$':
                                 replacementBuilder.Builder.Append('$');
                                 break;
@@ -327,51 +287,39 @@ namespace Anura.JavaScript.Native.RegExp
                             case '\'':
                                 replacementBuilder.Builder.Append(str.Substring(position + matched.Length));
                                 break;
-                            default:
-                            {
-                                if (char.IsDigit(c))
-                                {
-                                    int matchNumber1 = c - '0';
+                            default: {
+                                    if (char.IsDigit(c)) {
+                                        int matchNumber1 = c - '0';
 
-                                    // The match number can be one or two digits long.
-                                    int matchNumber2 = 0;
-                                    if (i < replacement.Length - 1 && char.IsDigit(replacement[i + 1]))
-                                    {
-                                        matchNumber2 = matchNumber1 * 10 + (replacement[i + 1] - '0');
-                                    }
+                                        // The match number can be one or two digits long.
+                                        int matchNumber2 = 0;
+                                        if (i < replacement.Length - 1 && char.IsDigit(replacement[i + 1])) {
+                                            matchNumber2 = matchNumber1 * 10 + (replacement[i + 1] - '0');
+                                        }
 
-                                    // Try the two digit capture first.
-                                    if (matchNumber2 > 0 && matchNumber2 <= captures.Length)
-                                    {
-                                        // Two digit capture replacement.
-                                        replacementBuilder.Builder.Append(TypeConverter.ToString(captures[matchNumber2 - 1]));
-                                        i++;
-                                    }
-                                    else if (matchNumber1 > 0 && matchNumber1 <= captures.Length)
-                                    {
-                                        // Single digit capture replacement.
-                                        replacementBuilder.Builder.Append(TypeConverter.ToString(captures[matchNumber1 - 1]));
-                                    }
-                                    else
-                                    {
-                                        // Capture does not exist.
+                                        // Try the two digit capture first.
+                                        if (matchNumber2 > 0 && matchNumber2 <= captures.Length) {
+                                            // Two digit capture replacement.
+                                            replacementBuilder.Builder.Append(TypeConverter.ToString(captures[matchNumber2 - 1]));
+                                            i++;
+                                        } else if (matchNumber1 > 0 && matchNumber1 <= captures.Length) {
+                                            // Single digit capture replacement.
+                                            replacementBuilder.Builder.Append(TypeConverter.ToString(captures[matchNumber1 - 1]));
+                                        } else {
+                                            // Capture does not exist.
+                                            replacementBuilder.Builder.Append('$');
+                                            i--;
+                                        }
+                                    } else {
+                                        // Unknown replacement pattern.
                                         replacementBuilder.Builder.Append('$');
-                                        i--;
+                                        replacementBuilder.Builder.Append(c);
                                     }
-                                }
-                                else
-                                {
-                                    // Unknown replacement pattern.
-                                    replacementBuilder.Builder.Append('$');
-                                    replacementBuilder.Builder.Append(c);
-                                }
 
-                                break;
-                            }
+                                    break;
+                                }
                         }
-                    }
-                    else
-                    {
+                    } else {
                         replacementBuilder.Builder.Append(c);
                     }
                 }
@@ -383,8 +331,7 @@ namespace Anura.JavaScript.Native.RegExp
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/#sec-regexp.prototype-@@split
         /// </summary>
-        private JsValue Split(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Split(JsValue thisObj, JsValue[] arguments) {
             var rx = AssertThisIsObjectInstance(thisObj, "RegExp.prototype.split");
             var s = TypeConverter.ToString(arguments.At(0));
             var limit = arguments.At(1);
@@ -400,17 +347,14 @@ namespace Anura.JavaScript.Native.RegExp
             uint lengthA = 0;
             var lim = limit.IsUndefined() ? NumberConstructor.MaxSafeInteger : TypeConverter.ToUint32(limit);
 
-            if (lim == 0)
-            {
+            if (lim == 0) {
                 return _engine.Array.ConstructFast(0);
             }
 
-            if (s.Length == 0)
-            {
+            if (s.Length == 0) {
                 var a = _engine.Array.ConstructFast(0);
                 var z = RegExpExec(splitter, s);
-                if (!z.IsNull())
-                {
+                if (!z.IsNull()) {
                     return a;
                 }
 
@@ -418,17 +362,15 @@ namespace Anura.JavaScript.Native.RegExp
                 return a;
             }
 
-            if (!unicodeMatching && rx is RegExpInstance R && R.TryGetDefaultRegExpExec(out _))
-            {
+            if (!unicodeMatching && rx is RegExpInstance R && R.TryGetDefaultRegExpExec(out _)) {
                 // we can take faster path
 
-                if (R.Source == RegExpInstance.regExpForMatchingAllCharacters)
-                {
+                if (R.Source == RegExpInstance.regExpForMatchingAllCharacters) {
                     // if empty string, just a string split
-                    return StringPrototype.SplitWithStringSeparator(_engine, "", s, (uint) s.Length);                    
+                    return StringPrototype.SplitWithStringSeparator(_engine, "", s, (uint)s.Length);
                 }
-                
-                var a = (ArrayInstance) Engine.Array.Construct(Arguments.Empty);
+
+                var a = (ArrayInstance)Engine.Array.Construct(Arguments.Empty);
                 var match = R.Value.Match(s, 0);
 
                 if (!match.Success) // No match at all return the string in an array
@@ -439,10 +381,8 @@ namespace Anura.JavaScript.Native.RegExp
 
                 int lastIndex = 0;
                 uint index = 0;
-                while (match.Success && index < lim)
-                {
-                    if (match.Length == 0 && (match.Index == 0 || match.Index == s.Length || match.Index == lastIndex))
-                    {
+                while (match.Success && index < lim) {
+                    if (match.Length == 0 && (match.Index == 0 || match.Index == s.Length || match.Index == lastIndex)) {
                         match = match.NextMatch();
                         continue;
                     }
@@ -450,25 +390,21 @@ namespace Anura.JavaScript.Native.RegExp
                     // Add the match results to the array.
                     a.SetIndexValue(index++, s.Substring(lastIndex, match.Index - lastIndex), updateLength: true);
 
-                    if (index >= lim)
-                    {
+                    if (index >= lim) {
                         return a;
                     }
 
                     lastIndex = match.Index + match.Length;
-                    for (int i = 1; i < match.Groups.Count; i++)
-                    {
+                    for (int i = 1; i < match.Groups.Count; i++) {
                         var group = match.Groups[i];
                         var item = Undefined;
-                        if (group.Captures.Count > 0)
-                        {
+                        if (group.Captures.Count > 0) {
                             item = match.Groups[i].Value;
                         }
 
                         a.SetIndexValue(index++, item, updateLength: true);
 
-                        if (index >= lim)
-                        {
+                        if (index >= lim) {
                             return a;
                         }
                     }
@@ -486,25 +422,21 @@ namespace Anura.JavaScript.Native.RegExp
             return SplitSlow(s, splitter, unicodeMatching, lengthA, lim);
         }
 
-        private JsValue SplitSlow(string s, ObjectInstance splitter, bool unicodeMatching, uint lengthA, long lim)
-        {
+        private JsValue SplitSlow(string s, ObjectInstance splitter, bool unicodeMatching, uint lengthA, long lim) {
             var a = _engine.Array.ConstructFast(0);
             var previousStringIndex = 0;
             var currentIndex = 0;
-            while (currentIndex < s.Length)
-            {
+            while (currentIndex < s.Length) {
                 splitter.Set(RegExpInstance.PropertyLastIndex, currentIndex, true);
                 var z = RegExpExec(splitter, s);
-                if (z.IsNull())
-                {
+                if (z.IsNull()) {
                     currentIndex = AdvanceStringIndex(s, currentIndex, unicodeMatching);
                     continue;
                 }
 
-                var endIndex = (int) TypeConverter.ToLength(splitter.Get(RegExpInstance.PropertyLastIndex));
+                var endIndex = (int)TypeConverter.ToLength(splitter.Get(RegExpInstance.PropertyLastIndex));
                 endIndex = System.Math.Min(endIndex, s.Length);
-                if (endIndex == previousStringIndex)
-                {
+                if (endIndex == previousStringIndex) {
                     currentIndex = AdvanceStringIndex(s, currentIndex, unicodeMatching);
                     continue;
                 }
@@ -512,23 +444,20 @@ namespace Anura.JavaScript.Native.RegExp
                 var t = s.Substring(previousStringIndex, currentIndex - previousStringIndex);
                 a.SetIndexValue(lengthA, t, updateLength: true);
                 lengthA++;
-                if (lengthA == lim)
-                {
+                if (lengthA == lim) {
                     return a;
                 }
 
                 previousStringIndex = endIndex;
-                var numberOfCaptures = (int) TypeConverter.ToLength(z.Get(CommonProperties.Length));
+                var numberOfCaptures = (int)TypeConverter.ToLength(z.Get(CommonProperties.Length));
                 numberOfCaptures = System.Math.Max(numberOfCaptures - 1, 0);
                 var i = 1;
-                while (i <= numberOfCaptures)
-                {
+                while (i <= numberOfCaptures) {
                     var nextCapture = z.Get(i);
                     a.SetIndexValue(lengthA, nextCapture, updateLength: true);
                     i++;
                     lengthA++;
-                    if (lengthA == lim)
-                    {
+                    if (lengthA == lim) {
                         return a;
                     }
                 }
@@ -540,12 +469,10 @@ namespace Anura.JavaScript.Native.RegExp
             return a;
         }
 
-        private JsValue Flags(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Flags(JsValue thisObj, JsValue[] arguments) {
             var r = AssertThisIsObjectInstance(thisObj, "RegExp.prototype.flags");
 
-            static string AddFlagIfPresent(JsValue o, JsValue p, char flag, string s)
-            {
+            static string AddFlagIfPresent(JsValue o, JsValue p, char flag, string s) {
                 return TypeConverter.ToBoolean(o.Get(p)) ? s + flag : s;
             }
 
@@ -559,8 +486,7 @@ namespace Anura.JavaScript.Native.RegExp
             return result;
         }
 
-        private JsValue ToRegExpString(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ToRegExpString(JsValue thisObj, JsValue[] arguments) {
             var r = AssertThisIsObjectInstance(thisObj, "RegExp.prototype.toString");
 
             var pattern = TypeConverter.ToString(r.Get(PropertySource));
@@ -569,74 +495,63 @@ namespace Anura.JavaScript.Native.RegExp
             return "/" + pattern + "/" + flags;
         }
 
-        private JsValue Test(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Test(JsValue thisObj, JsValue[] arguments) {
             var r = AssertThisIsObjectInstance(thisObj, "RegExp.prototype.test");
             var s = TypeConverter.ToString(arguments.At(0));
 
             // check couple fast paths
-            if (r is RegExpInstance R && !R.FullUnicode)
-            {
-                if (!R.Sticky && !R.Global)
-                {
-                    R.Set(RegExpInstance.PropertyLastIndex, 0, throwOnError: true); 
+            if (r is RegExpInstance R && !R.FullUnicode) {
+                if (!R.Sticky && !R.Global) {
+                    R.Set(RegExpInstance.PropertyLastIndex, 0, throwOnError: true);
                     return R.Value.IsMatch(s);
                 }
 
-                var lastIndex = (int) TypeConverter.ToLength(R.Get(RegExpInstance.PropertyLastIndex));
-                if (lastIndex >= s.Length && s.Length > 0)
-                {
+                var lastIndex = (int)TypeConverter.ToLength(R.Get(RegExpInstance.PropertyLastIndex));
+                if (lastIndex >= s.Length && s.Length > 0) {
                     return JsBoolean.False;
                 }
 
                 var m = R.Value.Match(s, lastIndex);
-                if (!m.Success || (R.Sticky && m.Index != lastIndex))
-                {
-                    R.Set(RegExpInstance.PropertyLastIndex, 0, throwOnError: true); 
+                if (!m.Success || (R.Sticky && m.Index != lastIndex)) {
+                    R.Set(RegExpInstance.PropertyLastIndex, 0, throwOnError: true);
                     return JsBoolean.False;
                 }
                 R.Set(RegExpInstance.PropertyLastIndex, m.Index + m.Length, throwOnError: true);
                 return JsBoolean.True;
             }
-            
+
             var match = RegExpExec(r, s);
             return !match.IsNull();
         }
 
-        private JsValue Search(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Search(JsValue thisObj, JsValue[] arguments) {
             var rx = AssertThisIsObjectInstance(thisObj, "RegExp.prototype.search");
 
             var s = TypeConverter.ToString(arguments.At(0));
             var previousLastIndex = rx.Get(RegExpInstance.PropertyLastIndex);
-            if (!SameValue(previousLastIndex, 0))
-            {
+            if (!SameValue(previousLastIndex, 0)) {
                 rx.Set(RegExpInstance.PropertyLastIndex, 0, true);
             }
 
             var result = RegExpExec(rx, s);
             var currentLastIndex = rx.Get(RegExpInstance.PropertyLastIndex);
-            if (!SameValue(currentLastIndex, previousLastIndex))
-            {
+            if (!SameValue(currentLastIndex, previousLastIndex)) {
                 rx.Set(RegExpInstance.PropertyLastIndex, previousLastIndex, true);
             }
 
-            if (result.IsNull())
-            {
+            if (result.IsNull()) {
                 return -1;
             }
 
             return result.Get(PropertyIndex);
         }
 
-        private JsValue Match(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Match(JsValue thisObj, JsValue[] arguments) {
             var rx = AssertThisIsObjectInstance(thisObj, "RegExp.prototype.match");
 
             var s = TypeConverter.ToString(arguments.At(0));
             var global = TypeConverter.ToBoolean(rx.Get(PropertyGlobal));
-            if (!global)
-            {
+            if (!global) {
                 return RegExpExec(rx, s);
             }
 
@@ -645,44 +560,36 @@ namespace Anura.JavaScript.Native.RegExp
 
             if (!fullUnicode
                 && rx is RegExpInstance rei
-                && rei.TryGetDefaultRegExpExec(out _))
-            {
+                && rei.TryGetDefaultRegExpExec(out _)) {
                 // fast path
                 var a = Engine.Array.ConstructFast(0);
 
-                if (rei.Sticky)
-                {
+                if (rei.Sticky) {
                     var match = rei.Value.Match(s);
-                    if (!match.Success || match.Index != 0)
-                    {
+                    if (!match.Success || match.Index != 0) {
                         return Null;
                     }
 
                     a.SetIndexValue(0, match.Value, updateLength: false);
                     uint li = 0;
-                    while (true)
-                    {
+                    while (true) {
                         match = match.NextMatch();
                         if (!match.Success || match.Index != ++li)
                             break;
-                        a.SetIndexValue(li,  match.Value, updateLength: false);
+                        a.SetIndexValue(li, match.Value, updateLength: false);
                     }
                     a.SetLength(li);
                     return a;
-                }
-                else
-                {
+                } else {
                     var matches = rei.Value.Matches(s);
-                    if (matches.Count == 0)
-                    {
+                    if (matches.Count == 0) {
                         return Null;
                     }
 
-                    a.EnsureCapacity((uint) matches.Count);
-                    a.SetLength((uint) matches.Count);
-                    for (var i = 0; i < matches.Count; i++)
-                    {
-                        a.SetIndexValue((uint) i, matches[i].Value, updateLength: false);
+                    a.EnsureCapacity((uint)matches.Count);
+                    a.SetLength((uint)matches.Count);
+                    for (var i = 0; i < matches.Count; i++) {
+                        a.SetIndexValue((uint)i, matches[i].Value, updateLength: false);
                     }
                     return a;
                 }
@@ -691,24 +598,20 @@ namespace Anura.JavaScript.Native.RegExp
             return MatchSlow(rx, s, fullUnicode);
         }
 
-        private JsValue MatchSlow(ObjectInstance rx, string s, bool fullUnicode)
-        {
+        private JsValue MatchSlow(ObjectInstance rx, string s, bool fullUnicode) {
             var a = Engine.Array.ConstructFast(0);
             uint n = 0;
-            while (true)
-            {
+            while (true) {
                 var result = RegExpExec(rx, s);
-                if (result.IsNull())
-                {
+                if (result.IsNull()) {
                     a.SetLength(n);
                     return n == 0 ? Null : a;
                 }
 
                 var matchStr = TypeConverter.ToString(result.Get(JsString.NumberZeroString));
                 a.SetIndexValue(n, matchStr, updateLength: false);
-                if (matchStr == "")
-                {
-                    var thisIndex = (int) TypeConverter.ToLength(rx.Get(RegExpInstance.PropertyLastIndex));
+                if (matchStr == "") {
+                    var thisIndex = (int)TypeConverter.ToLength(rx.Get(RegExpInstance.PropertyLastIndex));
                     var nextIndex = AdvanceStringIndex(s, thisIndex, fullUnicode);
                     rx.Set(RegExpInstance.PropertyLastIndex, nextIndex, true);
                 }
@@ -720,8 +623,7 @@ namespace Anura.JavaScript.Native.RegExp
         /// <summary>
         /// https://tc39.es/ecma262/#sec-regexp-prototype-matchall
         /// </summary>
-        private JsValue MatchAll(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue MatchAll(JsValue thisObj, JsValue[] arguments) {
             var r = AssertThisIsObjectInstance(thisObj, "RegExp.prototype.matchAll");
 
             var s = TypeConverter.ToString(arguments.At(0));
@@ -743,54 +645,44 @@ namespace Anura.JavaScript.Native.RegExp
             return _engine.Iterator.CreateRegExpStringIterator(matcher, s, global, fullUnicode);
         }
 
-        private static int AdvanceStringIndex(string s, int index, bool unicode)
-        {
-            if (!unicode || index + 1 >= s.Length)
-            {
+        private static int AdvanceStringIndex(string s, int index, bool unicode) {
+            if (!unicode || index + 1 >= s.Length) {
                 return index + 1;
             }
 
             var first = s[index];
-            if (first < 0xD800 || first > 0xDBFF)
-            {
+            if (first < 0xD800 || first > 0xDBFF) {
                 return index + 1;
             }
 
             var second = s[index + 1];
-            if (second < 0xDC00 || second > 0xDFFF)
-            {
+            if (second < 0xDC00 || second > 0xDFFF) {
                 return index + 1;
             }
 
             return index + 2;
         }
 
-        internal static JsValue RegExpExec(ObjectInstance r, string s)
-        {
+        internal static JsValue RegExpExec(ObjectInstance r, string s) {
             var exec = r.Get(PropertyExec);
-            if (exec is ICallable callable)
-            {
-                var result = callable.Call(r, new JsValue[]  { s });
-                if (!result.IsNull() && !result.IsObject())
-                {
+            if (exec is ICallable callable) {
+                var result = callable.Call(r, new JsValue[] { s });
+                if (!result.IsNull() && !result.IsObject()) {
                     return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(r.Engine);
                 }
 
                 return result;
             }
 
-            if (!(r is RegExpInstance ri))
-            {
+            if (!(r is RegExpInstance ri)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(r.Engine);
             }
 
             return RegExpBuiltinExec(ri, s);
         }
 
-        internal bool TryGetDefaultExec(ObjectInstance o, out Func<JsValue, JsValue[], JsValue> exec)
-        {
-            if (o.Get(PropertyExec) is ClrFunctionInstance functionInstance && functionInstance._func == _defaultExec)
-            {
+        internal bool TryGetDefaultExec(ObjectInstance o, out Func<JsValue, JsValue[], JsValue> exec) {
+            if (o.Get(PropertyExec) is ClrFunctionInstance functionInstance && functionInstance._func == _defaultExec) {
                 exec = _defaultExec;
                 return true;
             }
@@ -799,22 +691,19 @@ namespace Anura.JavaScript.Native.RegExp
             return false;
         }
 
-        private static JsValue RegExpBuiltinExec(RegExpInstance R, string s)
-        {
+        private static JsValue RegExpBuiltinExec(RegExpInstance R, string s) {
             var length = s.Length;
-            var lastIndex = (int) TypeConverter.ToLength(R.Get(RegExpInstance.PropertyLastIndex));
+            var lastIndex = (int)TypeConverter.ToLength(R.Get(RegExpInstance.PropertyLastIndex));
 
             var global = R.Global;
             var sticky = R.Sticky;
-            if (!global && !sticky)
-            {
+            if (!global && !sticky) {
                 lastIndex = 0;
             }
 
             if (R.Source == RegExpInstance.regExpForMatchingAllCharacters)  // Reg Exp is really ""
             {
-                if (lastIndex > s.Length)
-                {
+                if (lastIndex > s.Length) {
                     return Null;
                 }
 
@@ -829,12 +718,10 @@ namespace Anura.JavaScript.Native.RegExp
             var matcher = R.Value;
             var fullUnicode = R.FullUnicode;
 
-            if (!global & !sticky && !fullUnicode)
-            {
+            if (!global & !sticky && !fullUnicode) {
                 // we can the non-stateful fast path which is the common case
                 var m = matcher.Match(s, lastIndex);
-                if (!m.Success)
-                {
+                if (!m.Success) {
                     return Null;
                 }
 
@@ -843,42 +730,34 @@ namespace Anura.JavaScript.Native.RegExp
 
             // the stateful version
             Match match;
-            while (true)
-            {
-                if (lastIndex > length)
-                {
+            while (true) {
+                if (lastIndex > length) {
                     R.Set(RegExpInstance.PropertyLastIndex, JsNumber.PositiveZero, true);
                     return Null;
                 }
 
                 match = R.Value.Match(s, lastIndex);
                 var success = match.Success && (!sticky || match.Index == lastIndex);
-                if (!success)
-                {
-                    if (sticky)
-                    {
+                if (!success) {
+                    if (sticky) {
                         R.Set(RegExpInstance.PropertyLastIndex, JsNumber.PositiveZero, true);
                         return Null;
                     }
 
                     lastIndex = AdvanceStringIndex(s, lastIndex, fullUnicode);
-                }
-                else
-                {
+                } else {
                     break;
                 }
             }
 
             var e = match.Index + match.Length;
-            if (fullUnicode)
-            {
+            if (fullUnicode) {
                 // e is an index into the Input character list, derived from S, matched by matcher.
                 // Let eUTF be the smallest index into S that corresponds to the character at element e of Input.
                 // If e is greater than or equal to the number of elements in Input, then eUTF is the number of code units in S.
                 // Set e to eUTF.
                 var indexes = StringInfo.ParseCombiningCharacters(s);
-                if (match.Index < indexes.Length)
-                {
+                if (match.Index < indexes.Length) {
                     var sub = StringInfo.GetNextTextElement(s, match.Index);
                     e += sub.Length - 1;
                 }
@@ -889,19 +768,16 @@ namespace Anura.JavaScript.Native.RegExp
             return CreateReturnValueArray(R.Engine, match, s, fullUnicode);
         }
 
-        private static ArrayInstance CreateReturnValueArray(Engine engine, Match match, string inputValue, bool fullUnicode)
-        {
-            var array = engine.Array.ConstructFast((ulong) match.Groups.Count);
+        private static ArrayInstance CreateReturnValueArray(Engine engine, Match match, string inputValue, bool fullUnicode) {
+            var array = engine.Array.ConstructFast((ulong)match.Groups.Count);
             array.CreateDataProperty(PropertyIndex, match.Index);
             array.CreateDataProperty(PropertyInput, inputValue);
 
             ObjectInstance groups = null;
-            for (uint i = 0; i < match.Groups.Count; i++)
-            {
-                var capture = i < match.Groups.Count ? match.Groups[(int) i] : null;
+            for (uint i = 0; i < match.Groups.Count; i++) {
+                var capture = i < match.Groups.Count ? match.Groups[(int)i] : null;
                 var capturedValue = Undefined;
-                if (capture?.Success == true)
-                {
+                if (capture?.Success == true) {
                     capturedValue = fullUnicode
                         ? StringInfo.GetNextTextElement(inputValue, capture.Index)
                         : capture.Value;
@@ -918,10 +794,8 @@ namespace Anura.JavaScript.Native.RegExp
             return array;
         }
 
-        private JsValue Exec(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!(thisObj is RegExpInstance r))
-            {
+        private JsValue Exec(JsValue thisObj, JsValue[] arguments) {
+            if (!(thisObj is RegExpInstance r)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(_engine);
             }
 

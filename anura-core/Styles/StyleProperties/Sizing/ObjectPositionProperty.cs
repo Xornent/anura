@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    internal sealed class ObjectPositionProperty : Property {
-        private static readonly IValueConverter StyleConverter = Converters.PointConverter.OrDefault (Point.Center);
+namespace Anura.Styles
+{
+    internal sealed class ObjectPositionProperty : Property
+    {
+        private static readonly IValueConverter StyleConverter = Converters.PointConverter.OrDefault(Point.Center);
 
-        internal ObjectPositionProperty () : base (PropertyNames.ObjectPosition, PropertyFlags.Animatable) { }
+        internal ObjectPositionProperty() : base(PropertyNames.ObjectPosition, PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

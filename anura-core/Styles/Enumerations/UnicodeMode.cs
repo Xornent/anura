@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum UnicodeMode : byte {
+namespace Anura.Styles
+{
+    public enum UnicodeMode : byte
+    {
         Normal,
         Embed,
         Isolate,

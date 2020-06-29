@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum ParseError : byte {
+namespace Anura.Styles
+{
+    public enum ParseError : byte
+    {
         EOF = 0,
         InvalidCharacter = 0x10,
         InvalidBlockStart = 0x11,

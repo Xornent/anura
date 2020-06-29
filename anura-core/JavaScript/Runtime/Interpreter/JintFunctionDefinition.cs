@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-using System.Linq;
+using Anura.JavaScript.Runtime.Interpreter.Statements;
 using Esprima;
 using Esprima.Ast;
-using Anura.JavaScript.Runtime.Interpreter.Statements;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Anura.JavaScript.Runtime.Interpreter
 {
@@ -18,8 +18,7 @@ namespace Anura.JavaScript.Runtime.Interpreter
 
         public readonly HoistingScope _hoistingScope;
 
-        public JintFunctionDefinition(Engine engine, IFunction function)
-        {
+        public JintFunctionDefinition(Engine engine, IFunction function) {
             _function = function;
             _hoistingScope = function.HoistingScope;
             _name = !string.IsNullOrEmpty(function.Id?.Name) ? function.Id.Name : null;
@@ -27,19 +26,14 @@ namespace Anura.JavaScript.Runtime.Interpreter
             _parameterNames = GetParameterNames(function);
 
             Statement bodyStatement;
-            if (function.Expression)
-            {
-                bodyStatement = new ReturnStatement((Expression) function.Body);
-            }
-            else
-            {
+            if (function.Expression) {
+                bodyStatement = new ReturnStatement((Expression)function.Body);
+            } else {
                 // Esprima doesn't detect strict at the moment for
                 // language/expressions/object/method-definition/name-invoke-fn-strict.js
-                var blockStatement = (BlockStatement) function.Body;
-                for (int i = 0; i < blockStatement.Body.Count; ++i)
-                {
-                    if (blockStatement.Body[i] is Directive d && d.Directiv == "use strict")
-                    {
+                var blockStatement = (BlockStatement)function.Body;
+                for (int i = 0; i < blockStatement.Body.Count; ++i) {
+                    if (blockStatement.Body[i] is Directive d && d.Directiv == "use strict") {
                         _strict = true;
                     }
                 }
@@ -49,59 +43,46 @@ namespace Anura.JavaScript.Runtime.Interpreter
             _body = JintStatement.Build(engine, bodyStatement);
         }
 
-        private IEnumerable<Identifier> GetParameterIdentifiers(INode parameter)
-        {
-            if (parameter is Identifier identifier)
-            {
-                return new [] { identifier };
+        private IEnumerable<Identifier> GetParameterIdentifiers(INode parameter) {
+            if (parameter is Identifier identifier) {
+                return new[] { identifier };
             }
-            if (parameter is RestElement restElement)
-            {
+            if (parameter is RestElement restElement) {
                 _hasRestParameter = true;
                 return GetParameterIdentifiers(restElement.Argument);
             }
-            if (parameter is ArrayPattern arrayPattern)
-            {
+            if (parameter is ArrayPattern arrayPattern) {
                 return arrayPattern.Elements.SelectMany(GetParameterIdentifiers);
             }
-            if (parameter is ObjectPattern objectPattern)
-            {
+            if (parameter is ObjectPattern objectPattern) {
                 return objectPattern.Properties.SelectMany(property =>
                     property is Property p
                         ? GetParameterIdentifiers(p.Value)
-                        : GetParameterIdentifiers((RestElement) property)
+                        : GetParameterIdentifiers((RestElement)property)
                 );
             }
-            if (parameter is AssignmentPattern assignmentPattern)
-            {
+            if (parameter is AssignmentPattern assignmentPattern) {
                 return GetParameterIdentifiers(assignmentPattern.Left);
             }
 
             return Enumerable.Empty<Identifier>();
         }
 
-        private string[] GetParameterNames(IFunction functionDeclaration)
-        {
+        private string[] GetParameterNames(IFunction functionDeclaration) {
             var parameterNames = new List<string>();
             var functionDeclarationParams = functionDeclaration.Params;
             int count = functionDeclarationParams.Count;
             bool onlyIdentifiers = true;
-            for (var i = 0; i < count; i++)
-            {
+            for (var i = 0; i < count; i++) {
                 var parameter = functionDeclarationParams[i];
-                if (parameter is Identifier id)
-                {
+                if (parameter is Identifier id) {
                     parameterNames.Add(id.Name);
-                    if (onlyIdentifiers)
-                    {
+                    if (onlyIdentifiers) {
                         _length++;
                     }
-                }
-                else
-                {
+                } else {
                     onlyIdentifiers = false;
-                    foreach (var identifier in GetParameterIdentifiers(parameter))
-                    {
+                    foreach (var identifier in GetParameterIdentifiers(parameter)) {
                         parameterNames.Add(identifier.Name);
                     }
                 }

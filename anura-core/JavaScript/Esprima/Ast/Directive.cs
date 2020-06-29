@@ -5,8 +5,7 @@
         public readonly string Directiv;
 
         public Directive(Expression expression, string directive)
-            :base(expression)
-        {
+            : base(expression) {
             Directiv = directive;
         }
     }

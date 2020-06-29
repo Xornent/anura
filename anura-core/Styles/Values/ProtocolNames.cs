@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public static class ProtocolNames {
+namespace Anura.Styles
+{
+    public static class ProtocolNames
+    {
         public static readonly string Http = "http";
         public static readonly string Https = "https";
         public static readonly string Ftp = "ftp";
@@ -33,12 +35,12 @@ namespace Anura.Styles {
             Gopher
         };
 
-        public static bool IsRelative (string protocol) {
-            return RelativeProtocols.Contains (protocol);
+        public static bool IsRelative(string protocol) {
+            return RelativeProtocols.Contains(protocol);
         }
 
-        public static bool IsOriginable (string protocol) {
-            return OriginalableProtocols.Contains (protocol);
+        public static bool IsOriginable(string protocol) {
+            return OriginalableProtocols.Contains(protocol);
         }
     }
 }

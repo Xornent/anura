@@ -1,8 +1,8 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.References;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Expressions
 {
@@ -12,24 +12,19 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
         private readonly JintExpression _right;
         private readonly AssignmentOperator _operator;
 
-        private JintAssignmentExpression(Engine engine, AssignmentExpression expression) : base(engine, expression)
-        {
-            _left = Build(engine, (Expression) expression.Left);
+        private JintAssignmentExpression(Engine engine, AssignmentExpression expression) : base(engine, expression) {
+            _left = Build(engine, (Expression)expression.Left);
             _right = Build(engine, expression.Right);
             _operator = expression.Operator;
         }
 
-        internal static JintExpression Build(Engine engine, AssignmentExpression expression)
-        {
-            if (expression.Operator == AssignmentOperator.Assign)
-            {
-                if (expression.Left is Expression)
-                {
+        internal static JintExpression Build(Engine engine, AssignmentExpression expression) {
+            if (expression.Operator == AssignmentOperator.Assign) {
+                if (expression.Left is Expression) {
                     return new SimpleAssignmentExpression(engine, expression);
                 }
 
-                if (expression.Left is BindingPattern)
-                {
+                if (expression.Left is BindingPattern) {
                     return new BindingPatternAssignmentExpression(engine, expression);
                 }
             }
@@ -37,36 +32,27 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             return new JintAssignmentExpression(engine, expression);
         }
 
-        protected override object EvaluateInternal()
-        {
+        protected override object EvaluateInternal() {
             var lref = _left.Evaluate() as Reference ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowReferenceError<Reference>(_engine);
 
             var rval = _right.GetValue();
             var lval = _engine.GetValue(lref, false);
 
-            switch (_operator)
-            {
+            switch (_operator) {
                 case AssignmentOperator.PlusAssign:
-                    if (AreIntegerOperands(lval, rval))
-                    {
-                        lval = (long) lval.AsInteger() + rval.AsInteger();
-                    }
-                    else
-                    {
+                    if (AreIntegerOperands(lval, rval)) {
+                        lval = (long)lval.AsInteger() + rval.AsInteger();
+                    } else {
                         var lprim = TypeConverter.ToPrimitive(lval);
                         var rprim = TypeConverter.ToPrimitive(rval);
 
-                        if (lprim.IsString() || rprim.IsString())
-                        {
-                            if (!(lprim is JsString jsString))
-                            {
+                        if (lprim.IsString() || rprim.IsString()) {
+                            if (!(lprim is JsString jsString)) {
                                 jsString = new JsString.ConcatenatedString(TypeConverter.ToString(lprim));
                             }
 
                             lval = jsString.Append(rprim);
-                        }
-                        else
-                        {
+                        } else {
                             lval = TypeConverter.ToNumber(lprim) + TypeConverter.ToNumber(rprim);
                         }
                     }
@@ -80,16 +66,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                     break;
 
                 case AssignmentOperator.TimesAssign:
-                    if (AreIntegerOperands(lval, rval))
-                    {
-                        lval = (long) lval.AsInteger() * rval.AsInteger();
-                    }
-                    else if (lval.IsUndefined() || rval.IsUndefined())
-                    {
+                    if (AreIntegerOperands(lval, rval)) {
+                        lval = (long)lval.AsInteger() * rval.AsInteger();
+                    } else if (lval.IsUndefined() || rval.IsUndefined()) {
                         lval = Undefined.Instance;
-                    }
-                    else
-                    {
+                    } else {
                         lval = TypeConverter.ToNumber(lval) * TypeConverter.ToNumber(rval);
                     }
 
@@ -100,12 +81,9 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                     break;
 
                 case AssignmentOperator.ModuloAssign:
-                    if (lval.IsUndefined() || rval.IsUndefined())
-                    {
+                    if (lval.IsUndefined() || rval.IsUndefined()) {
                         lval = Undefined.Instance;
-                    }
-                    else
-                    {
+                    } else {
                         lval = TypeConverter.ToNumber(lval) % TypeConverter.ToNumber(rval);
                     }
 
@@ -124,15 +102,15 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                     break;
 
                 case AssignmentOperator.LeftShiftAssign:
-                    lval = TypeConverter.ToInt32(lval) << (int) (TypeConverter.ToUint32(rval) & 0x1F);
+                    lval = TypeConverter.ToInt32(lval) << (int)(TypeConverter.ToUint32(rval) & 0x1F);
                     break;
 
                 case AssignmentOperator.RightShiftAssign:
-                    lval = TypeConverter.ToInt32(lval) >> (int) (TypeConverter.ToUint32(rval) & 0x1F);
+                    lval = TypeConverter.ToInt32(lval) >> (int)(TypeConverter.ToUint32(rval) & 0x1F);
                     break;
 
                 case AssignmentOperator.UnsignedRightShiftAssign:
-                    lval = (uint) TypeConverter.ToInt32(lval) >> (int) (TypeConverter.ToUint32(rval) & 0x1F);
+                    lval = (uint)TypeConverter.ToInt32(lval) >> (int)(TypeConverter.ToUint32(rval) & 0x1F);
                     break;
 
                 default:
@@ -154,15 +132,11 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
             private readonly bool _evalOrArguments;
             private readonly ArrayPattern _arrayPattern;
 
-            public SimpleAssignmentExpression(Engine engine, AssignmentExpression expression) : base(engine, expression)
-            {
-                if (expression.Left is ArrayPattern arrayPattern)
-                {
+            public SimpleAssignmentExpression(Engine engine, AssignmentExpression expression) : base(engine, expression) {
+                if (expression.Left is ArrayPattern arrayPattern) {
                     _arrayPattern = arrayPattern;
-                }
-                else
-                {
-                    _left = Build(engine, (Expression) expression.Left);
+                } else {
+                    _left = Build(engine, (Expression)expression.Left);
                     _leftIdentifier = _left as JintIdentifierExpression;
                     _evalOrArguments = _leftIdentifier?.HasEvalOrArguments == true;
                 }
@@ -170,17 +144,12 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                 _right = Build(engine, expression.Right);
             }
 
-            protected override object EvaluateInternal()
-            {
+            protected override object EvaluateInternal() {
                 JsValue rval = null;
-                if (_leftIdentifier != null)
-                {
+                if (_leftIdentifier != null) {
                     rval = AssignToIdentifier(_engine, _leftIdentifier, _right, _evalOrArguments);
-                }
-                else if (_arrayPattern != null)
-                {
-                    foreach (var element in _arrayPattern.Elements)
-                    {
+                } else if (_arrayPattern != null) {
+                    foreach (var element in _arrayPattern.Elements) {
                         AssignToIdentifier(_engine, _leftIdentifier, _right, false);
                     }
                 }
@@ -188,8 +157,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                 return rval ?? SetValue();
             }
 
-            private JsValue SetValue()
-            {
+            private JsValue SetValue() {
                 // slower version
                 var lref = _left.Evaluate() as Reference ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowReferenceError<Reference>(_engine);
                 lref.AssertValid(_engine);
@@ -205,8 +173,7 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                 Engine engine,
                 JintIdentifierExpression left,
                 JintExpression right,
-                bool hasEvalOrArguments)
-            {
+                bool hasEvalOrArguments) {
                 var env = engine.ExecutionContext.LexicalEnvironment;
                 var strict = StrictModeScope.IsStrictModeCode;
                 if (LexicalEnvironment.TryGetIdentifierEnvironmentWithBindingValue(
@@ -214,18 +181,15 @@ namespace Anura.JavaScript.Runtime.Interpreter.Expressions
                     left.ExpressionName,
                     strict,
                     out var environmentRecord,
-                    out _))
-                {
-                    if (strict && hasEvalOrArguments)
-                    {
+                    out _)) {
+                    if (strict && hasEvalOrArguments) {
                         Anura.JavaScript.Runtime.ExceptionHelper.ThrowSyntaxError(engine);
                     }
 
                     var rval = right.GetValue().Clone();
 
-                    if (right._expression.IsFunctionWithName())
-                    {
-                        ((FunctionInstance) rval).SetFunctionName(left.ExpressionName);
+                    if (right._expression.IsFunctionWithName()) {
+                        ((FunctionInstance)rval).SetFunctionName(left.ExpressionName);
                     }
 
                     environmentRecord.SetMutableBinding(left.ExpressionName, rval, strict);

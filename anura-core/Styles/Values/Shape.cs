@@ -1,6 +1,8 @@
-namespace Anura.Styles {
-    public sealed class Shape {
-        public Shape (Length top, Length right, Length bottom, Length left) {
+namespace Anura.Styles
+{
+    public sealed class Shape
+    {
+        public Shape(Length top, Length right, Length bottom, Length left) {
             Top = top;
             Right = right;
             Bottom = bottom;

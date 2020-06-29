@@ -1,8 +1,8 @@
-﻿using System.Linq;
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Native.Symbol;
 using Anura.JavaScript.Runtime.Descriptors;
+using System.Linq;
 
 namespace Anura.JavaScript.Runtime.Environments
 {
@@ -15,27 +15,23 @@ namespace Anura.JavaScript.Runtime.Environments
         private readonly ObjectInstance _bindingObject;
         private readonly bool _provideThis;
 
-        public ObjectEnvironmentRecord(Engine engine, ObjectInstance bindingObject, bool provideThis) : base(engine)
-        {
+        public ObjectEnvironmentRecord(Engine engine, ObjectInstance bindingObject, bool provideThis) : base(engine) {
             _bindingObject = bindingObject;
             _provideThis = provideThis;
         }
 
-        public override bool HasBinding(string name)
-        {
+        public override bool HasBinding(string name) {
             var property = new JsString(name);
             var foundBinding = HasProperty(property);
 
-            if (!foundBinding)
-            {
+            if (!foundBinding) {
                 return false;
             }
 
             return !IsBlocked(name);
         }
 
-        private bool HasProperty(JsValue property)
-        {
+        private bool HasProperty(JsValue property) {
             return _bindingObject.HasProperty(property);
         }
 
@@ -43,13 +39,11 @@ namespace Anura.JavaScript.Runtime.Environments
             in Key name,
             bool strict,
             out Binding binding,
-            out JsValue value)
-        {
+            out JsValue value) {
             // we unwrap by name
             binding = default;
 
-            if (!HasProperty(name.Name) || IsBlocked(name))
-            {
+            if (!HasProperty(name.Name) || IsBlocked(name)) {
                 value = default;
                 return false;
             }
@@ -59,14 +53,11 @@ namespace Anura.JavaScript.Runtime.Environments
             return true;
         }
 
-        private bool IsBlocked(string property)
-        {
+        private bool IsBlocked(string property) {
             var unscopables = _bindingObject.Get(GlobalSymbolRegistry.Unscopables);
-            if (unscopables is ObjectInstance oi)
-            {
+            if (unscopables is ObjectInstance oi) {
                 var blocked = TypeConverter.ToBoolean(oi.Get(new JsString(property)));
-                if (blocked)
-                {
+                if (blocked) {
                     return true;
                 }
             }
@@ -77,8 +68,7 @@ namespace Anura.JavaScript.Runtime.Environments
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-10.2.1.2.2
         /// </summary>
-        public override void CreateMutableBinding(string name, JsValue value, bool configurable = false)
-        {
+        public override void CreateMutableBinding(string name, JsValue value, bool configurable = false) {
             var propertyDescriptor = configurable
                 ? new PropertyDescriptor(value, PropertyFlag.ConfigurableEnumerableWritable | PropertyFlag.MutableBinding)
                 : new PropertyDescriptor(value, PropertyFlag.NonConfigurable | PropertyFlag.MutableBinding);
@@ -86,52 +76,42 @@ namespace Anura.JavaScript.Runtime.Environments
             _bindingObject.DefinePropertyOrThrow(name, propertyDescriptor);
         }
 
-        public override void SetMutableBinding(string name, JsValue value, bool strict)
-        {
-            if (!_bindingObject.Set(name, value) && strict)
-            {
+        public override void SetMutableBinding(string name, JsValue value, bool strict) {
+            if (!_bindingObject.Set(name, value) && strict) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_engine);
             }
         }
 
-        public override JsValue GetBindingValue(string name, bool strict)
-        {
+        public override JsValue GetBindingValue(string name, bool strict) {
             var desc = _bindingObject.GetProperty(name);
-            if (strict && desc == PropertyDescriptor.Undefined)
-            {
+            if (strict && desc == PropertyDescriptor.Undefined) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowReferenceError(_engine, name.ToString());
             }
 
             return ObjectInstance.UnwrapJsValue(desc, this);
         }
 
-        public override bool DeleteBinding(string name)
-        {
+        public override bool DeleteBinding(string name) {
             return _bindingObject.Delete(name);
         }
 
-        public override JsValue ImplicitThisValue()
-        {
-            if (_provideThis)
-            {
+        public override JsValue ImplicitThisValue() {
+            if (_provideThis) {
                 return _bindingObject;
             }
 
             return Undefined;
         }
 
-        internal override string[] GetAllBindingNames()
-        {
-            if (!ReferenceEquals(_bindingObject, null))
-            {
-                return _bindingObject.GetOwnProperties().Select( x=> x.Key.ToString()).ToArray();
+        internal override string[] GetAllBindingNames() {
+            if (!ReferenceEquals(_bindingObject, null)) {
+                return _bindingObject.GetOwnProperties().Select(x => x.Key.ToString()).ToArray();
             }
 
             return System.Array.Empty<string>();
         }
 
-        public override bool Equals(JsValue other)
-        {
+        public override bool Equals(JsValue other) {
             return ReferenceEquals(_bindingObject, other);
         }
     }

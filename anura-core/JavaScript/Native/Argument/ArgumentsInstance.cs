@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading;
-using Anura.JavaScript.Native.Function;
+﻿using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Object;
 using Anura.JavaScript.Native.Symbol;
 using Anura.JavaScript.Runtime;
@@ -8,6 +6,8 @@ using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Descriptors.Specialized;
 using Anura.JavaScript.Runtime.Environments;
 using Anura.JavaScript.Runtime.Interop;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace Anura.JavaScript.Native.Argument
 {
@@ -27,17 +27,15 @@ namespace Anura.JavaScript.Native.Argument
         private bool _canReturnToPool;
 
         internal ArgumentsInstance(Engine engine)
-            : base(engine, ObjectClass.Arguments, InternalTypes.Object | InternalTypes.RequiresCloning)
-        {
+            : base(engine, ObjectClass.Arguments, InternalTypes.Object | InternalTypes.RequiresCloning) {
         }
 
         internal void Prepare(
-            FunctionInstance func, 
-            string[] names, 
-            JsValue[] args, 
-            EnvironmentRecord env, 
-            bool strict)
-        {
+            FunctionInstance func,
+            string[] names,
+            JsValue[] args,
+            EnvironmentRecord env,
+            bool strict) {
             _func = func;
             _names = names;
             _args = args;
@@ -49,31 +47,25 @@ namespace Anura.JavaScript.Native.Argument
             ClearProperties();
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             _canReturnToPool = false;
 
             SetOwnProperty(CommonProperties.Length, new PropertyDescriptor(_args.Length, PropertyFlag.NonEnumerable));
 
             var args = _args;
             ObjectInstance map = null;
-            if (args.Length > 0)
-            {
+            if (args.Length > 0) {
                 HashSet<string> mappedNamed = null;
-                if (!_strict)
-                {
+                if (!_strict) {
                     mappedNamed = _mappedNamed.Value;
                     mappedNamed.Clear();
                 }
 
-                for (uint i = 0; i < (uint) args.Length; i++)
-                {
+                for (uint i = 0; i < (uint)args.Length; i++) {
                     SetOwnProperty(i, new PropertyDescriptor(args[i], PropertyFlag.ConfigurableEnumerableWritable));
-                    if (i < _names.Length)
-                    {
+                    if (i < _names.Length) {
                         var name = _names[i];
-                        if (!_strict && !mappedNamed.Contains(name))
-                        {
+                        if (!_strict && !mappedNamed.Contains(name)) {
                             map ??= Engine.Object.Construct(Arguments.Empty);
                             mappedNamed.Add(name);
                             map.SetOwnProperty(i, new ClrAccessDescriptor(_env, Engine, name));
@@ -85,13 +77,11 @@ namespace Anura.JavaScript.Native.Argument
             ParameterMap = map;
 
             // step 13
-            if (!_strict)
-            {
+            if (!_strict) {
                 DefinePropertyOrThrow(CommonProperties.Callee, new PropertyDescriptor(_func, PropertyFlag.NonEnumerable));
             }
             // step 14
-            else
-            {
+            else {
                 DefinePropertyOrThrow(CommonProperties.Caller, _engine._getSetThrower);
                 DefinePropertyOrThrow(CommonProperties.Callee, _engine._getSetThrower);
             }
@@ -102,20 +92,16 @@ namespace Anura.JavaScript.Native.Argument
 
         public ObjectInstance ParameterMap { get; set; }
 
-        public override PropertyDescriptor GetOwnProperty(JsValue property)
-        {
+        public override PropertyDescriptor GetOwnProperty(JsValue property) {
             EnsureInitialized();
 
-            if (!_strict && !ReferenceEquals(ParameterMap, null))
-            {
+            if (!_strict && !ReferenceEquals(ParameterMap, null)) {
                 var desc = base.GetOwnProperty(property);
-                if (desc == PropertyDescriptor.Undefined)
-                {
+                if (desc == PropertyDescriptor.Undefined) {
                     return desc;
                 }
 
-                if (ParameterMap.TryGetValue(property, out var jsValue) && !jsValue.IsUndefined())
-                {
+                if (ParameterMap.TryGetValue(property, out var jsValue) && !jsValue.IsUndefined()) {
                     desc.Value = jsValue;
                 }
 
@@ -128,19 +114,16 @@ namespace Anura.JavaScript.Native.Argument
         /// Implementation from ObjectInstance official specs as the one
         /// in ObjectInstance is optimized for the general case and wouldn't work
         /// for arrays
-        public override bool Set(JsValue property, JsValue value, JsValue receiver)
-        {
+        public override bool Set(JsValue property, JsValue value, JsValue receiver) {
             EnsureInitialized();
 
-            if (!CanPut(property))
-            {
+            if (!CanPut(property)) {
                 return false;
             }
 
             var ownDesc = GetOwnProperty(property);
 
-            if (ownDesc.IsDataDescriptor())
-            {
+            if (ownDesc.IsDataDescriptor()) {
                 var valueDesc = new PropertyDescriptor(value, PropertyFlag.None);
                 return DefineOwnProperty(property, valueDesc);
             }
@@ -148,16 +131,12 @@ namespace Anura.JavaScript.Native.Argument
             // property is an accessor or inherited
             var desc = GetProperty(property);
 
-            if (desc.IsAccessorDescriptor())
-            {
-                if (!(desc.Set is ICallable setter))
-                {
+            if (desc.IsAccessorDescriptor()) {
+                if (!(desc.Set is ICallable setter)) {
                     return false;
                 }
-                setter.Call(receiver, new[] {value});
-            }
-            else
-            {
+                setter.Call(receiver, new[] { value });
+            } else {
                 var newDesc = new PropertyDescriptor(value, PropertyFlag.ConfigurableEnumerableWritable);
                 return DefineOwnProperty(property, newDesc);
             }
@@ -165,42 +144,32 @@ namespace Anura.JavaScript.Native.Argument
             return true;
         }
 
-        public override bool DefineOwnProperty(JsValue property, PropertyDescriptor desc)
-        {
-            if (_func is ScriptFunctionInstance scriptFunctionInstance && scriptFunctionInstance._function._hasRestParameter)
-            {
+        public override bool DefineOwnProperty(JsValue property, PropertyDescriptor desc) {
+            if (_func is ScriptFunctionInstance scriptFunctionInstance && scriptFunctionInstance._function._hasRestParameter) {
                 // immutable
                 return true;
             }
 
             EnsureInitialized();
 
-            if (!_strict && !ReferenceEquals(ParameterMap, null))
-            {
+            if (!_strict && !ReferenceEquals(ParameterMap, null)) {
                 var map = ParameterMap;
                 var isMapped = map.GetOwnProperty(property);
                 var allowed = base.DefineOwnProperty(property, desc);
-                if (!allowed)
-                {
+                if (!allowed) {
                     return false;
                 }
 
-                if (isMapped != PropertyDescriptor.Undefined)
-                {
-                    if (desc.IsAccessorDescriptor())
-                    {
+                if (isMapped != PropertyDescriptor.Undefined) {
+                    if (desc.IsAccessorDescriptor()) {
                         map.Delete(property);
-                    }
-                    else
-                    {
+                    } else {
                         var descValue = desc.Value;
-                        if (!ReferenceEquals(descValue, null) && !descValue.IsUndefined())
-                        {
+                        if (!ReferenceEquals(descValue, null) && !descValue.IsUndefined()) {
                             map.Set(property, descValue, false);
                         }
 
-                        if (desc.WritableSet && !desc.Writable)
-                        {
+                        if (desc.WritableSet && !desc.Writable) {
                             map.Delete(property);
                         }
                     }
@@ -212,17 +181,14 @@ namespace Anura.JavaScript.Native.Argument
             return base.DefineOwnProperty(property, desc);
         }
 
-        public override bool Delete(JsValue property)
-        {
+        public override bool Delete(JsValue property) {
             EnsureInitialized();
 
-            if (!_strict && !ReferenceEquals(ParameterMap, null))
-            {
+            if (!_strict && !ReferenceEquals(ParameterMap, null)) {
                 var map = ParameterMap;
                 var isMapped = map.GetOwnProperty(property);
                 var result = base.Delete(property);
-                if (result && isMapped != PropertyDescriptor.Undefined)
-                {
+                if (result && isMapped != PropertyDescriptor.Undefined) {
                     map.Delete(property);
                 }
 
@@ -232,8 +198,7 @@ namespace Anura.JavaScript.Native.Argument
             return base.Delete(property);
         }
 
-        internal override JsValue DoClone()
-        {
+        internal override JsValue DoClone() {
             // there's an assignment or return value of function, need to create persistent state
 
             EnsureInitialized();
@@ -248,13 +213,11 @@ namespace Anura.JavaScript.Native.Argument
             return this;
         }
 
-        internal void FunctionWasCalled()
-        {
+        internal void FunctionWasCalled() {
             // should no longer expose arguments which is special name
             ParameterMap = null;
 
-            if (_canReturnToPool)
-            {
+            if (_canReturnToPool) {
                 _engine._argumentsInstancePool.Return(this);
                 // prevent double-return
                 _canReturnToPool = false;

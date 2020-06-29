@@ -8,21 +8,18 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
         private JsValue _set;
 
         public GetSetPropertyDescriptor(JsValue get, JsValue set, bool? enumerable = null, bool? configurable = null)
-        : base(null, writable: null, enumerable: enumerable, configurable: configurable)
-        {
+        : base(null, writable: null, enumerable: enumerable, configurable: configurable) {
             _get = get;
             _set = set;
         }
 
         internal GetSetPropertyDescriptor(JsValue get, JsValue set, PropertyFlag flags)
-            : base(null, flags)
-        {
+            : base(null, flags) {
             _get = get;
             _set = set;
         }
 
-        public GetSetPropertyDescriptor(PropertyDescriptor descriptor) : base(descriptor)
-        {
+        public GetSetPropertyDescriptor(PropertyDescriptor descriptor) : base(descriptor) {
             _get = descriptor.Get;
             _set = descriptor.Set;
         }
@@ -30,13 +27,11 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
         public override JsValue Get => _get;
         public override JsValue Set => _set;
 
-        internal void SetGet(JsValue getter)
-        {
+        internal void SetGet(JsValue getter) {
             _get = getter;
         }
-        
-        internal void SetSet(JsValue setter)
-        {
+
+        internal void SetSet(JsValue setter) {
             _set = setter;
         }
 
@@ -46,8 +41,7 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
             private readonly JsValue _set;
 
             public ThrowerPropertyDescriptor(JsValue functionThrowTypeError)
-                : base(PropertyFlag.EnumerableSet | PropertyFlag.ConfigurableSet | PropertyFlag.CustomJsValue)
-            {
+                : base(PropertyFlag.EnumerableSet | PropertyFlag.ConfigurableSet | PropertyFlag.CustomJsValue) {
                 _get = functionThrowTypeError;
                 _set = functionThrowTypeError;
             }
@@ -55,8 +49,7 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
             public override JsValue Get => _get;
             public override JsValue Set => _set;
 
-            protected internal override JsValue CustomValue
-            {
+            protected internal override JsValue CustomValue {
                 set => Anura.JavaScript.Runtime.ExceptionHelper.ThrowInvalidOperationException("making changes to throw type error property's descriptor is not allowed");
             }
         }

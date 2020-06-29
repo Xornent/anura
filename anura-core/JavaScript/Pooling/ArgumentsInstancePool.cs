@@ -15,14 +15,12 @@ namespace Anura.JavaScript.Pooling
         private readonly Engine _engine;
         private readonly ObjectPool<ArgumentsInstance> _pool;
 
-        public ArgumentsInstancePool(Engine engine)
-        {
+        public ArgumentsInstancePool(Engine engine) {
             _engine = engine;
             _pool = new ObjectPool<ArgumentsInstance>(Factory, PoolSize);
         }
 
-        private ArgumentsInstance Factory()
-        {
+        private ArgumentsInstance Factory() {
             return new ArgumentsInstance(_engine)
             {
                 _prototype = _engine.Object.PrototypeObject
@@ -30,24 +28,21 @@ namespace Anura.JavaScript.Pooling
         }
 
         public ArgumentsInstance Rent(
-            FunctionInstance func, 
-            string[] names, 
-            JsValue[] args, 
-            EnvironmentRecord env, 
-            bool strict)
-        {
+            FunctionInstance func,
+            string[] names,
+            JsValue[] args,
+            EnvironmentRecord env,
+            bool strict) {
             var obj = _pool.Allocate();
             obj.Prepare(func, names, args, env, strict);
             return obj;
         }
 
-        public void Return(ArgumentsInstance instance)
-        {
-            if (ReferenceEquals(instance, null))
-            {
+        public void Return(ArgumentsInstance instance) {
+            if (ReferenceEquals(instance, null)) {
                 return;
             }
-            _pool.Free(instance);;
+            _pool.Free(instance); ;
         }
     }
 }

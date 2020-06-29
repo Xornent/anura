@@ -13,8 +13,7 @@ namespace Anura.JavaScript.Native.String
         private List<string> _splitSegmentList;
         private string[] _splitArray1;
 
-        private StringExecutionContext()
-        {
+        private StringExecutionContext() {
         }
 
         public List<string> SplitSegmentList => _splitSegmentList = _splitSegmentList ?? new List<string>();

@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Anura.JavaScript.Native;
 using Esprima.Ast;
-using Anura.JavaScript.Native;
+using System;
+using System.Collections.Generic;
 
 namespace Anura.JavaScript.Runtime.Debugger
 {

@@ -1,8 +1,8 @@
-using Esprima.Ast;
 using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Iterator;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
 using Anura.JavaScript.Runtime.References;
+using Esprima.Ast;
 
 namespace Anura.JavaScript.Runtime.Interpreter.Statements
 {
@@ -17,64 +17,48 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
 
         private JintExpression _right;
 
-        public JintForOfStatement(Engine engine, ForOfStatement statement) : base(engine, statement)
-        {
+        public JintForOfStatement(Engine engine, ForOfStatement statement) : base(engine, statement) {
             _initialized = false;
         }
 
-        protected override void Initialize()
-        {
-            if (_statement.Left is VariableDeclaration variableDeclaration)
-            {
+        protected override void Initialize() {
+            if (_statement.Left is VariableDeclaration variableDeclaration) {
                 var element = variableDeclaration.Declarations[0].Id;
-                if (element is BindingPattern bindingPattern)
-                {
+                if (element is BindingPattern bindingPattern) {
                     _leftPattern = bindingPattern;
+                } else {
+                    _identifier = JintExpression.Build(_engine, (Identifier)element);
                 }
-                else
-                {
-                    _identifier = JintExpression.Build(_engine, (Identifier) element);
-                }
-            }
-            else if (_statement.Left is BindingPattern bindingPattern)
-            {
+            } else if (_statement.Left is BindingPattern bindingPattern) {
                 _leftPattern = bindingPattern;
-            }
-            else
-            {
-                _identifier = JintExpression.Build(_engine, (Expression) _statement.Left);
+            } else {
+                _identifier = JintExpression.Build(_engine, (Expression)_statement.Left);
             }
 
             _body = Build(_engine, _statement.Body);
             _right = JintExpression.Build(_engine, _statement.Right);
         }
 
-        protected override Completion ExecuteInternal()
-        {
+        protected override Completion ExecuteInternal() {
             var experValue = _right.GetValue();
 
-            if (!(experValue is IIterator iterator))
-            {
+            if (!(experValue is IIterator iterator)) {
                 var obj = TypeConverter.ToObject(_engine, experValue);
                 obj.TryGetIterator(_engine, out iterator);
             }
 
-            if (iterator is null)
-            {
+            if (iterator is null) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<Completion>(_engine, _identifier + " is not iterable");
             }
 
             var completionType = CompletionType.Normal;
             var v = JsValue.Undefined;
             var close = false;
-            try
-            {
-                do
-                {
+            try {
+                do {
                     iterator.TryIteratorStep(out var item);
                     var done = item.Get(CommonProperties.Done);
-                    if (TypeConverter.ToBoolean(done))
-                    {
+                    if (TypeConverter.ToBoolean(done)) {
                         // we can close after checks pass
                         close = true;
                         break;
@@ -85,51 +69,39 @@ namespace Anura.JavaScript.Runtime.Interpreter.Statements
                     // we can close after checks pass
                     close = true;
 
-                    if (_leftPattern != null)
-                    {
+                    if (_leftPattern != null) {
                         BindingPatternAssignmentExpression.ProcessPatterns(
                             _engine,
                             _leftPattern,
                             currentValue,
                             checkReference: !(_statement.Left is VariableDeclaration));
-                    }
-                    else
-                    {
-                        var varRef = (Reference) _identifier.Evaluate();
+                    } else {
+                        var varRef = (Reference)_identifier.Evaluate();
                         _engine.PutValue(varRef, currentValue);
                     }
 
                     var stmt = _body.Execute();
 
-                    if (!ReferenceEquals(stmt.Value, null))
-                    {
+                    if (!ReferenceEquals(stmt.Value, null)) {
                         v = stmt.Value;
                     }
 
-                    if (stmt.Type == CompletionType.Break && (stmt.Identifier == null || stmt.Identifier == _statement?.LabelSet?.Name))
-                    {
+                    if (stmt.Type == CompletionType.Break && (stmt.Identifier == null || stmt.Identifier == _statement?.LabelSet?.Name)) {
                         return new Completion(CompletionType.Normal, stmt.Value, null, Location);
                     }
 
-                    if (stmt.Type != CompletionType.Continue || ((stmt.Identifier != null) && stmt.Identifier != _statement?.LabelSet?.Name))
-                    {
-                        if (stmt.Type != CompletionType.Normal)
-                        {
+                    if (stmt.Type != CompletionType.Continue || ((stmt.Identifier != null) && stmt.Identifier != _statement?.LabelSet?.Name)) {
+                        if (stmt.Type != CompletionType.Normal) {
                             return stmt;
                         }
                     }
-                    
+
                 } while (true);
-            }
-            catch
-            {
+            } catch {
                 completionType = CompletionType.Throw;
                 throw;
-            }   
-            finally
-            {
-                if (close)
-                {
+            } finally {
+                if (close) {
                     iterator.Close(completionType);
                 }
             }

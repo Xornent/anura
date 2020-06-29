@@ -6,7 +6,7 @@ namespace Esprima.Ast
         Expression
     {
         public ThisExpression() :
-            base(Nodes.ThisExpression) {}
+            base(Nodes.ThisExpression) { }
 
         public override IEnumerable<INode> ChildNodes => ZeroChildNodes;
     }

@@ -2,47 +2,49 @@ using System;
 using System.IO;
 using System.Linq;
 
-namespace Anura.Styles {
-    internal sealed class NamespaceRule : Rule, INamespaceRule {
+namespace Anura.Styles
+{
+    internal sealed class NamespaceRule : Rule, INamespaceRule
+    {
         private string _namespaceUri;
         private string _prefix;
 
-        internal NamespaceRule (StylesheetParser parser) : base (RuleType.Namespace, parser) { }
+        internal NamespaceRule(StylesheetParser parser) : base(RuleType.Namespace, parser) { }
 
-        public override void ToCss (TextWriter writer, IStyleFormatter formatter) {
-            var space = string.IsNullOrEmpty (_prefix) ? string.Empty : " ";
-            var value = string.Concat (_prefix, space, _namespaceUri.StylesheetUrl ());
-            writer.Write (formatter.Rule ("@namespace", value));
+        public override void ToCss(TextWriter writer, IStyleFormatter formatter) {
+            var space = string.IsNullOrEmpty(_prefix) ? string.Empty : " ";
+            var value = string.Concat(_prefix, space, _namespaceUri.StylesheetUrl());
+            writer.Write(formatter.Rule("@namespace", value));
         }
 
-        protected override void ReplaceWith (IRule rule) {
+        protected override void ReplaceWith(IRule rule) {
             var newRule = rule as NamespaceRule;
             _namespaceUri = newRule._namespaceUri;
             _prefix = newRule._prefix;
-            base.ReplaceWith (rule);
+            base.ReplaceWith(rule);
         }
 
         public string NamespaceUri {
-            get { return _namespaceUri; }
+            get => _namespaceUri;
             set {
-                CheckValidity ();
+                CheckValidity();
                 _namespaceUri = value ?? string.Empty;
             }
         }
 
         public string Prefix {
-            get { return _prefix; }
+            get => _prefix;
             set {
-                CheckValidity ();
+                CheckValidity();
                 _prefix = value ?? string.Empty;
             }
         }
 
-        private static bool IsNotSupported (RuleType type) {
+        private static bool IsNotSupported(RuleType type) {
             return (type != RuleType.Charset) && (type != RuleType.Import) && (type != RuleType.Namespace);
         }
 
-        private void CheckValidity () {
+        private void CheckValidity() {
             var parent = Owner;
             var list = parent?.Rules;
 
@@ -50,8 +52,8 @@ namespace Anura.Styles {
                 return;
             }
 
-            if (list.Any (entry => IsNotSupported (entry.Type))) {
-                throw new ParseException ("Rule is not supported");
+            if (list.Any(entry => IsNotSupported(entry.Type))) {
+                throw new ParseException("Rule is not supported");
             }
         }
     }

@@ -7,26 +7,21 @@ namespace Anura.JavaScript.Constraints
     {
         private CancellationToken _cancellationToken;
 
-        public CancellationConstraint(CancellationToken cancellationToken)
-        {
+        public CancellationConstraint(CancellationToken cancellationToken) {
             _cancellationToken = cancellationToken;
         }
 
-        public void Check()
-        {
-            if (_cancellationToken.IsCancellationRequested)
-            {
+        public void Check() {
+            if (_cancellationToken.IsCancellationRequested) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowStatementsCountOverflowException();
             }
         }
 
-        public void Reset(CancellationToken cancellationToken)
-        {
+        public void Reset(CancellationToken cancellationToken) {
             _cancellationToken = cancellationToken;
         }
 
-        public void Reset()
-        {
+        public void Reset() {
         }
     }
 }

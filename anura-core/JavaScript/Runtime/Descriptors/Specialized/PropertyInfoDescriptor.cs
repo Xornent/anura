@@ -1,6 +1,6 @@
-﻿using System.Globalization;
+﻿using Anura.JavaScript.Native;
+using System.Globalization;
 using System.Reflection;
-using Anura.JavaScript.Native;
 
 namespace Anura.JavaScript.Runtime.Descriptors.Specialized
 {
@@ -10,8 +10,7 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
         private readonly PropertyInfo _propertyInfo;
         private readonly object _item;
 
-        public PropertyInfoDescriptor(Engine engine, PropertyInfo propertyInfo, object item) : base(PropertyFlag.CustomJsValue)
-        {
+        public PropertyInfoDescriptor(Engine engine, PropertyInfo propertyInfo, object item) : base(PropertyFlag.CustomJsValue) {
             _engine = engine;
             _propertyInfo = propertyInfo;
             _item = item;
@@ -19,46 +18,33 @@ namespace Anura.JavaScript.Runtime.Descriptors.Specialized
             Writable = propertyInfo.CanWrite && engine.Options._IsClrWriteAllowed;
         }
 
-        protected internal override JsValue CustomValue
-        {
-            get
-            {
+        protected internal override JsValue CustomValue {
+            get {
                 object v;
-                try
-                {
+                try {
                     v = _propertyInfo.GetValue(_item, null);
-                }
-                catch (TargetInvocationException exception)
-                {
+                } catch (TargetInvocationException exception) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowMeaningfulException(_engine, exception);
                     throw;
                 }
 
                 return JsValue.FromObject(_engine, v);
             }
-            set
-            {
+            set {
                 object obj;
-                if (_propertyInfo.PropertyType == typeof(JsValue))
-                {
+                if (_propertyInfo.PropertyType == typeof(JsValue)) {
                     obj = value;
-                }
-                else
-                {
+                } else {
                     // attempt to convert the JsValue to the target type
                     obj = value.ToObject();
-                    if (obj != null && obj.GetType() != _propertyInfo.PropertyType)
-                    {
+                    if (obj != null && obj.GetType() != _propertyInfo.PropertyType) {
                         obj = _engine.ClrTypeConverter.Convert(obj, _propertyInfo.PropertyType, CultureInfo.InvariantCulture);
                     }
                 }
 
-                try
-                {
+                try {
                     _propertyInfo.SetValue(_item, obj, null);
-                }
-                catch (TargetInvocationException exception)
-                {
+                } catch (TargetInvocationException exception) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowMeaningfulException(_engine, exception);
                 }
             }

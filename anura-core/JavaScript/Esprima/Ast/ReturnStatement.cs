@@ -7,8 +7,7 @@ namespace Esprima.Ast
         public readonly Expression Argument;
 
         public ReturnStatement(Expression argument) :
-            base(Nodes.ReturnStatement)
-        {
+            base(Nodes.ReturnStatement) {
             Argument = argument;
         }
 

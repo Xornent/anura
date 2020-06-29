@@ -10,12 +10,10 @@ namespace Anura.JavaScript.Native.Boolean
         private static readonly JsString _functionName = new JsString("Boolean");
 
         private BooleanConstructor(Engine engine)
-            : base(engine, _functionName, strict: false)
-        {
+            : base(engine, _functionName, strict: false) {
         }
 
-        public static BooleanConstructor CreateBooleanConstructor(Engine engine)
-        {
+        public static BooleanConstructor CreateBooleanConstructor(Engine engine) {
             var obj = new BooleanConstructor(engine);
 
             // The value of the [[Prototype]] internal property of the Boolean constructor is the Function prototype object
@@ -30,10 +28,8 @@ namespace Anura.JavaScript.Native.Boolean
             return obj;
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
-            if (arguments.Length == 0)
-            {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
+            if (arguments.Length == 0) {
                 return false;
             }
 
@@ -43,20 +39,17 @@ namespace Anura.JavaScript.Native.Boolean
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.2.1
         /// </summary>
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             return Construct(TypeConverter.ToBoolean(arguments.At(0)));
         }
 
         public BooleanPrototype PrototypeObject { get; private set; }
 
-        public BooleanInstance Construct(bool value)
-        {
+        public BooleanInstance Construct(bool value) {
             return Construct(value ? JsBoolean.True : JsBoolean.False);
         }
-        
-        public BooleanInstance Construct(JsBoolean value)
-        {
+
+        public BooleanInstance Construct(JsBoolean value) {
             var instance = new BooleanInstance(Engine)
             {
                 _prototype = PrototypeObject,

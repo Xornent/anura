@@ -1,15 +1,17 @@
-namespace Anura.Styles {
-    internal abstract class ShorthandProperty : Property {
-        protected ShorthandProperty (string name, PropertyFlags flags = PropertyFlags.None) : base (name, flags | PropertyFlags.Shorthand) { }
+namespace Anura.Styles
+{
+    internal abstract class ShorthandProperty : Property
+    {
+        protected ShorthandProperty(string name, PropertyFlags flags = PropertyFlags.None) : base(name, flags | PropertyFlags.Shorthand) { }
 
-        public string Stringify (Property[] properties) {
-            return Converter.Construct (properties)?.CssText;
+        public string Stringify(Property[] properties) {
+            return Converter.Construct(properties)?.CssText;
         }
 
-        public void Export (Property[] properties) {
+        public void Export(Property[] properties) {
             foreach (var property in properties) {
-                var value = DeclaredValue.ExtractFor (property.Name);
-                property.TrySetValue (value);
+                var value = DeclaredValue.ExtractFor(property.Name);
+                property.TrySetValue(value);
             }
         }
     }

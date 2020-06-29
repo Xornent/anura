@@ -1,13 +1,15 @@
-namespace Anura.Styles {
+namespace Anura.Styles
+{
     using static Converters;
 
-    internal sealed class OutlineProperty : ShorthandProperty {
-        private static readonly IValueConverter StyleConverter = WithAny (
-            LineWidthConverter.Option ().For (PropertyNames.OutlineWidth),
-            LineStyleConverter.Option ().For (PropertyNames.OutlineStyle),
-            InvertedColorConverter.Option ().For (PropertyNames.OutlineColor)).OrDefault ();
+    internal sealed class OutlineProperty : ShorthandProperty
+    {
+        private static readonly IValueConverter StyleConverter = WithAny(
+            LineWidthConverter.Option().For(PropertyNames.OutlineWidth),
+            LineStyleConverter.Option().For(PropertyNames.OutlineStyle),
+            InvertedColorConverter.Option().For(PropertyNames.OutlineColor)).OrDefault();
 
-        internal OutlineProperty () : base (PropertyNames.Outline, PropertyFlags.Animatable) { }
+        internal OutlineProperty() : base(PropertyNames.Outline, PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

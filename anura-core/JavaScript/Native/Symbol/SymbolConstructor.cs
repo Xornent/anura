@@ -16,12 +16,10 @@ namespace Anura.JavaScript.Native.Symbol
         private static readonly JsString _functionName = new JsString("Symbol");
 
         public SymbolConstructor(Engine engine)
-            : base(engine, _functionName, strict: false)
-        {
+            : base(engine, _functionName, strict: false) {
         }
 
-        public static SymbolConstructor CreateSymbolConstructor(Engine engine)
-        {
+        public static SymbolConstructor CreateSymbolConstructor(Engine engine) {
             var obj = new SymbolConstructor(engine)
             {
                 _prototype = engine.Function.PrototypeObject
@@ -38,8 +36,7 @@ namespace Anura.JavaScript.Native.Symbol
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             const PropertyFlag lengthFlags = PropertyFlag.Configurable;
             const PropertyFlag propertyFlags = PropertyFlag.AllForbidden;
 
@@ -66,8 +63,7 @@ namespace Anura.JavaScript.Native.Symbol
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/6.0/index.html#sec-symbol-description
         /// </summary>
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
             var description = arguments.At(0);
             var descString = description.IsUndefined()
                 ? Undefined
@@ -77,14 +73,12 @@ namespace Anura.JavaScript.Native.Symbol
             return value;
         }
 
-        public JsValue For(JsValue thisObj, JsValue[] arguments)
-        {
+        public JsValue For(JsValue thisObj, JsValue[] arguments) {
             var stringKey = TypeConverter.ToJsString(arguments.At(0));
 
             // 2. ReturnIfAbrupt(stringKey).
 
-            if (!_engine.GlobalSymbolRegistry.TryGetSymbol(stringKey, out var symbol))
-            {
+            if (!_engine.GlobalSymbolRegistry.TryGetSymbol(stringKey, out var symbol)) {
                 symbol = _engine.GlobalSymbolRegistry.CreateSymbol(stringKey);
                 _engine.GlobalSymbolRegistry.Add(symbol);
             }
@@ -92,28 +86,23 @@ namespace Anura.JavaScript.Native.Symbol
             return symbol;
         }
 
-        public JsValue KeyFor(JsValue thisObj, JsValue[] arguments)
-        {
-            if (!(arguments.At(0) is JsSymbol sym))
-            {
+        public JsValue KeyFor(JsValue thisObj, JsValue[] arguments) {
+            if (!(arguments.At(0) is JsSymbol sym)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(Engine);
             }
 
-            if (_engine.GlobalSymbolRegistry.TryGetSymbol(sym._value, out var e))
-            {
+            if (_engine.GlobalSymbolRegistry.TryGetSymbol(sym._value, out var e)) {
                 return e._value;
             }
 
             return Undefined;
         }
 
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(Engine);
         }
 
-        public SymbolInstance Construct(JsSymbol symbol)
-        {
+        public SymbolInstance Construct(JsSymbol symbol) {
             var instance = new SymbolInstance(Engine)
             {
                 _prototype = PrototypeObject,

@@ -10,43 +10,35 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         internal readonly char[] _chars;
         internal int Length;
 
-        public DtoaBuilder(int size)
-        {
+        public DtoaBuilder(int size) {
             _chars = new char[size];
         }
 
-        public DtoaBuilder() : this(FastDtoa.KFastDtoaMaximalLength + 8)
-        {
+        public DtoaBuilder() : this(FastDtoa.KFastDtoaMaximalLength + 8) {
         }
 
-        internal void Append(char c)
-        {
+        internal void Append(char c) {
             _chars[Length++] = c;
         }
 
-        internal void DecreaseLast()
-        {
+        internal void DecreaseLast() {
             _chars[Length - 1]--;
         }
 
-        public void Reset()
-        {
+        public void Reset() {
             Length = 0;
             System.Array.Clear(_chars, 0, _chars.Length);
         }
 
-        public char this[int i]
-        {
+        public char this[int i] {
             get => _chars[i];
-            set
-            {
+            set {
                 _chars[i] = value;
                 Length = System.Math.Max(Length, i + 1);
             }
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return "[chars:" + new string(_chars, 0, Length) + "]";
         }
     }

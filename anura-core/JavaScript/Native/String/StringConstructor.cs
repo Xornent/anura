@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Anura.JavaScript.Collections;
+﻿using Anura.JavaScript.Collections;
 using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Function;
 using Anura.JavaScript.Native.Object;
@@ -8,6 +7,7 @@ using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
 using Anura.JavaScript.Runtime.Interop;
 using Anura.JavaScript.Runtime.Interpreter.Expressions;
+using System.Collections.Generic;
 
 namespace Anura.JavaScript.Native.String
 {
@@ -16,12 +16,10 @@ namespace Anura.JavaScript.Native.String
         private static readonly JsString _functionName = new JsString("String");
 
         public StringConstructor(Engine engine)
-            : base(engine, _functionName, strict: false)
-        {
+            : base(engine, _functionName, strict: false) {
         }
 
-        public static StringConstructor CreateStringConstructor(Engine engine)
-        {
+        public static StringConstructor CreateStringConstructor(Engine engine) {
             var obj = new StringConstructor(engine)
             {
                 _prototype = engine.Function.PrototypeObject
@@ -38,8 +36,7 @@ namespace Anura.JavaScript.Native.String
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             var properties = new PropertyDictionary(3, checkExistingKeys: false)
             {
                 ["fromCharCode"] = new PropertyDescriptor(new PropertyDescriptor(new ClrFunctionInstance(Engine, "fromCharCode", FromCharCode, 1), PropertyFlag.NonEnumerable)),
@@ -49,49 +46,40 @@ namespace Anura.JavaScript.Native.String
             SetProperties(properties);
         }
 
-        private static JsValue FromCharCode(JsValue thisObj, JsValue[] arguments)
-        {
+        private static JsValue FromCharCode(JsValue thisObj, JsValue[] arguments) {
             var chars = new char[arguments.Length];
-            for (var i = 0; i < chars.Length; i++ )
-            {
+            for (var i = 0; i < chars.Length; i++) {
                 chars[i] = (char)TypeConverter.ToUint16(arguments[i]);
             }
 
             return JsString.Create(new string(chars));
         }
 
-        private static JsValue FromCodePoint(JsValue thisObj, JsValue[] arguments)
-        {
+        private static JsValue FromCodePoint(JsValue thisObj, JsValue[] arguments) {
             var codeUnits = new List<JsValue>();
             string result = "";
-            for (var i = 0; i < arguments.Length; i++ )
-            {
+            for (var i = 0; i < arguments.Length; i++) {
                 var codePoint = TypeConverter.ToNumber(arguments[i]);
                 if (codePoint < 0
                     || codePoint > 0x10FFFF
                     || double.IsInfinity(codePoint)
                     || double.IsNaN(codePoint)
-                    || TypeConverter.ToInt32(codePoint) != codePoint)
-                {
+                    || TypeConverter.ToInt32(codePoint) != codePoint) {
                     return Anura.JavaScript.Runtime.ExceptionHelper.ThrowRangeErrorNoEngine<JsValue>("Invalid code point " + codePoint);
                 }
 
-                var point = (uint) codePoint;
-                if (point <= 0xFFFF)
-                {
+                var point = (uint)codePoint;
+                if (point <= 0xFFFF) {
                     // BMP code point
                     codeUnits.Add(JsNumber.Create(point));
-                }
-                else
-                {
+                } else {
                     // Astral code point; split in surrogate halves
                     // https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
                     point -= 0x10000;
                     codeUnits.Add(JsNumber.Create((point >> 10) + 0xD800)); // highSurrogate
                     codeUnits.Add(JsNumber.Create((point % 0x400) + 0xDC00)); // lowSurrogate
                 }
-                if (codeUnits.Count >= 0x3fff)
-                {
+                if (codeUnits.Count >= 0x3fff) {
                     result += FromCharCode(null, codeUnits.ToArray());
                     codeUnits.Clear();
                 }
@@ -103,42 +91,34 @@ namespace Anura.JavaScript.Native.String
         /// <summary>
         /// https://www.ecma-international.org/ecma-262/6.0/#sec-string.raw
         /// </summary>
-        private JsValue Raw(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Raw(JsValue thisObj, JsValue[] arguments) {
             var cooked = TypeConverter.ToObject(_engine, arguments.At(0));
             var raw = TypeConverter.ToObject(_engine, cooked.Get(JintTaggedTemplateExpression.PropertyRaw, cooked));
 
             var operations = ArrayOperations.For(raw);
             var length = operations.GetLength();
 
-            if (length <= 0)
-            {
+            if (length <= 0) {
                 return JsString.Empty;
             }
 
-            using (var result = StringBuilderPool.Rent())
-            {
-                for (var i = 0; i < length; i++)
-                {
-                    if (i > 0)
-                    {
-                        if (i < arguments.Length && !arguments[i].IsUndefined())
-                        {
+            using (var result = StringBuilderPool.Rent()) {
+                for (var i = 0; i < length; i++) {
+                    if (i > 0) {
+                        if (i < arguments.Length && !arguments[i].IsUndefined()) {
                             result.Builder.Append(TypeConverter.ToString(arguments[i]));
                         }
                     }
 
-                    result.Builder.Append(TypeConverter.ToString(operations.Get((ulong) i)));
+                    result.Builder.Append(TypeConverter.ToString(operations.Get((ulong)i)));
                 }
 
                 return result.ToString();
             }
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] arguments)
-        {
-            if (arguments.Length == 0)
-            {
+        public override JsValue Call(JsValue thisObject, JsValue[] arguments) {
+            if (arguments.Length == 0) {
                 return JsString.Empty;
             }
 
@@ -153,11 +133,9 @@ namespace Anura.JavaScript.Native.String
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.2.1
         /// </summary>
-        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget)
-        {
+        public ObjectInstance Construct(JsValue[] arguments, JsValue newTarget) {
             string value = "";
-            if (arguments.Length > 0)
-            {
+            if (arguments.Length > 0) {
                 value = TypeConverter.ToString(arguments[0]);
             }
             return Construct(value);
@@ -165,13 +143,11 @@ namespace Anura.JavaScript.Native.String
 
         public StringPrototype PrototypeObject { get; private set; }
 
-        public StringInstance Construct(string value)
-        {
+        public StringInstance Construct(string value) {
             return Construct(JsString.Create(value));
         }
 
-        public StringInstance Construct(JsString value)
-        {
+        public StringInstance Construct(JsString value) {
             var instance = new StringInstance(Engine)
             {
                 _prototype = PrototypeObject,

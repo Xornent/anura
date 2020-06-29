@@ -12,8 +12,7 @@ namespace Esprima.Ast
             bool expression,
             bool async,
             HoistingScope hoistingScope) :
-            base(Nodes.ArrowFunctionExpression)
-        {
+            base(Nodes.ArrowFunctionExpression) {
             Id = null;
             _params = parameters;
             Body = body;
@@ -34,6 +33,6 @@ namespace Esprima.Ast
         public ref readonly NodeList<INode> Params => ref _params;
 
         public override IEnumerable<INode> ChildNodes =>
-            ChildNodeYielder.Yield(Params, Body);        
+            ChildNodeYielder.Yield(Params, Body);
     }
 }

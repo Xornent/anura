@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Anura.JavaScript.Native;
+using System;
 using System.Runtime.CompilerServices;
-using Anura.JavaScript.Native;
 
 namespace Anura.JavaScript.Runtime
 {
@@ -8,8 +8,7 @@ namespace Anura.JavaScript.Runtime
     {
         public static readonly JsValue[] Empty = Array.Empty<JsValue>();
 
-        public static JsValue[] From(params JsValue[] o)
-        {
+        public static JsValue[] From(params JsValue[] o) {
             return o;
         }
 
@@ -21,23 +20,19 @@ namespace Anura.JavaScript.Runtime
         /// <param name="undefinedValue">The value to return is the parameter is not provided</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsValue At(this JsValue[] args, int index, JsValue undefinedValue)
-        {
-            return (uint) index < (uint) args.Length ? args[index] : undefinedValue;
+        public static JsValue At(this JsValue[] args, int index, JsValue undefinedValue) {
+            return (uint)index < (uint)args.Length ? args[index] : undefinedValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsValue At(this JsValue[] args, int index)
-        {
+        public static JsValue At(this JsValue[] args, int index) {
             return At(args, index, Undefined.Instance);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T As<T>(this JsValue[] args, int index, Engine engine) where T : JsValue
-        {
-            var value = (uint) index < (uint) args.Length ? args[index] as T : null;
-            if (value is null)
-            {
+        public static T As<T>(this JsValue[] args, int index, Engine engine) where T : JsValue {
+            var value = (uint)index < (uint)args.Length ? args[index] as T : null;
+            if (value is null) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<JsValue>(engine);
             }
 
@@ -45,11 +40,9 @@ namespace Anura.JavaScript.Runtime
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsValue[] Skip(this JsValue[] args, int count)
-        {
+        public static JsValue[] Skip(this JsValue[] args, int count) {
             var newLength = args.Length - count;
-            if (newLength <= 0)
-            {
+            if (newLength <= 0) {
                 return Array.Empty<JsValue>();
             }
 

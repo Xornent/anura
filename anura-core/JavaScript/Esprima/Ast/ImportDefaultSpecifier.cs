@@ -7,8 +7,7 @@ namespace Esprima.Ast
         public readonly Identifier Local;
 
         public ImportDefaultSpecifier(Identifier local) :
-            base(Nodes.ImportDefaultSpecifier)
-        {
+            base(Nodes.ImportDefaultSpecifier) {
             Local = local;
         }
 

@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class PaddingTopProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class PaddingTopProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.LengthOrPercentConverter.OrDefault (Length.Zero);
+            Converters.LengthOrPercentConverter.OrDefault(Length.Zero);
 
-        internal PaddingTopProperty () : base (PropertyNames.PaddingTop, PropertyFlags.Unitless | PropertyFlags.Animatable) { }
+        internal PaddingTopProperty() : base(PropertyNames.PaddingTop, PropertyFlags.Unitless | PropertyFlags.Animatable) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

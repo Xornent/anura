@@ -4,8 +4,7 @@ namespace Anura.JavaScript.Runtime.Environments
 {
     public readonly struct Binding
     {
-        public Binding(JsValue value, bool canBeDeleted, bool mutable)
-        {
+        public Binding(JsValue value, bool canBeDeleted, bool mutable) {
             Value = value;
             CanBeDeleted = canBeDeleted;
             Mutable = mutable;
@@ -15,11 +14,12 @@ namespace Anura.JavaScript.Runtime.Environments
         public readonly bool CanBeDeleted;
         public readonly bool Mutable;
 
-        public Binding ChangeValue(JsValue argument)
-        {
+        public Binding ChangeValue(JsValue argument) {
             return new Binding(argument, CanBeDeleted, Mutable);
         }
 
-        public bool IsInitialized() => !(Value is null);
+        public bool IsInitialized() {
+            return !(Value is null);
+        }
     }
 }

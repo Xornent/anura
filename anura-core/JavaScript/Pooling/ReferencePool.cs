@@ -11,28 +11,23 @@ namespace Anura.JavaScript.Pooling
         private const int PoolSize = 10;
         private readonly ObjectPool<Reference> _pool;
 
-        public ReferencePool()
-        {
+        public ReferencePool() {
             _pool = new ObjectPool<Reference>(Factory, PoolSize);
         }
 
-        private static Reference Factory()
-        {
+        private static Reference Factory() {
             return new Reference(JsValue.Undefined, JsString.Empty, false);
         }
 
-        public Reference Rent(JsValue baseValue, JsValue name, bool strict)
-        {
+        public Reference Rent(JsValue baseValue, JsValue name, bool strict) {
             return _pool.Allocate().Reassign(baseValue, name, strict);
         }
 
-        public void Return(Reference reference)
-        {
-            if (reference == null)
-            {
+        public void Return(Reference reference) {
+            if (reference == null) {
                 return;
             }
-            _pool.Free(reference);;
+            _pool.Free(reference); ;
         }
     }
 }

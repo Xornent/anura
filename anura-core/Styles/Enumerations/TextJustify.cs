@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public enum TextJustify : byte {
+namespace Anura.Styles
+{
+    public enum TextJustify : byte
+    {
         Auto,
         InterWord,
         InterIdeograph,

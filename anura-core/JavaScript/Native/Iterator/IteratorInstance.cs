@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-
 using Anura.JavaScript.Native.Array;
 using Anura.JavaScript.Native.Map;
 using Anura.JavaScript.Native.Object;
@@ -9,6 +5,9 @@ using Anura.JavaScript.Native.RegExp;
 using Anura.JavaScript.Native.Set;
 using Anura.JavaScript.Runtime;
 using Anura.JavaScript.Runtime.Descriptors;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace Anura.JavaScript.Native.Iterator
 {
@@ -17,31 +16,25 @@ namespace Anura.JavaScript.Native.Iterator
         private readonly IEnumerator<JsValue> _enumerable;
 
         public IteratorInstance(Engine engine)
-            : this(engine, Enumerable.Empty<JsValue>())
-        {
+            : this(engine, Enumerable.Empty<JsValue>()) {
         }
 
         public IteratorInstance(
             Engine engine,
-            IEnumerable<JsValue> enumerable) : base(engine, ObjectClass.Iterator)
-        {
+            IEnumerable<JsValue> enumerable) : base(engine, ObjectClass.Iterator) {
             _enumerable = enumerable.GetEnumerator();
         }
 
-        public override object ToObject()
-        {
+        public override object ToObject() {
             throw new System.NotImplementedException();
         }
 
-        public override bool Equals(JsValue other)
-        {
+        public override bool Equals(JsValue other) {
             return false;
         }
 
-        public virtual bool TryIteratorStep(out ObjectInstance nextItem)
-        {
-            if (_enumerable.MoveNext())
-            {
+        public virtual bool TryIteratorStep(out ObjectInstance nextItem) {
+            if (_enumerable.MoveNext()) {
                 nextItem = new ValueIteratorPosition(_engine, _enumerable.Current);
                 return true;
             }
@@ -50,12 +43,10 @@ namespace Anura.JavaScript.Native.Iterator
             return false;
         }
 
-        public void Close(CompletionType completion)
-        {
+        public void Close(CompletionType completion) {
         }
 
-        private ObjectInstance CreateIterResultObject(JsValue value, bool done)
-        {
+        private ObjectInstance CreateIterResultObject(JsValue value, bool done) {
             var obj = _engine.Object.Construct(2);
             obj.SetDataProperty("value", value);
             obj.SetDataProperty("done", done);
@@ -66,11 +57,9 @@ namespace Anura.JavaScript.Native.Iterator
         {
             internal static readonly ObjectInstance Done = new KeyValueIteratorPosition(null, null, null);
 
-            public KeyValueIteratorPosition(Engine engine, JsValue key, JsValue value) : base(engine)
-            {
+            public KeyValueIteratorPosition(Engine engine, JsValue key, JsValue value) : base(engine) {
                 var done = ReferenceEquals(null, key) && ReferenceEquals(null, value);
-                if (!done)
-                {
+                if (!done) {
                     var arrayInstance = engine.Array.ConstructFast(2);
                     arrayInstance.SetIndexValue(0, key, false);
                     arrayInstance.SetIndexValue(1, value, false);
@@ -84,11 +73,9 @@ namespace Anura.JavaScript.Native.Iterator
         {
             internal static readonly ObjectInstance Done = new KeyValueIteratorPosition(null, null, null);
 
-            public ValueIteratorPosition(Engine engine, JsValue value) : base(engine)
-            {
+            public ValueIteratorPosition(Engine engine, JsValue value) : base(engine) {
                 var done = ReferenceEquals(null, value);
-                if (!done)
-                {
+                if (!done) {
                     SetProperty("value", new PropertyDescriptor(value, PropertyFlag.AllForbidden));
                 }
                 SetProperty("done", new PropertyDescriptor(done, PropertyFlag.AllForbidden));
@@ -101,17 +88,14 @@ namespace Anura.JavaScript.Native.Iterator
 
             private int _position;
 
-            public MapIterator(Engine engine, MapInstance map) : base(engine)
-            {
+            public MapIterator(Engine engine, MapInstance map) : base(engine) {
                 _map = map;
                 _position = 0;
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
-                if (_position < _map.GetSize())
-                {
-                    var key  = _map._map.GetKey(_position);
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
+                if (_position < _map.GetSize()) {
+                    var key = _map._map.GetKey(_position);
                     var value = _map._map[key];
 
                     _position++;
@@ -130,10 +114,8 @@ namespace Anura.JavaScript.Native.Iterator
             private uint? _end;
             private uint _position;
 
-            public ArrayLikeIterator(Engine engine, JsValue target) : base(engine)
-            {
-                if (!(target is ObjectInstance objectInstance))
-                {
+            public ArrayLikeIterator(Engine engine, JsValue target) : base(engine) {
+                if (!(target is ObjectInstance objectInstance)) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine, "Target must be an object");
                     return;
                 }
@@ -142,15 +124,12 @@ namespace Anura.JavaScript.Native.Iterator
                 _position = 0;
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
-                if (_end == null)
-                {
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
+                if (_end == null) {
                     _end = _array.GetLength();
                 }
 
-                if (_position < _end.Value)
-                {
+                if (_position < _end.Value) {
                     _array.TryGetValue(_position, out var value);
                     nextItem = new KeyValueIteratorPosition(_engine, _position++, value);
                     return true;
@@ -166,19 +145,16 @@ namespace Anura.JavaScript.Native.Iterator
             private readonly SetInstance _set;
             private int _position;
 
-            public SetIterator(Engine engine, SetInstance set) : base(engine)
-            {
+            public SetIterator(Engine engine, SetInstance set) : base(engine) {
                 _set = set;
                 _position = 0;
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
-                if (_position < _set._set._list.Count)
-                {
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
+                if (_position < _set._set._list.Count) {
                     var value = _set._set[_position];
                     _position++;
-                    nextItem = new  ValueIteratorPosition(_engine, value);
+                    nextItem = new ValueIteratorPosition(_engine, value);
                     return true;
                 }
 
@@ -192,19 +168,16 @@ namespace Anura.JavaScript.Native.Iterator
             private readonly SetInstance _set;
             private int _position;
 
-            public SetEntryIterator(Engine engine, SetInstance set) : base(engine)
-            {
+            public SetEntryIterator(Engine engine, SetInstance set) : base(engine) {
                 _set = set;
                 _position = 0;
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
-                if (_position < _set._set._list.Count)
-                {
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
+                if (_position < _set._set._list.Count) {
                     var value = _set._set[_position];
                     _position++;
-                    nextItem = new  KeyValueIteratorPosition(_engine, value, value);
+                    nextItem = new KeyValueIteratorPosition(_engine, value, value);
                     return true;
                 }
 
@@ -219,19 +192,16 @@ namespace Anura.JavaScript.Native.Iterator
             private int _position;
             private bool _closed;
 
-            public ListIterator(Engine engine, List<JsValue> values) : base(engine)
-            {
+            public ListIterator(Engine engine, List<JsValue> values) : base(engine) {
                 _values = values;
                 _position = 0;
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
-                if (!_closed && _position < _values.Count)
-                {
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
+                if (!_closed && _position < _values.Count) {
                     var value = _values[_position];
                     _position++;
-                    nextItem = new  ValueIteratorPosition(_engine, value);
+                    nextItem = new ValueIteratorPosition(_engine, value);
                     return true;
                 }
 
@@ -239,7 +209,7 @@ namespace Anura.JavaScript.Native.Iterator
                 nextItem = KeyValueIteratorPosition.Done;
                 return false;
             }
-        } 
+        }
 
         public class ArrayLikeKeyIterator : IteratorInstance
         {
@@ -247,18 +217,15 @@ namespace Anura.JavaScript.Native.Iterator
             private uint _position;
             private bool _closed;
 
-            public ArrayLikeKeyIterator(Engine engine, ObjectInstance objectInstance) : base(engine)
-            {
+            public ArrayLikeKeyIterator(Engine engine, ObjectInstance objectInstance) : base(engine) {
                 _operations = ArrayOperations.For(objectInstance);
                 _position = 0;
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
                 var length = _operations.GetLength();
-                if (!_closed && _position < length)
-                {
-                    nextItem = new  ValueIteratorPosition(_engine, _position++);
+                if (!_closed && _position < length) {
+                    nextItem = new ValueIteratorPosition(_engine, _position++);
                     return true;
                 }
 
@@ -274,17 +241,14 @@ namespace Anura.JavaScript.Native.Iterator
             private uint _position;
             private bool _closed;
 
-            public ArrayLikeValueIterator(Engine engine, ObjectInstance objectInstance) : base(engine)
-            {
+            public ArrayLikeValueIterator(Engine engine, ObjectInstance objectInstance) : base(engine) {
                 _operations = ArrayOperations.For(objectInstance);
                 _position = 0;
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
                 var length = _operations.GetLength();
-                if (!_closed && _position < length)
-                {
+                if (!_closed && _position < length) {
                     _operations.TryGetValue(_position++, out var value);
                     nextItem = new ValueIteratorPosition(_engine, value);
                     return true;
@@ -301,52 +265,41 @@ namespace Anura.JavaScript.Native.Iterator
             private readonly ObjectInstance _target;
             private readonly ICallable _nextMethod;
 
-            public ObjectWrapper(ObjectInstance target)
-            {
+            public ObjectWrapper(ObjectInstance target) {
                 _target = target;
                 _nextMethod = target.Get(CommonProperties.Next, target) as ICallable
                             ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ICallable>(target.Engine);
             }
 
-            public bool TryIteratorStep(out ObjectInstance result)
-            {
+            public bool TryIteratorStep(out ObjectInstance result) {
                 result = IteratorNext();
 
-                if (result.TryGetValue(CommonProperties.Done, out var done) && TypeConverter.ToBoolean(done))
-                {
+                if (result.TryGetValue(CommonProperties.Done, out var done) && TypeConverter.ToBoolean(done)) {
                     return false;
                 }
 
                 return true;
             }
 
-            private ObjectInstance IteratorNext()
-            {
+            private ObjectInstance IteratorNext() {
                 return _nextMethod.Call(_target, Arguments.Empty) as ObjectInstance
                        ?? Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<ObjectInstance>(_target.Engine);
             }
 
-            public void Close(CompletionType completion)
-            {
-                if (!_target.TryGetValue(CommonProperties.Return, out var func))
-                {
+            public void Close(CompletionType completion) {
+                if (!_target.TryGetValue(CommonProperties.Return, out var func)) {
                     return;
                 }
 
                 var innerResult = Undefined;
-                try
-                {
-                    innerResult = ((ICallable) func).Call(_target, Arguments.Empty);
-                }
-                catch
-                {
-                    if (completion != CompletionType.Throw)
-                    {
+                try {
+                    innerResult = ((ICallable)func).Call(_target, Arguments.Empty);
+                } catch {
+                    if (completion != CompletionType.Throw) {
                         throw;
                     }
                 }
-                if (completion != CompletionType.Throw && !innerResult.IsObject())
-                {
+                if (completion != CompletionType.Throw && !innerResult.IsObject()) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(_target.Engine);
                 }
             }
@@ -356,16 +309,13 @@ namespace Anura.JavaScript.Native.Iterator
         {
             private readonly TextElementEnumerator _iterator;
 
-            public StringIterator(Engine engine, string str) : base(engine)
-            {
+            public StringIterator(Engine engine, string str) : base(engine) {
                 _iterator = StringInfo.GetTextElementEnumerator(str);
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
-                if (_iterator.MoveNext())
-                {
-                    nextItem = new ValueIteratorPosition(_engine, (string) _iterator.Current);
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
+                if (_iterator.MoveNext()) {
+                    nextItem = new ValueIteratorPosition(_engine, (string)_iterator.Current);
                     return true;
                 }
 
@@ -373,7 +323,7 @@ namespace Anura.JavaScript.Native.Iterator
                 return false;
             }
         }
-        
+
         internal class RegExpStringIterator : IteratorInstance
         {
             private readonly RegExpInstance _iteratingRegExp;
@@ -383,48 +333,39 @@ namespace Anura.JavaScript.Native.Iterator
 
             private bool _done;
 
-            public RegExpStringIterator(Engine engine, ObjectInstance iteratingRegExp, string iteratedString, bool global, bool unicode) : base(engine)
-            {
-                if (!(iteratingRegExp is RegExpInstance r))
-                {
+            public RegExpStringIterator(Engine engine, ObjectInstance iteratingRegExp, string iteratedString, bool global, bool unicode) : base(engine) {
+                if (!(iteratingRegExp is RegExpInstance r)) {
                     Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError(engine);
                     return;
                 }
-                
+
                 _iteratingRegExp = r;
                 _s = iteratedString;
                 _global = global;
                 _unicode = unicode;
             }
 
-            public override bool TryIteratorStep(out ObjectInstance nextItem)
-            {
-                if (_done)
-                {
+            public override bool TryIteratorStep(out ObjectInstance nextItem) {
+                if (_done) {
                     nextItem = CreateIterResultObject(Undefined, true);
                     return false;
                 }
-                
-                var match  = RegExpPrototype.RegExpExec(_iteratingRegExp, _s);
-                if (match.IsNull())
-                {
+
+                var match = RegExpPrototype.RegExpExec(_iteratingRegExp, _s);
+                if (match.IsNull()) {
                     _done = true;
                     nextItem = CreateIterResultObject(Undefined, true);
                     return false;
                 }
 
-                if (_global)
-                {
+                if (_global) {
                     var macthStr = TypeConverter.ToString(match.Get(JsString.NumberZeroString));
-                    if (macthStr == "")
-                    {
+                    if (macthStr == "") {
                         var thisIndex = TypeConverter.ToLength(_iteratingRegExp.Get(RegExpInstance.PropertyLastIndex));
                         var nextIndex = thisIndex + 1;
                         _iteratingRegExp.Set(RegExpInstance.PropertyLastIndex, nextIndex, true);
                     }
-                }
-                else
-                {
+                } else {
                     _done = true;
                 }
 

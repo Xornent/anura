@@ -20,21 +20,18 @@ namespace Anura.JavaScript.Native.Symbol
         // engine-specific created by scripts
         private Dictionary<JsValue, JsSymbol> _customSymbolLookup;
 
-        internal bool TryGetSymbol(JsValue key, out JsSymbol symbol)
-        {
+        internal bool TryGetSymbol(JsValue key, out JsSymbol symbol) {
             symbol = null;
             return _customSymbolLookup != null
                    && _customSymbolLookup.TryGetValue(key, out symbol);
         }
 
-        internal void Add(JsSymbol symbol)
-        {
+        internal void Add(JsSymbol symbol) {
             _customSymbolLookup ??= new Dictionary<JsValue, JsSymbol>();
             _customSymbolLookup[symbol._value] = symbol;
         }
 
-        internal JsSymbol CreateSymbol(JsValue description)
-        {
+        internal JsSymbol CreateSymbol(JsValue description) {
             return new JsSymbol(description);
         }
     }

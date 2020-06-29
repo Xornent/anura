@@ -3,13 +3,12 @@
     public class ParserOptions
     {
         public ParserOptions() :
-            this(new ErrorHandler()) {}
+            this(new ErrorHandler()) { }
 
         public ParserOptions(string source) :
-            this(new ErrorHandler { Source = source }) {}
+            this(new ErrorHandler { Source = source }) { }
 
-        public ParserOptions(IErrorHandler errorHandler)
-        {
+        public ParserOptions(IErrorHandler errorHandler) {
             ErrorHandler = errorHandler;
         }
 

@@ -1,8 +1,8 @@
+using Anura.JavaScript.Native;
+using Anura.JavaScript.Native.Function;
 using System;
 using System.Globalization;
 using System.Reflection;
-using Anura.JavaScript.Native;
-using Anura.JavaScript.Native.Function;
 
 namespace Anura.JavaScript.Runtime.Interop
 {
@@ -16,26 +16,22 @@ namespace Anura.JavaScript.Runtime.Interop
         private readonly bool _delegateContainsParamsArgument;
 
         public DelegateWrapper(Engine engine, Delegate d)
-            : base(engine, "delegate", null, null, false)
-        {
+            : base(engine, "delegate", null, null, false) {
             _d = d;
             _prototype = engine.Function.PrototypeObject;
 
             var parameterInfos = _d.Method.GetParameters();
 
             _delegateContainsParamsArgument = false;
-            foreach (var p in parameterInfos)
-            {
-                if (Attribute.IsDefined(p, typeof(ParamArrayAttribute)))
-                {
+            foreach (var p in parameterInfos) {
+                if (Attribute.IsDefined(p, typeof(ParamArrayAttribute))) {
                     _delegateContainsParamsArgument = true;
                     break;
                 }
             }
         }
 
-        public override JsValue Call(JsValue thisObject, JsValue[] jsArguments)
-        {
+        public override JsValue Call(JsValue thisObject, JsValue[] jsArguments) {
             var parameterInfos = _d.Method.GetParameters();
 
 #if NETFRAMEWORK
@@ -57,16 +53,12 @@ namespace Anura.JavaScript.Runtime.Interop
             var parameters = new object[delegateArgumentsCount];
 
             // convert non params parameter to expected types
-            for (var i = 0; i < jsArgumentsWithoutParamsCount; i++)
-            {
+            for (var i = 0; i < jsArgumentsWithoutParamsCount; i++) {
                 var parameterType = parameterInfos[i].ParameterType;
 
-                if (parameterType == typeof(JsValue))
-                {
+                if (parameterType == typeof(JsValue)) {
                     parameters[i] = jsArguments[i];
-                }
-                else
-                {
+                } else {
                     parameters[i] = Engine.ClrTypeConverter.Convert(
                         jsArguments[i].ToObject(),
                         parameterType,
@@ -75,37 +67,28 @@ namespace Anura.JavaScript.Runtime.Interop
             }
 
             // assign null to parameters not provided
-            for (var i = jsArgumentsWithoutParamsCount; i < delegateNonParamsArgumentsCount; i++)
-            {
-                if (parameterInfos[i].ParameterType.IsValueType)
-                {
+            for (var i = jsArgumentsWithoutParamsCount; i < delegateNonParamsArgumentsCount; i++) {
+                if (parameterInfos[i].ParameterType.IsValueType) {
                     parameters[i] = Activator.CreateInstance(parameterInfos[i].ParameterType);
-                }
-                else
-                {
+                } else {
                     parameters[i] = null;
                 }
             }
 
             // assign params to array and converts each objet to expected type
-            if (_delegateContainsParamsArgument)
-            {
+            if (_delegateContainsParamsArgument) {
                 int paramsArgumentIndex = delegateArgumentsCount - 1;
                 int paramsCount = Math.Max(0, jsArgumentsCount - delegateNonParamsArgumentsCount);
 
                 object[] paramsParameter = new object[paramsCount];
                 var paramsParameterType = parameterInfos[paramsArgumentIndex].ParameterType.GetElementType();
 
-                for (var i = paramsArgumentIndex; i < jsArgumentsCount; i++)
-                {
+                for (var i = paramsArgumentIndex; i < jsArgumentsCount; i++) {
                     var paramsIndex = i - paramsArgumentIndex;
 
-                    if (paramsParameterType == typeof(JsValue))
-                    {
+                    if (paramsParameterType == typeof(JsValue)) {
                         paramsParameter[paramsIndex] = jsArguments[i];
-                    }
-                    else
-                    {
+                    } else {
                         paramsParameter[paramsIndex] = Engine.ClrTypeConverter.Convert(
                             jsArguments[i].ToObject(),
                             paramsParameterType,
@@ -114,12 +97,9 @@ namespace Anura.JavaScript.Runtime.Interop
                 }
                 parameters[paramsArgumentIndex] = paramsParameter;
             }
-            try
-            {
+            try {
                 return FromObject(Engine, _d.DynamicInvoke(parameters));
-            }
-            catch (TargetInvocationException exception)
-            {
+            } catch (TargetInvocationException exception) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowMeaningfulException(_engine, exception);
                 throw;
             }

@@ -1,9 +1,11 @@
-namespace Anura.Styles {
-    internal sealed class PageBreakAfterProperty : Property {
+namespace Anura.Styles
+{
+    internal sealed class PageBreakAfterProperty : Property
+    {
         private static readonly IValueConverter StyleConverter =
-            Converters.PageBreakModeConverter.OrDefault (BreakMode.Auto);
+            Converters.PageBreakModeConverter.OrDefault(BreakMode.Auto);
 
-        internal PageBreakAfterProperty () : base (PropertyNames.PageBreakAfter) { }
+        internal PageBreakAfterProperty() : base(PropertyNames.PageBreakAfter) { }
 
         internal override IValueConverter Converter => StyleConverter;
     }

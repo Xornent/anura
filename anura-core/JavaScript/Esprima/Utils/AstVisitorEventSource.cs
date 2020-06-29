@@ -1,5 +1,5 @@
-﻿using System;
-using Esprima.Ast;
+﻿using Esprima.Ast;
+using System;
 
 namespace Esprima.Utils
 {
@@ -151,491 +151,421 @@ namespace Esprima.Utils
         public event EventHandler<BlockStatement> VisitingBlockStatement;
         public event EventHandler<BlockStatement> VisitedBlockStatement;
 
-        public override void Visit(INode node)
-        {
+        public override void Visit(INode node) {
             VisitingNode?.Invoke(this, node);
             base.Visit(node);
             VisitedNode?.Invoke(this, node);
         }
 
-        protected override void VisitProgram(Program program)
-        {
+        protected override void VisitProgram(Program program) {
             VisitingProgram?.Invoke(this, program);
             base.VisitProgram(program);
             VisitedProgram?.Invoke(this, program);
         }
 
-        protected override void VisitStatement(Statement statement)
-        {
+        protected override void VisitStatement(Statement statement) {
             VisitingStatement?.Invoke(this, statement);
             base.VisitStatement(statement);
             VisitedStatement?.Invoke(this, statement);
         }
 
-        protected override void VisitUnknownNode(INode node)
-        {
+        protected override void VisitUnknownNode(INode node) {
             VisitingUnknownNode?.Invoke(this, node);
             base.VisitUnknownNode(node);
             VisitedUnknownNode?.Invoke(this, node);
         }
 
-        protected override void VisitCatchClause(CatchClause catchClause)
-        {
+        protected override void VisitCatchClause(CatchClause catchClause) {
             VisitingCatchClause?.Invoke(this, catchClause);
             base.VisitCatchClause(catchClause);
             VisitedCatchClause?.Invoke(this, catchClause);
         }
 
-        protected override void VisitFunctionDeclaration(FunctionDeclaration functionDeclaration)
-        {
+        protected override void VisitFunctionDeclaration(FunctionDeclaration functionDeclaration) {
             VisitingFunctionDeclaration?.Invoke(this, functionDeclaration);
             base.VisitFunctionDeclaration(functionDeclaration);
             VisitedFunctionDeclaration?.Invoke(this, functionDeclaration);
         }
 
-        protected override void VisitWithStatement(WithStatement withStatement)
-        {
+        protected override void VisitWithStatement(WithStatement withStatement) {
             VisitingWithStatement?.Invoke(this, withStatement);
             base.VisitWithStatement(withStatement);
             VisitedWithStatement?.Invoke(this, withStatement);
         }
 
-        protected override void VisitWhileStatement(WhileStatement whileStatement)
-        {
+        protected override void VisitWhileStatement(WhileStatement whileStatement) {
             VisitingWhileStatement?.Invoke(this, whileStatement);
             base.VisitWhileStatement(whileStatement);
             VisitedWhileStatement?.Invoke(this, whileStatement);
         }
 
-        protected override void VisitVariableDeclaration(VariableDeclaration variableDeclaration)
-        {
+        protected override void VisitVariableDeclaration(VariableDeclaration variableDeclaration) {
             VisitingVariableDeclaration?.Invoke(this, variableDeclaration);
             base.VisitVariableDeclaration(variableDeclaration);
             VisitedVariableDeclaration?.Invoke(this, variableDeclaration);
         }
 
-        protected override void VisitTryStatement(TryStatement tryStatement)
-        {
+        protected override void VisitTryStatement(TryStatement tryStatement) {
             VisitingTryStatement?.Invoke(this, tryStatement);
             base.VisitTryStatement(tryStatement);
             VisitedTryStatement?.Invoke(this, tryStatement);
         }
 
-        protected override void VisitThrowStatement(ThrowStatement throwStatement)
-        {
+        protected override void VisitThrowStatement(ThrowStatement throwStatement) {
             VisitingThrowStatement?.Invoke(this, throwStatement);
             base.VisitThrowStatement(throwStatement);
             VisitedThrowStatement?.Invoke(this, throwStatement);
         }
 
-        protected override void VisitSwitchStatement(SwitchStatement switchStatement)
-        {
+        protected override void VisitSwitchStatement(SwitchStatement switchStatement) {
             VisitingSwitchStatement?.Invoke(this, switchStatement);
             base.VisitSwitchStatement(switchStatement);
             VisitedSwitchStatement?.Invoke(this, switchStatement);
         }
 
-        protected override void VisitSwitchCase(SwitchCase switchCase)
-        {
+        protected override void VisitSwitchCase(SwitchCase switchCase) {
             VisitingSwitchCase?.Invoke(this, switchCase);
             base.VisitSwitchCase(switchCase);
             VisitedSwitchCase?.Invoke(this, switchCase);
         }
 
-        protected override void VisitReturnStatement(ReturnStatement returnStatement)
-        {
+        protected override void VisitReturnStatement(ReturnStatement returnStatement) {
             VisitingReturnStatement?.Invoke(this, returnStatement);
             base.VisitReturnStatement(returnStatement);
             VisitedReturnStatement?.Invoke(this, returnStatement);
         }
 
-        protected override void VisitLabeledStatement(LabeledStatement labeledStatement)
-        {
+        protected override void VisitLabeledStatement(LabeledStatement labeledStatement) {
             VisitingLabeledStatement?.Invoke(this, labeledStatement);
             base.VisitLabeledStatement(labeledStatement);
             VisitedLabeledStatement?.Invoke(this, labeledStatement);
         }
 
-        protected override void VisitIfStatement(IfStatement ifStatement)
-        {
+        protected override void VisitIfStatement(IfStatement ifStatement) {
             VisitingIfStatement?.Invoke(this, ifStatement);
             base.VisitIfStatement(ifStatement);
             VisitedIfStatement?.Invoke(this, ifStatement);
         }
 
-        protected override void VisitEmptyStatement(EmptyStatement emptyStatement)
-        {
+        protected override void VisitEmptyStatement(EmptyStatement emptyStatement) {
             VisitingEmptyStatement?.Invoke(this, emptyStatement);
             base.VisitEmptyStatement(emptyStatement);
             VisitedEmptyStatement?.Invoke(this, emptyStatement);
         }
 
-        protected override void VisitDebuggerStatement(DebuggerStatement debuggerStatement)
-        {
+        protected override void VisitDebuggerStatement(DebuggerStatement debuggerStatement) {
             VisitingDebuggerStatement?.Invoke(this, debuggerStatement);
             base.VisitDebuggerStatement(debuggerStatement);
             VisitedDebuggerStatement?.Invoke(this, debuggerStatement);
         }
 
-        protected override void VisitExpressionStatement(ExpressionStatement expressionStatement)
-        {
+        protected override void VisitExpressionStatement(ExpressionStatement expressionStatement) {
             VisitingExpressionStatement?.Invoke(this, expressionStatement);
             base.VisitExpressionStatement(expressionStatement);
             VisitedExpressionStatement?.Invoke(this, expressionStatement);
         }
 
-        protected override void VisitForStatement(ForStatement forStatement)
-        {
+        protected override void VisitForStatement(ForStatement forStatement) {
             VisitingForStatement?.Invoke(this, forStatement);
             base.VisitForStatement(forStatement);
             VisitedForStatement?.Invoke(this, forStatement);
         }
 
-        protected override void VisitForInStatement(ForInStatement forInStatement)
-        {
+        protected override void VisitForInStatement(ForInStatement forInStatement) {
             VisitingForInStatement?.Invoke(this, forInStatement);
             base.VisitForInStatement(forInStatement);
             VisitedForInStatement?.Invoke(this, forInStatement);
         }
 
-        protected override void VisitDoWhileStatement(DoWhileStatement doWhileStatement)
-        {
+        protected override void VisitDoWhileStatement(DoWhileStatement doWhileStatement) {
             VisitingDoWhileStatement?.Invoke(this, doWhileStatement);
             base.VisitDoWhileStatement(doWhileStatement);
             VisitedDoWhileStatement?.Invoke(this, doWhileStatement);
         }
 
-        protected override void VisitExpression(Expression expression)
-        {
+        protected override void VisitExpression(Expression expression) {
             VisitingExpression?.Invoke(this, expression);
             base.VisitExpression(expression);
             VisitedExpression?.Invoke(this, expression);
         }
 
-        protected override void VisitArrowFunctionExpression(ArrowFunctionExpression arrowFunctionExpression)
-        {
+        protected override void VisitArrowFunctionExpression(ArrowFunctionExpression arrowFunctionExpression) {
             VisitingArrowFunctionExpression?.Invoke(this, arrowFunctionExpression);
             base.VisitArrowFunctionExpression(arrowFunctionExpression);
             VisitedArrowFunctionExpression?.Invoke(this, arrowFunctionExpression);
         }
 
-        protected override void VisitUnaryExpression(UnaryExpression unaryExpression)
-        {
+        protected override void VisitUnaryExpression(UnaryExpression unaryExpression) {
             VisitingUnaryExpression?.Invoke(this, unaryExpression);
             base.VisitUnaryExpression(unaryExpression);
             VisitedUnaryExpression?.Invoke(this, unaryExpression);
         }
 
-        protected override void VisitUpdateExpression(UpdateExpression updateExpression)
-        {
+        protected override void VisitUpdateExpression(UpdateExpression updateExpression) {
             VisitingUpdateExpression?.Invoke(this, updateExpression);
             base.VisitUpdateExpression(updateExpression);
             VisitedUpdateExpression?.Invoke(this, updateExpression);
         }
 
-        protected override void VisitThisExpression(ThisExpression thisExpression)
-        {
+        protected override void VisitThisExpression(ThisExpression thisExpression) {
             VisitingThisExpression?.Invoke(this, thisExpression);
             base.VisitThisExpression(thisExpression);
             VisitedThisExpression?.Invoke(this, thisExpression);
         }
 
-        protected override void VisitSequenceExpression(SequenceExpression sequenceExpression)
-        {
+        protected override void VisitSequenceExpression(SequenceExpression sequenceExpression) {
             VisitingSequenceExpression?.Invoke(this, sequenceExpression);
             base.VisitSequenceExpression(sequenceExpression);
             VisitedSequenceExpression?.Invoke(this, sequenceExpression);
         }
 
-        protected override void VisitObjectExpression(ObjectExpression objectExpression)
-        {
+        protected override void VisitObjectExpression(ObjectExpression objectExpression) {
             VisitingObjectExpression?.Invoke(this, objectExpression);
             base.VisitObjectExpression(objectExpression);
             VisitedObjectExpression?.Invoke(this, objectExpression);
         }
 
-        protected override void VisitNewExpression(NewExpression newExpression)
-        {
+        protected override void VisitNewExpression(NewExpression newExpression) {
             VisitingNewExpression?.Invoke(this, newExpression);
             base.VisitNewExpression(newExpression);
             VisitedNewExpression?.Invoke(this, newExpression);
         }
 
-        protected override void VisitMemberExpression(MemberExpression memberExpression)
-        {
+        protected override void VisitMemberExpression(MemberExpression memberExpression) {
             VisitingMemberExpression?.Invoke(this, memberExpression);
             base.VisitMemberExpression(memberExpression);
             VisitedMemberExpression?.Invoke(this, memberExpression);
         }
 
-        protected override void VisitLogicalExpression(BinaryExpression binaryExpression)
-        {
+        protected override void VisitLogicalExpression(BinaryExpression binaryExpression) {
             VisitingLogicalExpression?.Invoke(this, binaryExpression);
             base.VisitLogicalExpression(binaryExpression);
             VisitedLogicalExpression?.Invoke(this, binaryExpression);
         }
 
-        protected override void VisitLiteral(Literal literal)
-        {
+        protected override void VisitLiteral(Literal literal) {
             VisitingLiteral?.Invoke(this, literal);
             base.VisitLiteral(literal);
             VisitedLiteral?.Invoke(this, literal);
         }
 
-        protected override void VisitIdentifier(Identifier identifier)
-        {
+        protected override void VisitIdentifier(Identifier identifier) {
             VisitingIdentifier?.Invoke(this, identifier);
             base.VisitIdentifier(identifier);
             VisitedIdentifier?.Invoke(this, identifier);
         }
 
-        protected override void VisitFunctionExpression(IFunction function)
-        {
+        protected override void VisitFunctionExpression(IFunction function) {
             VisitingFunctionExpression?.Invoke(this, function);
             base.VisitFunctionExpression(function);
             VisitedFunctionExpression?.Invoke(this, function);
         }
 
-        protected override void VisitClassExpression(ClassExpression classExpression)
-        {
+        protected override void VisitClassExpression(ClassExpression classExpression) {
             VisitingClassExpression?.Invoke(this, classExpression);
             base.VisitClassExpression(classExpression);
             VisitedClassExpression?.Invoke(this, classExpression);
         }
 
-        protected override void VisitExportDefaultDeclaration(ExportDefaultDeclaration exportDefaultDeclaration)
-        {
+        protected override void VisitExportDefaultDeclaration(ExportDefaultDeclaration exportDefaultDeclaration) {
             VisitingExportDefaultDeclaration?.Invoke(this, exportDefaultDeclaration);
             base.VisitExportDefaultDeclaration(exportDefaultDeclaration);
             VisitedExportDefaultDeclaration?.Invoke(this, exportDefaultDeclaration);
         }
 
-        protected override void VisitExportAllDeclaration(ExportAllDeclaration exportAllDeclaration)
-        {
+        protected override void VisitExportAllDeclaration(ExportAllDeclaration exportAllDeclaration) {
             VisitingExportAllDeclaration?.Invoke(this, exportAllDeclaration);
             base.VisitExportAllDeclaration(exportAllDeclaration);
             VisitedExportAllDeclaration?.Invoke(this, exportAllDeclaration);
         }
 
-        protected override void VisitExportNamedDeclaration(ExportNamedDeclaration exportNamedDeclaration)
-        {
+        protected override void VisitExportNamedDeclaration(ExportNamedDeclaration exportNamedDeclaration) {
             VisitingExportNamedDeclaration?.Invoke(this, exportNamedDeclaration);
             base.VisitExportNamedDeclaration(exportNamedDeclaration);
             VisitedExportNamedDeclaration?.Invoke(this, exportNamedDeclaration);
         }
 
-        protected override void VisitExportSpecifier(ExportSpecifier exportSpecifier)
-        {
+        protected override void VisitExportSpecifier(ExportSpecifier exportSpecifier) {
             VisitingExportSpecifier?.Invoke(this, exportSpecifier);
             base.VisitExportSpecifier(exportSpecifier);
             VisitedExportSpecifier?.Invoke(this, exportSpecifier);
         }
 
-        protected override void VisitImport(Import import)
-        {
+        protected override void VisitImport(Import import) {
             VisitingImport?.Invoke(this, import);
             base.VisitImport(import);
             VisitedImport?.Invoke(this, import);
         }
 
-        protected override void VisitImportDeclaration(ImportDeclaration importDeclaration)
-        {
+        protected override void VisitImportDeclaration(ImportDeclaration importDeclaration) {
             VisitingImportDeclaration?.Invoke(this, importDeclaration);
             base.VisitImportDeclaration(importDeclaration);
             VisitedImportDeclaration?.Invoke(this, importDeclaration);
         }
 
-        protected override void VisitImportNamespaceSpecifier(ImportNamespaceSpecifier importNamespaceSpecifier)
-        {
+        protected override void VisitImportNamespaceSpecifier(ImportNamespaceSpecifier importNamespaceSpecifier) {
             VisitingImportNamespaceSpecifier?.Invoke(this, importNamespaceSpecifier);
             base.VisitImportNamespaceSpecifier(importNamespaceSpecifier);
             VisitedImportNamespaceSpecifier?.Invoke(this, importNamespaceSpecifier);
         }
 
-        protected override void VisitImportDefaultSpecifier(ImportDefaultSpecifier importDefaultSpecifier)
-        {
+        protected override void VisitImportDefaultSpecifier(ImportDefaultSpecifier importDefaultSpecifier) {
             VisitingImportDefaultSpecifier?.Invoke(this, importDefaultSpecifier);
             base.VisitImportDefaultSpecifier(importDefaultSpecifier);
             VisitedImportDefaultSpecifier?.Invoke(this, importDefaultSpecifier);
         }
 
-        protected override void VisitImportSpecifier(ImportSpecifier importSpecifier)
-        {
+        protected override void VisitImportSpecifier(ImportSpecifier importSpecifier) {
             VisitingImportSpecifier?.Invoke(this, importSpecifier);
             base.VisitImportSpecifier(importSpecifier);
             VisitedImportSpecifier?.Invoke(this, importSpecifier);
         }
 
-        protected override void VisitMethodDefinition(MethodDefinition methodDefinitions)
-        {
+        protected override void VisitMethodDefinition(MethodDefinition methodDefinitions) {
             VisitingMethodDefinition?.Invoke(this, methodDefinitions);
             base.VisitMethodDefinition(methodDefinitions);
             VisitedMethodDefinition?.Invoke(this, methodDefinitions);
         }
 
-        protected override void VisitForOfStatement(ForOfStatement forOfStatement)
-        {
+        protected override void VisitForOfStatement(ForOfStatement forOfStatement) {
             VisitingForOfStatement?.Invoke(this, forOfStatement);
             base.VisitForOfStatement(forOfStatement);
             VisitedForOfStatement?.Invoke(this, forOfStatement);
         }
 
-        protected override void VisitClassDeclaration(ClassDeclaration classDeclaration)
-        {
+        protected override void VisitClassDeclaration(ClassDeclaration classDeclaration) {
             VisitingClassDeclaration?.Invoke(this, classDeclaration);
             base.VisitClassDeclaration(classDeclaration);
             VisitedClassDeclaration?.Invoke(this, classDeclaration);
         }
 
-        protected override void VisitClassBody(ClassBody classBody)
-        {
+        protected override void VisitClassBody(ClassBody classBody) {
             VisitingClassBody?.Invoke(this, classBody);
             base.VisitClassBody(classBody);
             VisitedClassBody?.Invoke(this, classBody);
         }
 
-        protected override void VisitYieldExpression(YieldExpression yieldExpression)
-        {
+        protected override void VisitYieldExpression(YieldExpression yieldExpression) {
             VisitingYieldExpression?.Invoke(this, yieldExpression);
             base.VisitYieldExpression(yieldExpression);
             VisitedYieldExpression?.Invoke(this, yieldExpression);
         }
 
-        protected override void VisitTaggedTemplateExpression(TaggedTemplateExpression taggedTemplateExpression)
-        {
+        protected override void VisitTaggedTemplateExpression(TaggedTemplateExpression taggedTemplateExpression) {
             VisitingTaggedTemplateExpression?.Invoke(this, taggedTemplateExpression);
             base.VisitTaggedTemplateExpression(taggedTemplateExpression);
             VisitedTaggedTemplateExpression?.Invoke(this, taggedTemplateExpression);
         }
 
-        protected override void VisitSuper(Super super)
-        {
+        protected override void VisitSuper(Super super) {
             VisitingSuper?.Invoke(this, super);
             base.VisitSuper(super);
             VisitedSuper?.Invoke(this, super);
         }
 
-        protected override void VisitMetaProperty(MetaProperty metaProperty)
-        {
+        protected override void VisitMetaProperty(MetaProperty metaProperty) {
             VisitingMetaProperty?.Invoke(this, metaProperty);
             base.VisitMetaProperty(metaProperty);
             VisitedMetaProperty?.Invoke(this, metaProperty);
         }
 
-        protected override void VisitObjectPattern(ObjectPattern objectPattern)
-        {
+        protected override void VisitObjectPattern(ObjectPattern objectPattern) {
             VisitingObjectPattern?.Invoke(this, objectPattern);
             base.VisitObjectPattern(objectPattern);
             VisitedObjectPattern?.Invoke(this, objectPattern);
         }
 
-        protected override void VisitSpreadElement(SpreadElement spreadElement)
-        {
+        protected override void VisitSpreadElement(SpreadElement spreadElement) {
             VisitingSpreadElement?.Invoke(this, spreadElement);
             base.VisitSpreadElement(spreadElement);
             VisitedSpreadElement?.Invoke(this, spreadElement);
         }
 
-        protected override void VisitAssignmentPattern(AssignmentPattern assignmentPattern)
-        {
+        protected override void VisitAssignmentPattern(AssignmentPattern assignmentPattern) {
             VisitingAssignmentPattern?.Invoke(this, assignmentPattern);
             base.VisitAssignmentPattern(assignmentPattern);
             VisitedAssignmentPattern?.Invoke(this, assignmentPattern);
         }
 
-        protected override void VisitArrayPattern(ArrayPattern arrayPattern)
-        {
+        protected override void VisitArrayPattern(ArrayPattern arrayPattern) {
             VisitingArrayPattern?.Invoke(this, arrayPattern);
             base.VisitArrayPattern(arrayPattern);
             VisitedArrayPattern?.Invoke(this, arrayPattern);
         }
 
-        protected override void VisitVariableDeclarator(VariableDeclarator variableDeclarator)
-        {
+        protected override void VisitVariableDeclarator(VariableDeclarator variableDeclarator) {
             VisitingVariableDeclarator?.Invoke(this, variableDeclarator);
             base.VisitVariableDeclarator(variableDeclarator);
             VisitedVariableDeclarator?.Invoke(this, variableDeclarator);
         }
 
-        protected override void VisitTemplateLiteral(TemplateLiteral templateLiteral)
-        {
+        protected override void VisitTemplateLiteral(TemplateLiteral templateLiteral) {
             VisitingTemplateLiteral?.Invoke(this, templateLiteral);
             base.VisitTemplateLiteral(templateLiteral);
             VisitedTemplateLiteral?.Invoke(this, templateLiteral);
         }
 
-        protected override void VisitTemplateElement(TemplateElement templateElement)
-        {
+        protected override void VisitTemplateElement(TemplateElement templateElement) {
             VisitingTemplateElement?.Invoke(this, templateElement);
             base.VisitTemplateElement(templateElement);
             VisitedTemplateElement?.Invoke(this, templateElement);
         }
 
-        protected override void VisitRestElement(RestElement restElement)
-        {
+        protected override void VisitRestElement(RestElement restElement) {
             VisitingRestElement?.Invoke(this, restElement);
             base.VisitRestElement(restElement);
             VisitedRestElement?.Invoke(this, restElement);
         }
 
-        protected override void VisitProperty(Property property)
-        {
+        protected override void VisitProperty(Property property) {
             VisitingProperty?.Invoke(this, property);
             base.VisitProperty(property);
             VisitedProperty?.Invoke(this, property);
         }
 
-        protected override void VisitConditionalExpression(ConditionalExpression conditionalExpression)
-        {
+        protected override void VisitConditionalExpression(ConditionalExpression conditionalExpression) {
             VisitingConditionalExpression?.Invoke(this, conditionalExpression);
             base.VisitConditionalExpression(conditionalExpression);
             VisitedConditionalExpression?.Invoke(this, conditionalExpression);
         }
 
-        protected override void VisitCallExpression(CallExpression callExpression)
-        {
+        protected override void VisitCallExpression(CallExpression callExpression) {
             VisitingCallExpression?.Invoke(this, callExpression);
             base.VisitCallExpression(callExpression);
             VisitedCallExpression?.Invoke(this, callExpression);
         }
 
-        protected override void VisitBinaryExpression(BinaryExpression binaryExpression)
-        {
+        protected override void VisitBinaryExpression(BinaryExpression binaryExpression) {
             VisitingBinaryExpression?.Invoke(this, binaryExpression);
             base.VisitBinaryExpression(binaryExpression);
             VisitedBinaryExpression?.Invoke(this, binaryExpression);
         }
 
-        protected override void VisitArrayExpression(ArrayExpression arrayExpression)
-        {
+        protected override void VisitArrayExpression(ArrayExpression arrayExpression) {
             VisitingArrayExpression?.Invoke(this, arrayExpression);
             base.VisitArrayExpression(arrayExpression);
             VisitedArrayExpression?.Invoke(this, arrayExpression);
         }
 
-        protected override void VisitAssignmentExpression(AssignmentExpression assignmentExpression)
-        {
+        protected override void VisitAssignmentExpression(AssignmentExpression assignmentExpression) {
             VisitingAssignmentExpression?.Invoke(this, assignmentExpression);
             base.VisitAssignmentExpression(assignmentExpression);
             VisitedAssignmentExpression?.Invoke(this, assignmentExpression);
         }
 
-        protected override void VisitContinueStatement(ContinueStatement continueStatement)
-        {
+        protected override void VisitContinueStatement(ContinueStatement continueStatement) {
             VisitingContinueStatement?.Invoke(this, continueStatement);
             base.VisitContinueStatement(continueStatement);
             VisitedContinueStatement?.Invoke(this, continueStatement);
         }
 
-        protected override void VisitBreakStatement(BreakStatement breakStatement)
-        {
+        protected override void VisitBreakStatement(BreakStatement breakStatement) {
             VisitingBreakStatement?.Invoke(this, breakStatement);
             base.VisitBreakStatement(breakStatement);
             VisitedBreakStatement?.Invoke(this, breakStatement);
         }
 
-        protected override void VisitBlockStatement(BlockStatement blockStatement)
-        {
+        protected override void VisitBlockStatement(BlockStatement blockStatement) {
             VisitingBlockStatement?.Invoke(this, blockStatement);
             base.VisitBlockStatement(blockStatement);
             VisitedBlockStatement?.Invoke(this, blockStatement);

@@ -1,5 +1,5 @@
-﻿using System;
-using Anura.JavaScript.Runtime;
+﻿using Anura.JavaScript.Runtime;
+using System;
 
 namespace Anura.JavaScript.Native
 {
@@ -13,53 +13,43 @@ namespace Anura.JavaScript.Native
 
         internal readonly bool _value;
 
-        public JsBoolean(bool value) : base(Types.Boolean)
-        {
+        public JsBoolean(bool value) : base(Types.Boolean) {
             _value = value;
         }
 
-        public override object ToObject()
-        {
+        public override object ToObject() {
             return _value ? BoxedTrue : BoxedFalse;
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return _value ? "true" : "false";
         }
 
-        public override bool Equals(JsValue obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
+        public override bool Equals(JsValue obj) {
+            if (ReferenceEquals(null, obj)) {
                 return false;
             }
 
-            if (!(obj is JsBoolean number))
-            {
+            if (!(obj is JsBoolean number)) {
                 return false;
             }
 
             return Equals(number);
         }
 
-        public bool Equals(JsBoolean other)
-        {
-            if (ReferenceEquals(null, other))
-            {
+        public bool Equals(JsBoolean other) {
+            if (ReferenceEquals(null, other)) {
                 return false;
             }
 
-            if (ReferenceEquals(this, other))
-            {
+            if (ReferenceEquals(this, other)) {
                 return true;
             }
 
             return _value == other._value;
         }
 
-        public override int GetHashCode()
-        {
+        public override int GetHashCode() {
             return _value.GetHashCode();
         }
     }

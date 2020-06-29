@@ -1,8 +1,10 @@
 using System;
 
-namespace Anura.Styles {
-    public struct Resolution : IEquatable<Resolution>, IComparable<Resolution>, IFormattable {
-        public Resolution (float value, Unit unit) {
+namespace Anura.Styles
+{
+    public struct Resolution : IEquatable<Resolution>, IComparable<Resolution>, IFormattable
+    {
+        public Resolution(float value, Unit unit) {
             Value = value;
             Type = unit;
         }
@@ -27,20 +29,20 @@ namespace Anura.Styles {
             }
         }
 
-        public static bool TryParse (string s, out Resolution result) {
+        public static bool TryParse(string s, out Resolution result) {
             float value;
-            var unit = GetUnit (s.StylesheetUnit (out value));
+            var unit = GetUnit(s.StylesheetUnit(out value));
 
             if (unit != Unit.None) {
-                result = new Resolution (value, unit);
+                result = new Resolution(value, unit);
                 return true;
             }
 
-            result = default (Resolution);
+            result = default(Resolution);
             return false;
         }
 
-        public static Unit GetUnit (string s) {
+        public static Unit GetUnit(string s) {
             switch (s) {
                 case "dpcm":
                     return Unit.Dpcm;
@@ -53,7 +55,7 @@ namespace Anura.Styles {
             }
         }
 
-        public float ToDotsPerPixel () {
+        public float ToDotsPerPixel() {
             if (Type == Unit.Dpi) {
                 return Value / 96f;
             }
@@ -64,8 +66,8 @@ namespace Anura.Styles {
             return Value;
         }
 
-        public float To (Unit unit) {
-            var value = ToDotsPerPixel ();
+        public float To(Unit unit) {
+            var value = ToDotsPerPixel();
 
             if (unit == Unit.Dpi) {
                 return value * 96f;
@@ -77,41 +79,42 @@ namespace Anura.Styles {
             return value;
         }
 
-        public bool Equals (Resolution other) {
+        public bool Equals(Resolution other) {
             return (Value == other.Value) && (Type == other.Type);
         }
 
-        public enum Unit : byte {
+        public enum Unit : byte
+        {
             None,
             Dpi,
             Dpcm,
             Dppx
         }
 
-        public int CompareTo (Resolution other) {
-            return ToDotsPerPixel ().CompareTo (other.ToDotsPerPixel ());
+        public int CompareTo(Resolution other) {
+            return ToDotsPerPixel().CompareTo(other.ToDotsPerPixel());
         }
 
-        public override bool Equals (object obj) {
+        public override bool Equals(object obj) {
             var other = obj as Resolution?;
 
             if (other != null) {
-                return Equals (other.Value);
+                return Equals(other.Value);
             }
 
             return false;
         }
 
-        public override int GetHashCode () {
-            return Value.GetHashCode ();
+        public override int GetHashCode() {
+            return Value.GetHashCode();
         }
 
-        public override string ToString () {
-            return string.Concat (Value.ToString (), UnitString);
+        public override string ToString() {
+            return string.Concat(Value.ToString(), UnitString);
         }
 
-        public string ToString (string format, IFormatProvider formatProvider) {
-            return string.Concat (Value.ToString (format, formatProvider), UnitString);
+        public string ToString(string format, IFormatProvider formatProvider) {
+            return string.Concat(Value.ToString(format, formatProvider), UnitString);
         }
     }
 }

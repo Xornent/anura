@@ -1,8 +1,10 @@
 using System;
 
-namespace Anura.Styles {
+namespace Anura.Styles
+{
     [Flags]
-    internal enum PropertyFlags : byte {
+    internal enum PropertyFlags : byte
+    {
         None = 0x0,
         Inherited = 0x1,
         Hashless = 0x2,

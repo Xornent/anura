@@ -13,8 +13,7 @@ namespace Esprima.Ast
             IStatementListItem declaration,
             in NodeList<ExportSpecifier> specifiers,
             Literal source) :
-            base(Nodes.ExportNamedDeclaration)
-        {
+            base(Nodes.ExportNamedDeclaration) {
             Declaration = declaration;
             _specifiers = specifiers;
             Source = source;

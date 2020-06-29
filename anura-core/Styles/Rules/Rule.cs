@@ -1,8 +1,10 @@
-namespace Anura.Styles {
-    public abstract class Rule : StylesheetNode, IRule {
+namespace Anura.Styles
+{
+    public abstract class Rule : StylesheetNode, IRule
+    {
         private IRule _parentRule;
 
-        internal Rule (RuleType type, StylesheetParser parser) {
+        internal Rule(RuleType type, StylesheetParser parser) {
             Type = type;
             Parser = parser;
         }
@@ -12,22 +14,22 @@ namespace Anura.Styles {
         public RuleType Type { get; }
 
         public string Text {
-            get { return this.ToCss (); }
+            get => this.ToCss();
             set {
-                var rule = Parser.ParseRule (value);
+                var rule = Parser.ParseRule(value);
 
                 if (rule == null) {
-                    throw new ParseException ("Unable to parse rule");
+                    throw new ParseException("Unable to parse rule");
                 }
                 if (rule.Type != Type) {
-                    throw new ParseException ("Invalid rule type");
+                    throw new ParseException("Invalid rule type");
                 }
-                ReplaceWith (rule);
+                ReplaceWith(rule);
             }
         }
 
         public IRule Parent {
-            get { return _parentRule; }
+            get => _parentRule;
             internal set {
                 _parentRule = value;
 
@@ -37,19 +39,19 @@ namespace Anura.Styles {
             }
         }
 
-        protected virtual void ReplaceWith (IRule rule) {
-            ReplaceAll (rule);
+        protected virtual void ReplaceWith(IRule rule) {
+            ReplaceAll(rule);
         }
 
-        protected void ReplaceSingle (IStylesheetNode oldNode, IStylesheetNode newNode) {
+        protected void ReplaceSingle(IStylesheetNode oldNode, IStylesheetNode newNode) {
             if (oldNode != null) {
                 if (newNode != null) {
-                    ReplaceChild (oldNode, newNode);
+                    ReplaceChild(oldNode, newNode);
                 } else {
-                    RemoveChild (oldNode);
+                    RemoveChild(oldNode);
                 }
             } else if (newNode != null) {
-                AppendChild (newNode);
+                AppendChild(newNode);
             }
         }
     }

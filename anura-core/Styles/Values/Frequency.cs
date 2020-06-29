@@ -1,8 +1,10 @@
 using System;
 
-namespace Anura.Styles {
-    public struct Frequency : IEquatable<Frequency>, IComparable<Frequency>, IFormattable {
-        public Frequency (float value, Unit unit) {
+namespace Anura.Styles
+{
+    public struct Frequency : IEquatable<Frequency>, IComparable<Frequency>, IFormattable
+    {
+        public Frequency(float value, Unit unit) {
             Value = value;
             Type = unit;
         }
@@ -23,42 +25,42 @@ namespace Anura.Styles {
             }
         }
 
-        public static bool operator >= (Frequency a, Frequency b) {
-            var result = a.CompareTo (b);
+        public static bool operator >=(Frequency a, Frequency b) {
+            var result = a.CompareTo(b);
             return (result == 0) || (result == 1);
         }
 
-        public static bool operator > (Frequency a, Frequency b) {
-            return a.CompareTo (b) == 1;
+        public static bool operator >(Frequency a, Frequency b) {
+            return a.CompareTo(b) == 1;
         }
 
-        public static bool operator <= (Frequency a, Frequency b) {
-            var result = a.CompareTo (b);
+        public static bool operator <=(Frequency a, Frequency b) {
+            var result = a.CompareTo(b);
             return (result == 0) || (result == -1);
         }
 
-        public static bool operator < (Frequency a, Frequency b) {
-            return a.CompareTo (b) == -1;
+        public static bool operator <(Frequency a, Frequency b) {
+            return a.CompareTo(b) == -1;
         }
 
-        public int CompareTo (Frequency other) {
-            return ToHertz ().CompareTo (other.ToHertz ());
+        public int CompareTo(Frequency other) {
+            return ToHertz().CompareTo(other.ToHertz());
         }
 
-        public static bool TryParse (string s, out Frequency result) {
+        public static bool TryParse(string s, out Frequency result) {
             float value;
-            var unit = GetUnit (s.StylesheetUnit (out value));
+            var unit = GetUnit(s.StylesheetUnit(out value));
 
             if (unit != Unit.None) {
-                result = new Frequency (value, unit);
+                result = new Frequency(value, unit);
                 return true;
             }
 
-            result = default (Frequency);
+            result = default(Frequency);
             return false;
         }
 
-        public static Unit GetUnit (string s) {
+        public static Unit GetUnit(string s) {
             switch (s) {
                 case "hz":
                     return Unit.Hz;
@@ -69,48 +71,49 @@ namespace Anura.Styles {
             }
         }
 
-        public float ToHertz () {
+        public float ToHertz() {
             return Type == Unit.Khz ? Value * 1000f : Value;
         }
 
-        public bool Equals (Frequency other) {
+        public bool Equals(Frequency other) {
             return (Value == other.Value) && (Type == other.Type);
         }
 
-        public enum Unit : byte {
+        public enum Unit : byte
+        {
             None,
             Hz,
             Khz
         }
 
-        public static bool operator == (Frequency a, Frequency b) {
-            return a.Equals (b);
+        public static bool operator ==(Frequency a, Frequency b) {
+            return a.Equals(b);
         }
 
-        public static bool operator != (Frequency a, Frequency b) {
-            return !a.Equals (b);
+        public static bool operator !=(Frequency a, Frequency b) {
+            return !a.Equals(b);
         }
 
-        public override bool Equals (object obj) {
+        public override bool Equals(object obj) {
             var other = obj as Frequency?;
 
             if (other != null) {
-                return Equals (other.Value);
+                return Equals(other.Value);
             }
 
             return false;
         }
 
-        public override int GetHashCode () {
-            return Value.GetHashCode ();
+        public override int GetHashCode() {
+            return Value.GetHashCode();
         }
 
-        public override string ToString () {
-            return string.Concat (Value.ToString (), UnitString);
+        public override string ToString() {
+            return string.Concat(Value.ToString(), UnitString);
         }
 
-        public string ToString (string format, IFormatProvider formatProvider) {
-            return string.Concat (Value.ToString (format, formatProvider), UnitString);
+        public string ToString(string format, IFormatProvider formatProvider) {
+            return string.Concat(Value.ToString(format, formatProvider), UnitString);
         }
     }
 }

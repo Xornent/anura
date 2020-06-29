@@ -1,9 +1,9 @@
-﻿using System;
-using Esprima;
-using Esprima.Ast;
-using Anura.JavaScript.Native;
+﻿using Anura.JavaScript.Native;
 using Anura.JavaScript.Native.Error;
 using Anura.JavaScript.Pooling;
+using Esprima;
+using Esprima.Ast;
+using System;
 
 namespace Anura.JavaScript.Runtime
 {
@@ -11,54 +11,42 @@ namespace Anura.JavaScript.Runtime
     {
         private string _callStack;
 
-        public JavaScriptException(ErrorConstructor errorConstructor) : base("")
-        {
+        public JavaScriptException(ErrorConstructor errorConstructor) : base("") {
             Error = errorConstructor.Construct(Arguments.Empty);
         }
 
         public JavaScriptException(ErrorConstructor errorConstructor, string message, Exception innerException)
-             : base(message, innerException)
-        {
+             : base(message, innerException) {
             Error = errorConstructor.Construct(new JsValue[] { message });
         }
 
         public JavaScriptException(ErrorConstructor errorConstructor, string message)
-            : base(message)
-        {
+            : base(message) {
             Error = errorConstructor.Construct(new JsValue[] { message });
         }
 
         public JavaScriptException(JsValue error)
-            : base(GetErrorMessage(error))
-        {
+            : base(GetErrorMessage(error)) {
             Error = error;
         }
 
-        public JavaScriptException SetCallstack(Engine engine, Location? location = null)
-        {
+        public JavaScriptException SetCallstack(Engine engine, Location? location = null) {
             Location = location ?? default;
 
-            using (var sb = StringBuilderPool.Rent())
-            {
-                foreach (var cse in engine.CallStack)
-                {
+            using (var sb = StringBuilderPool.Rent()) {
+                foreach (var cse in engine.CallStack) {
                     sb.Builder.Append(" at ")
                         .Append(cse)
                         .Append("(");
 
-                    for (var index = 0; index < cse.CallExpression.Arguments.Count; index++)
-                    {
-                        if (index != 0)
-                        {
+                    for (var index = 0; index < cse.CallExpression.Arguments.Count; index++) {
+                        if (index != 0) {
                             sb.Builder.Append(", ");
                         }
                         var arg = cse.CallExpression.Arguments[index];
-                        if (arg is Expression pke)
-                        {
+                        if (arg is Expression pke) {
                             sb.Builder.Append(GetPropertyKey(pke));
-                        }
-                        else
-                        {
+                        } else {
                             sb.Builder.Append(arg);
                         }
                     }
@@ -80,30 +68,24 @@ namespace Anura.JavaScript.Runtime
         /// <summary>
         /// A version of <see cref="EsprimaExtensions.GetKey"/> that cannot get into loop as we are already building a stack.
         /// </summary>
-        private static string GetPropertyKey(Expression expression)
-        {
-            if (expression is Literal literal)
-            {
+        private static string GetPropertyKey(Expression expression) {
+            if (expression is Literal literal) {
                 return EsprimaExtensions.LiteralKeyToString(literal);
             }
 
-            if (expression is Identifier identifier)
-            {
+            if (expression is Identifier identifier) {
                 return identifier.Name;
             }
 
-            if (expression is StaticMemberExpression staticMemberExpression)
-            {
+            if (expression is StaticMemberExpression staticMemberExpression) {
                 return GetPropertyKey(staticMemberExpression.Object) + "." + GetPropertyKey(staticMemberExpression.Property);
             }
 
             return "?";
         }
 
-        private static string GetErrorMessage(JsValue error)
-        {
-            if (error.IsObject())
-            {
+        private static string GetErrorMessage(JsValue error) {
+            if (error.IsObject()) {
                 var oi = error.AsObject();
                 var message = oi.Get("message", oi).ToString();
                 return message;
@@ -116,15 +98,12 @@ namespace Anura.JavaScript.Runtime
 
         public JsValue Error { get; }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return Error.ToString();
         }
 
-        public string CallStack
-        {
-            get
-            {
+        public string CallStack {
+            get {
                 if (_callStack != null)
                     return _callStack;
                 if (ReferenceEquals(Error, null))
@@ -136,11 +115,9 @@ namespace Anura.JavaScript.Runtime
                     return null;
                 return callstack.AsString();
             }
-            set
-            {
+            set {
                 _callStack = value;
-                if (value != null && Error.IsObject())
-                {
+                if (value != null && Error.IsObject()) {
                     Error.AsObject()
                         .FastAddProperty("callstack", new JsString(value), false, false, false);
                 }

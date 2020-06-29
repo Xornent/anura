@@ -1,5 +1,7 @@
-namespace Anura.Styles {
-    public static class PseudoElementNames {
+namespace Anura.Styles
+{
+    public static class PseudoElementNames
+    {
         public static readonly string Before = "before";
         public static readonly string After = "after";
         public static readonly string Selection = "selection";

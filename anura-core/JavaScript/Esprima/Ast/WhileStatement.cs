@@ -8,8 +8,7 @@ namespace Esprima.Ast
         public readonly Statement Body;
 
         public WhileStatement(Expression test, Statement body) :
-            base(Nodes.WhileStatement)
-        {
+            base(Nodes.WhileStatement) {
             Test = test;
             Body = body;
         }

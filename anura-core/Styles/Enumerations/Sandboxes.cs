@@ -1,8 +1,10 @@
 using System;
 
-namespace Anura.Styles {
+namespace Anura.Styles
+{
     [Flags]
-    public enum Sandboxes : ushort {
+    public enum Sandboxes : ushort
+    {
         None = 0,
         Navigation = 0x1,
         AuxiliaryNavigation = 0x2,

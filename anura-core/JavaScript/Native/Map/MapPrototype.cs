@@ -15,12 +15,10 @@ namespace Anura.JavaScript.Native.Map
     {
         private MapConstructor _mapConstructor;
 
-        private MapPrototype(Engine engine) : base(engine)
-        {
+        private MapPrototype(Engine engine) : base(engine) {
         }
 
-        public static MapPrototype CreatePrototypeObject(Engine engine, MapConstructor mapConstructor)
-        {
+        public static MapPrototype CreatePrototypeObject(Engine engine, MapConstructor mapConstructor) {
             var obj = new MapPrototype(engine)
             {
                 _prototype = engine.Object.PrototypeObject,
@@ -30,8 +28,7 @@ namespace Anura.JavaScript.Native.Map
             return obj;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             const PropertyFlag propertyFlags = PropertyFlag.Configurable | PropertyFlag.Writable;
             var properties = new PropertyDictionary(12, checkExistingKeys: false)
             {
@@ -58,50 +55,43 @@ namespace Anura.JavaScript.Native.Map
             SetSymbols(symbols);
         }
 
-        private JsValue Size(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Size(JsValue thisObj, JsValue[] arguments) {
             AssertMapInstance(thisObj);
             return JsNumber.Create(0);
         }
 
-        private JsValue Get(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Get(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             return map.MapGet(arguments.At(0));
         }
 
-        private JsValue Clear(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Clear(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             map.Clear();
             return Undefined;
         }
 
-        private JsValue Delete(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Delete(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             return map.MapDelete(arguments[0])
                 ? JsBoolean.True
                 : JsBoolean.False;
         }
 
-        private JsValue Set(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Set(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             map.MapSet(arguments[0], arguments[1]);
             return thisObj;
         }
 
-        private JsValue Has(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue Has(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             return map.Has(arguments[0])
                 ? JsBoolean.True
                 : JsBoolean.False;
         }
 
-        private JsValue ForEach(JsValue thisObj, JsValue[] arguments)
-        {
+        private JsValue ForEach(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             var callbackfn = arguments.At(0);
             var thisArg = arguments.At(1);
@@ -113,28 +103,23 @@ namespace Anura.JavaScript.Native.Map
             return Undefined;
         }
 
-        private ObjectInstance Iterator(JsValue thisObj, JsValue[] arguments)
-        {
+        private ObjectInstance Iterator(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             return map.Iterator();
         }
 
-        private ObjectInstance Keys(JsValue thisObj, JsValue[] arguments)
-        {
+        private ObjectInstance Keys(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             return map.Keys();
         }
 
-        private ObjectInstance Values(JsValue thisObj, JsValue[] arguments)
-        {
+        private ObjectInstance Values(JsValue thisObj, JsValue[] arguments) {
             var map = AssertMapInstance(thisObj);
             return map.Values();
         }
 
-        private MapInstance AssertMapInstance(JsValue thisObj)
-        {
-            if (!(thisObj is MapInstance map))
-            {
+        private MapInstance AssertMapInstance(JsValue thisObj) {
+            if (!(thisObj is MapInstance map)) {
                 return Anura.JavaScript.Runtime.ExceptionHelper.ThrowTypeError<MapInstance>(_engine, "object must be a Map");
             }
 

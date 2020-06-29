@@ -11,43 +11,36 @@ namespace Esprima.Ast
         private readonly T[] _items;
         private readonly int _count;
 
-        internal NodeList(ICollection<T> collection)
-        {
-            if (collection == null)
-            {
+        internal NodeList(ICollection<T> collection) {
+            if (collection == null) {
                 throw new ArgumentNullException(nameof(collection));
             }
 
             var count = _count = collection.Count;
-            if ((_items = count == 0 ? null : new T[count]) != null)
-            {
+            if ((_items = count == 0 ? null : new T[count]) != null) {
                 collection.CopyTo(_items, 0);
             }
         }
 
-        internal NodeList(T[] items, int count)
-        {
+        internal NodeList(T[] items, int count) {
             _items = items;
             _count = count;
         }
 
-        public int Count
-        {
+        public int Count {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _count;
         }
 
-        public NodeList<INode> AsNodes() =>
-            new NodeList<INode>(_items /* conversion by co-variance! */, _count);
+        public NodeList<INode> AsNodes() {
+            return new NodeList<INode>(_items /* conversion by co-variance! */, _count);
+        }
 
-        public T this[int index]
-        {
+        public T this[int index] {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
+            get {
                 // Following trick can reduce the range check by one
-                if ((uint) index >= (uint) _count)
-                {
+                if ((uint)index >= (uint)_count) {
                     ThrowIndexOutOfRangeException();
                 }
 
@@ -55,11 +48,17 @@ namespace Esprima.Ast
             }
         }
 
-        public Enumerator GetEnumerator() => new Enumerator(_items, Count);
+        public Enumerator GetEnumerator() {
+            return new Enumerator(_items, Count);
+        }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+            return GetEnumerator();
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
+        }
 
         /// <remarks>
         /// This implementation does not detect changes to the list
@@ -73,8 +72,7 @@ namespace Esprima.Ast
             private T[] _items; // Usually null when count is zero
             private int _count;
 
-            internal Enumerator(T[] items, int count) : this()
-            {
+            internal Enumerator(T[] items, int count) : this() {
                 _index = -1;
                 _items = items;
                 _count = count;
@@ -85,18 +83,15 @@ namespace Esprima.Ast
 
             private bool IsDisposed => _count < 0;
 
-            public void Dispose()
-            {
+            public void Dispose() {
                 _items = null;
                 _count = -1;
             }
 
-            public bool MoveNext()
-            {
+            public bool MoveNext() {
                 ThrowIfDisposed();
 
-                if (_index + 1 == _count)
-                {
+                if (_index + 1 == _count) {
                     return false;
                 }
 
@@ -104,16 +99,13 @@ namespace Esprima.Ast
                 return true;
             }
 
-            public void Reset()
-            {
+            public void Reset() {
                 ThrowIfDisposed();
                 _index = -1;
             }
 
-            public T Current
-            {
-                get
-                {
+            public T Current {
+                get {
                     ThrowIfDisposed();
                     return _index >= 0
                          ? _items[_index]
@@ -123,10 +115,8 @@ namespace Esprima.Ast
 
             object IEnumerator.Current => Current;
 
-            private void ThrowIfDisposed()
-            {
-                if (IsDisposed)
-                {
+            private void ThrowIfDisposed() {
+                if (IsDisposed) {
                     ThrowObjectDisposedException(nameof(Enumerator));
                 }
             }
@@ -136,71 +126,59 @@ namespace Esprima.Ast
     public static class NodeList
     {
         internal static NodeList<T> From<T>(ref ArrayList<T> arrayList)
-            where T : class, INode
-        {
+            where T : class, INode {
             arrayList.Yield(out var items, out var count);
             arrayList = default;
             return new NodeList<T>(items, count);
         }
 
-        public static NodeList<T> Create<T>(IEnumerable<T> source) where T : class, INode
-        {
-            switch (source)
-            {
-                case null:
-                {
-                    throw new ArgumentNullException(nameof(source));
-                }
-
-                case NodeList<T> list:
-                {
-                    return list;
-                }
-
-                case ICollection<T> collection:
-                {
-                    return collection.Count > 0
-                         ? new NodeList<T>(collection)
-                         : default;
-                }
-
-                case IReadOnlyList<T> sourceList:
-                {
-                    if (sourceList.Count == 0)
-                    {
-                        return default;
+        public static NodeList<T> Create<T>(IEnumerable<T> source) where T : class, INode {
+            switch (source) {
+                case null: {
+                        throw new ArgumentNullException(nameof(source));
                     }
 
-                    var list = new ArrayList<T>(sourceList.Count);
-                    for (var i = 0; i < sourceList.Count; i++)
-                    {
-                        list.Add(sourceList[i]);
+                case NodeList<T> list: {
+                        return list;
                     }
 
-                    return From(ref list);
-                }
+                case ICollection<T> collection: {
+                        return collection.Count > 0
+                             ? new NodeList<T>(collection)
+                             : default;
+                    }
 
-                default:
-                {
-                    var count
-                        = source is IReadOnlyCollection<T> collection
-                        ? collection.Count
-                        : (int?)null;
-
-                    var list = count is int initialCapacity
-                             ? new ArrayList<T>(initialCapacity)
-                             : new ArrayList<T>();
-
-                    if (count == null || count > 0)
-                    {
-                        foreach (var item in source)
-                        {
-                            list.Add(item);
+                case IReadOnlyList<T> sourceList: {
+                        if (sourceList.Count == 0) {
+                            return default;
                         }
+
+                        var list = new ArrayList<T>(sourceList.Count);
+                        for (var i = 0; i < sourceList.Count; i++) {
+                            list.Add(sourceList[i]);
+                        }
+
+                        return From(ref list);
                     }
 
-                    return From(ref list);
-                }
+                default: {
+                        var count
+                            = source is IReadOnlyCollection<T> collection
+                            ? collection.Count
+                            : (int?)null;
+
+                        var list = count is int initialCapacity
+                                 ? new ArrayList<T>(initialCapacity)
+                                 : new ArrayList<T>();
+
+                        if (count == null || count > 0) {
+                            foreach (var item in source) {
+                                list.Add(item);
+                            }
+                        }
+
+                        return From(ref list);
+                    }
             }
         }
     }

@@ -1,12 +1,14 @@
 using System;
 
-namespace Anura.Styles {
-    public sealed class TransformMatrix : IEquatable<TransformMatrix> {
-        public static readonly TransformMatrix Zero = new TransformMatrix ();
-        public static readonly TransformMatrix One = new TransformMatrix (1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 0f, 0f);
-        private readonly float[, ] _matrix;
+namespace Anura.Styles
+{
+    public sealed class TransformMatrix : IEquatable<TransformMatrix>
+    {
+        public static readonly TransformMatrix Zero = new TransformMatrix();
+        public static readonly TransformMatrix One = new TransformMatrix(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 0f, 0f);
+        private readonly float[,] _matrix;
 
-        public bool Equals (TransformMatrix other) {
+        public bool Equals(TransformMatrix other) {
             var A = _matrix;
             var B = other._matrix;
 
@@ -21,17 +23,17 @@ namespace Anura.Styles {
             return true;
         }
 
-        private TransformMatrix () {
+        private TransformMatrix() {
             _matrix = new float[4, 4];
         }
 
-        public TransformMatrix (float[] values) : this () {
+        public TransformMatrix(float[] values) : this() {
             if (values == null) {
-                throw new ArgumentNullException (nameof (values));
+                throw new ArgumentNullException(nameof(values));
             }
 
             if (values.Length != 16) {
-                throw new ArgumentException ("You need to provide 16 (4x4) values.", nameof (values));
+                throw new ArgumentException("You need to provide 16 (4x4) values.", nameof(values));
             }
 
             for (int i = 0, k = 0; i < 4; i++) {
@@ -41,12 +43,12 @@ namespace Anura.Styles {
             }
         }
 
-        public TransformMatrix (
+        public TransformMatrix(
             float m11, float m12, float m13,
             float m21, float m22, float m23,
             float m31, float m32, float m33,
             float tx, float ty, float tz,
-            float px, float py, float pz) : this () {
+            float px, float py, float pz) : this() {
             _matrix[0, 0] = m11;
             _matrix[0, 1] = m12;
             _matrix[0, 2] = m13;
@@ -78,12 +80,12 @@ namespace Anura.Styles {
         public float Ty => _matrix[1, 3];
         public float Tz => _matrix[2, 3];
 
-        public override bool Equals (object obj) {
+        public override bool Equals(object obj) {
             var other = obj as TransformMatrix;
-            return other != null && Equals (other);
+            return other != null && Equals(other);
         }
 
-        public override int GetHashCode () {
+        public override int GetHashCode() {
             var sum = 0f;
 
             for (var i = 0; i < 4; i++) {
@@ -92,7 +94,7 @@ namespace Anura.Styles {
                 }
             }
 
-            return (int) sum;
+            return (int)sum;
         }
     }
 }

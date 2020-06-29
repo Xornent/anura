@@ -1,18 +1,20 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using Anura;
 using Anura.JavaScript;
 using Anura.JavaScript.Native;
 using Anura.Styles;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 
-namespace Anura {
-    public static class Global {
-        public static void InitializeCore (string clientVersion = "0.0.0.0") {
-            InitializeUserAgent (clientVersion);
+namespace Anura
+{
+    public static class Global
+    {
+        public static void InitializeCore(string clientVersion = "0.0.0.0") {
+            InitializeUserAgent(clientVersion);
         }
 
-        public static void InitializeUserAgent (string clientVersion = "0.0.0.0") {
+        public static void InitializeUserAgent(string clientVersion = "0.0.0.0") {
             string uagent = "Anura/" + clientVersion;
             string system = "Unknown";
             if (Environment.OSVersion.Platform == System.PlatformID.Win32NT)

@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using Anura.JavaScript.Runtime;
+using System.Diagnostics;
 
 namespace Anura.JavaScript.Native.Number.Dtoa
 {
@@ -28,14 +28,12 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         private int exponent_;
         private int used_digits_;
 
-        private int BigitLength()
-        {
+        private int BigitLength() {
             return used_digits_ + exponent_;
         }
 
         // Precondition: this/other < 16bit.
-        public uint DivideModuloIntBignum(Bignum other)
-        {
+        public uint DivideModuloIntBignum(Bignum other) {
             Debug.Assert(IsClamped());
             Debug.Assert(other.IsClamped());
             Debug.Assert(other.used_digits_ > 0);
@@ -50,8 +48,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
 
             // Start by removing multiples of 'other' until both numbers have the same
             // number of digits.
-            while (BigitLength() > other.BigitLength())
-            {
+            while (BigitLength() > other.BigitLength()) {
                 // This naive approach is extremely inefficient if the this divided other
                 // might be big. This function is implemented for doubleToString where
                 // the result should be small (less than 10).
@@ -70,8 +67,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             var this_bigit = bigits_[used_digits_ - 1];
             var other_bigit = other.bigits_[other.used_digits_ - 1];
 
-            if (other.used_digits_ == 1)
-            {
+            if (other.used_digits_ == 1) {
                 // Shortcut for easy (and common) case.
                 uint quotient = this_bigit / other_bigit;
                 bigits_[used_digits_ - 1] = this_bigit - other_bigit * quotient;
@@ -86,8 +82,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
 
             if (other_bigit * (division_estimate + 1) > this_bigit) return result;
 
-            while (LessEqual(other, this))
-            {
+            while (LessEqual(other, this)) {
                 SubtractBignum(other);
                 result++;
             }
@@ -95,10 +90,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             return result;
         }
 
-        void Align(Bignum other)
-        {
-            if (exponent_ > other.exponent_)
-            {
+        void Align(Bignum other) {
+            if (exponent_ > other.exponent_) {
                 // If "X" represents a "hidden" digit (by the exponent) then we are in the
                 // following case (a == this, b == other):
                 // a:  aaaaaaXXXX   or a:   aaaaaXXX
@@ -107,13 +100,11 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 // a:  aaaaaa000X   or a:   aaaaa0XX
                 int zero_digits = exponent_ - other.exponent_;
                 EnsureCapacity(used_digits_ + zero_digits);
-                for (int i = used_digits_ - 1; i >= 0; --i)
-                {
+                for (int i = used_digits_ - 1; i >= 0; --i) {
                     bigits_[i + zero_digits] = bigits_[i];
                 }
 
-                for (int i = 0; i < zero_digits; ++i)
-                {
+                for (int i = 0; i < zero_digits; ++i) {
                     bigits_[i] = 0;
                 }
 
@@ -124,37 +115,31 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             }
         }
 
-        void EnsureCapacity(int size)
-        {
-            if (size > kBigitCapacity)
-            {
+        void EnsureCapacity(int size) {
+            if (size > kBigitCapacity) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowInvalidOperationException();
             }
         }
 
-        private void Clamp()
-        {
+        private void Clamp() {
             while (used_digits_ > 0 && bigits_[used_digits_ - 1] == 0) used_digits_--;
             if (used_digits_ == 0) exponent_ = 0;
         }
 
 
-        private bool IsClamped()
-        {
+        private bool IsClamped() {
             return used_digits_ == 0 || bigits_[used_digits_ - 1] != 0;
         }
 
 
-        private void Zero()
-        {
+        private void Zero() {
             for (var i = 0; i < used_digits_; ++i) bigits_[i] = 0;
             used_digits_ = 0;
             exponent_ = 0;
         }
 
         // Guaranteed to lie in one Bigit.
-        internal void AssignUInt16(uint value)
-        {
+        internal void AssignUInt16(uint value) {
             Debug.Assert(kBigitSize <= 8 * sizeof(uint));
             Zero();
             if (value == 0) return;
@@ -164,8 +149,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             used_digits_ = 1;
         }
 
-        internal void AssignUInt64(ulong value)
-        {
+        internal void AssignUInt64(ulong value) {
             const int kUInt64Size = 64;
 
             Zero();
@@ -173,9 +157,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa
 
             int needed_bigits = kUInt64Size / kBigitSize + 1;
             EnsureCapacity(needed_bigits);
-            for (int i = 0; i < needed_bigits; ++i)
-            {
-                bigits_[i] = (uint) (value & kBigitMask);
+            for (int i = 0; i < needed_bigits; ++i) {
+                bigits_[i] = (uint)(value & kBigitMask);
                 value = value >> kBigitSize;
             }
 
@@ -184,17 +167,14 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         }
 
 
-        internal void AssignBignum(Bignum other)
-        {
+        internal void AssignBignum(Bignum other) {
             exponent_ = other.exponent_;
-            for (int i = 0; i < other.used_digits_; ++i)
-            {
+            for (int i = 0; i < other.used_digits_; ++i) {
                 bigits_[i] = other.bigits_[i];
             }
 
             // Clear the excess digits (if there were any).
-            for (int i = other.used_digits_; i < used_digits_; ++i)
-            {
+            for (int i = other.used_digits_; i < used_digits_; ++i) {
                 bigits_[i] = 0;
             }
 
@@ -202,8 +182,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         }
 
 
-        void SubtractTimes(Bignum other, uint factor)
-        {
+        void SubtractTimes(Bignum other, uint factor) {
 #if DEBUG
             var a = new Bignum();
             var b = new Bignum();
@@ -213,10 +192,8 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             a.SubtractBignum(b);
 #endif
             Debug.Assert(exponent_ <= other.exponent_);
-            if (factor < 3)
-            {
-                for (int i = 0; i < factor; ++i)
-                {
+            if (factor < 3) {
+                for (int i = 0; i < factor; ++i) {
                     SubtractBignum(other);
                 }
 
@@ -225,17 +202,15 @@ namespace Anura.JavaScript.Native.Number.Dtoa
 
             uint borrow = 0;
             int exponent_diff = other.exponent_ - exponent_;
-            for (int i = 0; i < other.used_digits_; ++i)
-            {
+            for (int i = 0; i < other.used_digits_; ++i) {
                 ulong product = factor * other.bigits_[i];
                 ulong remove = borrow + product;
-                uint difference = bigits_[i + exponent_diff] - (uint) (remove & kBigitMask);
+                uint difference = bigits_[i + exponent_diff] - (uint)(remove & kBigitMask);
                 bigits_[i + exponent_diff] = difference & kBigitMask;
-                borrow = (uint) ((difference >> (kChunkSize - 1)) + (remove >> kBigitSize));
+                borrow = (uint)((difference >> (kChunkSize - 1)) + (remove >> kBigitSize));
             }
 
-            for (int i = other.used_digits_ + exponent_diff; i < used_digits_; ++i)
-            {
+            for (int i = other.used_digits_ + exponent_diff; i < used_digits_; ++i) {
                 if (borrow == 0) return;
                 uint difference = bigits_[i] - borrow;
                 bigits_[i] = difference & kBigitMask;
@@ -250,8 +225,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         }
 
 
-        void SubtractBignum(Bignum other)
-        {
+        void SubtractBignum(Bignum other) {
             Debug.Assert(IsClamped());
             Debug.Assert(other.IsClamped());
             // We require this to be bigger than other.
@@ -262,16 +236,14 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             int offset = other.exponent_ - exponent_;
             uint borrow = 0;
             int i;
-            for (i = 0; i < other.used_digits_; ++i)
-            {
+            for (i = 0; i < other.used_digits_; ++i) {
                 Debug.Assert((borrow == 0) || (borrow == 1));
                 uint difference = bigits_[i + offset] - other.bigits_[i] - borrow;
                 bigits_[i + offset] = difference & kBigitMask;
                 borrow = difference >> (kChunkSize - 1);
             }
 
-            while (borrow != 0)
-            {
+            while (borrow != 0) {
                 uint difference = bigits_[i + offset] - borrow;
                 bigits_[i + offset] = difference & kBigitMask;
                 borrow = difference >> (kChunkSize - 1);
@@ -281,57 +253,48 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             Clamp();
         }
 
-        internal static bool Equal(Bignum a, Bignum b)
-        {
+        internal static bool Equal(Bignum a, Bignum b) {
             return Compare(a, b) == 0;
         }
 
-        internal static bool LessEqual(Bignum a, Bignum b)
-        {
+        internal static bool LessEqual(Bignum a, Bignum b) {
             return Compare(a, b) <= 0;
         }
 
-        internal static bool Less(Bignum a, Bignum b)
-        {
+        internal static bool Less(Bignum a, Bignum b) {
             return Compare(a, b) < 0;
         }
 
         // Returns a + b == c
-        static bool PlusEqual(Bignum a, Bignum b, Bignum c)
-        {
+        static bool PlusEqual(Bignum a, Bignum b, Bignum c) {
             return PlusCompare(a, b, c) == 0;
         }
 
         // Returns a + b <= c
-        static bool PlusLessEqual(Bignum a, Bignum b, Bignum c)
-        {
+        static bool PlusLessEqual(Bignum a, Bignum b, Bignum c) {
             return PlusCompare(a, b, c) <= 0;
         }
 
         // Returns a + b < c
-        static bool PlusLess(Bignum a, Bignum b, Bignum c)
-        {
+        static bool PlusLess(Bignum a, Bignum b, Bignum c) {
             return PlusCompare(a, b, c) < 0;
         }
 
-        uint BigitAt(int index)
-        {
+        uint BigitAt(int index) {
             if (index >= BigitLength()) return 0;
             if (index < exponent_) return 0;
             return bigits_[index - exponent_];
         }
 
 
-        static int Compare(Bignum a, Bignum b)
-        {
+        static int Compare(Bignum a, Bignum b) {
             Debug.Assert(a.IsClamped());
             Debug.Assert(b.IsClamped());
             int bigit_length_a = a.BigitLength();
             int bigit_length_b = b.BigitLength();
             if (bigit_length_a < bigit_length_b) return -1;
             if (bigit_length_a > bigit_length_b) return +1;
-            for (int i = bigit_length_a - 1; i >= System.Math.Min(a.exponent_, b.exponent_); --i)
-            {
+            for (int i = bigit_length_a - 1; i >= System.Math.Min(a.exponent_, b.exponent_); --i) {
                 uint bigit_a = a.BigitAt(i);
                 uint bigit_b = b.BigitAt(i);
                 if (bigit_a < bigit_b) return -1;
@@ -343,13 +306,11 @@ namespace Anura.JavaScript.Native.Number.Dtoa
         }
 
 
-        internal static int PlusCompare(Bignum a, Bignum b, Bignum c)
-        {
+        internal static int PlusCompare(Bignum a, Bignum b, Bignum c) {
             Debug.Assert(a.IsClamped());
             Debug.Assert(b.IsClamped());
             Debug.Assert(c.IsClamped());
-            if (a.BigitLength() < b.BigitLength())
-            {
+            if (a.BigitLength() < b.BigitLength()) {
                 return PlusCompare(b, a, c);
             }
 
@@ -358,26 +319,21 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             // The exponent encodes 0-bigits. So if there are more 0-digits in 'a' than
             // 'b' has digits, then the bigit-length of 'a'+'b' must be equal to the one
             // of 'a'.
-            if (a.exponent_ >= b.BigitLength() && a.BigitLength() < c.BigitLength())
-            {
+            if (a.exponent_ >= b.BigitLength() && a.BigitLength() < c.BigitLength()) {
                 return -1;
             }
 
             uint borrow = 0;
             // Starting at min_exponent all digits are == 0. So no need to compare them.
             int min_exponent = System.Math.Min(System.Math.Min(a.exponent_, b.exponent_), c.exponent_);
-            for (int i = c.BigitLength() - 1; i >= min_exponent; --i)
-            {
+            for (int i = c.BigitLength() - 1; i >= min_exponent; --i) {
                 uint chunk_a = a.BigitAt(i);
                 uint chunk_b = b.BigitAt(i);
                 uint chunk_c = c.BigitAt(i);
                 uint sum = chunk_a + chunk_b;
-                if (sum > chunk_c + borrow)
-                {
+                if (sum > chunk_c + borrow) {
                     return +1;
-                }
-                else
-                {
+                } else {
                     borrow = chunk_c + borrow - sum;
                     if (borrow > 1) return -1;
                     borrow <<= kBigitSize;
@@ -388,16 +344,13 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             return -1;
         }
 
-        internal void Times10()
-        {
+        internal void Times10() {
             MultiplyByUInt32(10);
         }
 
-        internal void MultiplyByUInt32(uint factor)
-        {
+        internal void MultiplyByUInt32(uint factor) {
             if (factor == 1) return;
-            if (factor == 0)
-            {
+            if (factor == 0) {
                 Zero();
                 return;
             }
@@ -408,24 +361,21 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             // Assert that this number + 1 (for the carry) fits into double chunk.
             Debug.Assert(kDoubleChunkSize >= kBigitSize + 32 + 1);
             ulong carry = 0;
-            for (int i = 0; i < used_digits_; ++i)
-            {
-                ulong product = ((ulong) factor) * bigits_[i] + carry;
-                bigits_[i] = (uint) (product & kBigitMask);
+            for (int i = 0; i < used_digits_; ++i) {
+                ulong product = ((ulong)factor) * bigits_[i] + carry;
+                bigits_[i] = (uint)(product & kBigitMask);
                 carry = (product >> kBigitSize);
             }
 
-            while (carry != 0)
-            {
+            while (carry != 0) {
                 EnsureCapacity(used_digits_ + 1);
-                bigits_[used_digits_] = (uint) (carry & kBigitMask);
+                bigits_[used_digits_] = (uint)(carry & kBigitMask);
                 used_digits_++;
                 carry >>= kBigitSize;
             }
         }
 
-        internal void MultiplyByUInt64(ulong factor)
-        {
+        internal void MultiplyByUInt64(ulong factor) {
             if (factor == 1) return;
             if (factor == 0) {
                 Zero();
@@ -439,20 +389,19 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 ulong product_low = low * bigits_[i];
                 ulong product_high = high * bigits_[i];
                 ulong tmp = (carry & kBigitMask) + product_low;
-                bigits_[i] = (uint) (tmp & kBigitMask);
+                bigits_[i] = (uint)(tmp & kBigitMask);
                 carry = (carry >> kBigitSize) + (tmp >> kBigitSize) +
                         (product_high << (32 - kBigitSize));
             }
             while (carry != 0) {
                 EnsureCapacity(used_digits_ + 1);
-                bigits_[used_digits_] = (uint) (carry & kBigitMask);
+                bigits_[used_digits_] = (uint)(carry & kBigitMask);
                 used_digits_++;
                 carry >>= kBigitSize;
             }
         }
 
-        internal void ShiftLeft(int shift_amount)
-        {
+        internal void ShiftLeft(int shift_amount) {
             if (used_digits_ == 0) return;
             exponent_ += shift_amount / kBigitSize;
             int local_shift = shift_amount % kBigitSize;
@@ -460,32 +409,27 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             BigitsShiftLeft(local_shift);
         }
 
-        void BigitsShiftLeft(int shift_amount)
-        {
+        void BigitsShiftLeft(int shift_amount) {
             Debug.Assert(shift_amount < kBigitSize);
             Debug.Assert(shift_amount >= 0);
             uint carry = 0;
-            for (int i = 0; i < used_digits_; ++i)
-            {
+            for (int i = 0; i < used_digits_; ++i) {
                 uint new_carry = bigits_[i] >> (kBigitSize - shift_amount);
                 bigits_[i] = ((bigits_[i] << shift_amount) + carry) & kBigitMask;
                 carry = new_carry;
             }
 
-            if (carry != 0)
-            {
+            if (carry != 0) {
                 bigits_[used_digits_] = carry;
                 used_digits_++;
             }
         }
 
 
-        internal void AssignPowerUInt16(uint baseValue, int power_exponent)
-        {
+        internal void AssignPowerUInt16(uint baseValue, int power_exponent) {
             Debug.Assert(baseValue != 0);
             Debug.Assert(power_exponent >= 0);
-            if (power_exponent == 0)
-            {
+            if (power_exponent == 0) {
                 AssignUInt16(1);
                 return;
             }
@@ -495,16 +439,14 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             // We expect baseValue to be in range 2-32, and most often to be 10.
             // It does not make much sense to implement different algorithms for counting
             // the bits.
-            while ((baseValue & 1) == 0)
-            {
+            while ((baseValue & 1) == 0) {
                 baseValue >>= 1;
                 shifts++;
             }
 
             int bit_size = 0;
             uint tmp_base = baseValue;
-            while (tmp_base != 0)
-            {
+            while (tmp_base != 0) {
                 tmp_base >>= 1;
                 bit_size++;
             }
@@ -525,21 +467,16 @@ namespace Anura.JavaScript.Native.Number.Dtoa
 
             bool delayed_multipliciation = false;
             const ulong max_32bits = 0xFFFFFFFF;
-            while (mask != 0 && this_value <= max_32bits)
-            {
+            while (mask != 0 && this_value <= max_32bits) {
                 this_value = this_value * this_value;
                 // Verify that there is enough space in this_value to perform the
                 // multiplication.  The first bit_size bits must be 0.
-                if ((power_exponent & mask) != 0)
-                {
-                    ulong base_bits_mask = ~((((ulong) 1) << (64 - bit_size)) - 1);
+                if ((power_exponent & mask) != 0) {
+                    ulong base_bits_mask = ~((((ulong)1) << (64 - bit_size)) - 1);
                     bool high_bits_zero = (this_value & base_bits_mask) == 0;
-                    if (high_bits_zero)
-                    {
+                    if (high_bits_zero) {
                         this_value *= baseValue;
-                    }
-                    else
-                    {
+                    } else {
                         delayed_multipliciation = true;
                     }
                 }
@@ -548,17 +485,14 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             }
 
             AssignUInt64(this_value);
-            if (delayed_multipliciation)
-            {
+            if (delayed_multipliciation) {
                 MultiplyByUInt32(baseValue);
             }
 
             // Now do the same thing as a bignum.
-            while (mask != 0)
-            {
+            while (mask != 0) {
                 Square();
-                if ((power_exponent & mask) != 0)
-                {
+                if ((power_exponent & mask) != 0) {
                     MultiplyByUInt32(baseValue);
                 }
 
@@ -569,8 +503,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             ShiftLeft(shifts * power_exponent);
         }
 
-        void Square()
-        {
+        void Square() {
             Debug.Assert(IsClamped());
             int product_length = 2 * used_digits_;
             EnsureCapacity(product_length);
@@ -587,51 +520,45 @@ namespace Anura.JavaScript.Native.Number.Dtoa
             //
             // Assert that the additional number of bits in a DoubleChunk are enough to
             // sum up used_digits of Bigit*Bigit.
-            if ((1 << (2 * (kChunkSize - kBigitSize))) <= used_digits_)
-            {
+            if ((1 << (2 * (kChunkSize - kBigitSize))) <= used_digits_) {
                 Anura.JavaScript.Runtime.ExceptionHelper.ThrowNotImplementedException();
             }
 
             ulong accumulator = 0;
             // First shift the digits so we don't overwrite them.
             int copy_offset = used_digits_;
-            for (int i = 0; i < used_digits_; ++i)
-            {
+            for (int i = 0; i < used_digits_; ++i) {
                 bigits_[copy_offset + i] = bigits_[i];
             }
 
             // We have two loops to avoid some 'if's in the loop.
-            for (int i = 0; i < used_digits_; ++i)
-            {
+            for (int i = 0; i < used_digits_; ++i) {
                 // Process temporary digit i with power i.
                 // The sum of the two indices must be equal to i.
                 int bigit_index1 = i;
                 int bigit_index2 = 0;
                 // Sum all of the sub-products.
-                while (bigit_index1 >= 0)
-                {
+                while (bigit_index1 >= 0) {
                     uint chunk1 = bigits_[copy_offset + bigit_index1];
                     uint chunk2 = bigits_[copy_offset + bigit_index2];
-                    accumulator += (ulong) chunk1 * chunk2;
+                    accumulator += (ulong)chunk1 * chunk2;
                     bigit_index1--;
                     bigit_index2++;
                 }
 
-                bigits_[i] = (uint) accumulator & kBigitMask;
+                bigits_[i] = (uint)accumulator & kBigitMask;
                 accumulator >>= kBigitSize;
             }
 
-            for (int i = used_digits_; i < product_length; ++i)
-            {
+            for (int i = used_digits_; i < product_length; ++i) {
                 int bigit_index1 = used_digits_ - 1;
                 int bigit_index2 = i - bigit_index1;
                 // Invariant: sum of both indices is again equal to i.
                 // Inner loop runs 0 times on last iteration, emptying accumulator.
-                while (bigit_index2 < used_digits_)
-                {
+                while (bigit_index2 < used_digits_) {
                     uint chunk1 = bigits_[copy_offset + bigit_index1];
                     uint chunk2 = bigits_[copy_offset + bigit_index2];
-                    accumulator += (ulong) chunk1 * chunk2;
+                    accumulator += (ulong)chunk1 * chunk2;
                     bigit_index1--;
                     bigit_index2++;
                 }
@@ -639,7 +566,7 @@ namespace Anura.JavaScript.Native.Number.Dtoa
                 // The overwritten bigits_[i] will never be read in further loop iterations,
                 // because bigit_index1 and bigit_index2 are always greater
                 // than i - used_digits_.
-                bigits_[i] = (uint) accumulator & kBigitMask;
+                bigits_[i] = (uint)accumulator & kBigitMask;
                 accumulator >>= kBigitSize;
             }
 

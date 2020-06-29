@@ -7,8 +7,7 @@ namespace Esprima.Ast
         public readonly Identifier Label;
 
         public ContinueStatement(Identifier label) :
-            base(Nodes.ContinueStatement)
-        {
+            base(Nodes.ContinueStatement) {
             Label = label;
         }
 

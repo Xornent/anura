@@ -2,12 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Anura.Styles {
-    internal sealed class FunctionToken : Token, IEnumerable<Token> {
+namespace Anura.Styles
+{
+    internal sealed class FunctionToken : Token, IEnumerable<Token>
+    {
         private readonly List<Token> _arguments;
 
-        public FunctionToken (string data, TextPosition position) : base (TokenType.Function, data, position) {
-            _arguments = new List<Token> ();
+        public FunctionToken(string data, TextPosition position) : base(TokenType.Function, data, position) {
+            _arguments = new List<Token>();
         }
 
         public IEnumerable<Token> ArgumentTokens {
@@ -18,24 +20,24 @@ namespace Anura.Styles {
                     final--;
                 }
 
-                return _arguments.Take (1 + final);
+                return _arguments.Take(1 + final);
             }
         }
 
-        public override string ToValue () {
-            return string.Concat (Data, "(", _arguments.ToText ());
+        public override string ToValue() {
+            return string.Concat(Data, "(", _arguments.ToText());
         }
 
-        public void AddArgumentToken (Token token) {
-            _arguments.Add (token);
+        public void AddArgumentToken(Token token) {
+            _arguments.Add(token);
         }
 
-        public IEnumerator<Token> GetEnumerator () {
-            return _arguments.GetEnumerator ();
+        public IEnumerator<Token> GetEnumerator() {
+            return _arguments.GetEnumerator();
         }
 
-        IEnumerator IEnumerable.GetEnumerator () {
-            return GetEnumerator ();
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
         }
     }
 }
