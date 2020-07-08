@@ -1,10 +1,9 @@
 #if graphics && gl
 using System;
 
-namespace Anura.Graphics.Gl
-{
-    public enum BlendDestFactor : uint
-    {
+namespace Anura.Graphics.Gl {
+    
+    public enum BlendDestFactor : uint {
         Zero = Constants.GL_ZERO,
         One = Constants.GL_ONE,
         SrcColor = Constants.GL_SRC_COLOR,
@@ -21,8 +20,7 @@ namespace Anura.Graphics.Gl
         OneMinusConstantAlpha = Constants.GL_ONE_MINUS_CONSTANT_ALPHA,
     }
 
-    public enum BlendSrcFactor : uint
-    {
+    public enum BlendSrcFactor : uint {
         One = Constants.GL_ONE,
         Zero = Constants.GL_ZERO,
         SrcColor = Constants.GL_SRC_COLOR,
@@ -40,8 +38,7 @@ namespace Anura.Graphics.Gl
         SrcAlphaSaturate = Constants.GL_SRC_ALPHA_SATURATE,
     }
 
-    public enum BlendEquationMode : uint
-    {
+    public enum BlendEquationMode : uint {
         Add = Constants.GL_FUNC_ADD,
         Subtract = Constants.GL_FUNC_SUBTRACT,
         ReverseSubtract = Constants.GL_FUNC_REVERSE_SUBTRACT,

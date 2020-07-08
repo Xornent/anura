@@ -1,81 +1,76 @@
 using System;
+using System.Collections.Generic;
 
-namespace Anura
-{
+namespace Anura {
+
     /// <summary>
-    /// <h>项目的版本信息</h>
+    /// 项目的版本信息
     /// </summary>
-    public static class Versioning
-    {
+    public static class Versioning {
+
         /// <summary>
         /// 特异版本号
+        /// 
+        /// 版本号分为 4 个 `int32` 类型的子版本号，主版本，次版本，修补版本和编译版本。
+        /// 主版本记录项目的里程碑，表示一个以完全实现的功能集；次版本表示实现的子功能；修补版本
+        /// 表示对已有次版本的小幅度更改和安全更新；编译版本随每一次编译自增 1 。
+        /// 
+        /// 用户安装时，应该首选次版本为 0 的版本，因为其中只有以实现并且测试的功能，相对稳定，
+        /// 尽量不要使用修补版本号，除非特定的安全和修复更新。
         /// </summary>
-        public static Version CoreVersion = new Version(1, 1, 0, 415);
-        public static VersionMode Mode = VersionMode.Insider;
-        public static bool DebugMode = true;
+        public static Version CoreVersion = new Version (1, 3, 0, 431);
 
-        public enum VersionMode
-        {
+        /// <summary>
+        /// 指示一个版本模式， 参见 [Anura.Versioning.VersionMode]
+        /// </summary>
+        public static VersionMode Mode = VersionMode.Insider;
+        internal static bool DebugMode = true;
+
+        /// <summary>
+        /// 版本模式
+        /// </summary>
+        public enum VersionMode {
+
+            /// <summary>
+            /// 内部测试版本
+            /// </summary>
             Insider,
+
+            /// <summary>
+            /// 发布预览版本
+            /// </summary>
             Preview,
-            Candidate,
+
+            /// <summary>
+            /// 发布版本
+            /// </summary>
             Stable
         }
     }
 
 #if windows && cli
-    /// <summary>
-    /// <h>Anura 命令行工具的总入口点。</h>
-    /// 
-    /// <para>在项目的属性中选择输出类库文件可以停止生成命令行类型工具。 此时，
-    /// 初始化 Anura 需要调用 <see cref="Anura.Global.InitializeCore(string)"></see></para>
-    /// <para><i>不要从程序的外部调用本类</i></para>
-    /// </summary>
-    internal class Program
-    {
+    internal class Program {
         [STAThread]
-        internal static void Main(string[] args)
-        {
-            Anura.Global.InitializeCore();
-            Console.WriteLine(Global.UserAgent);
+        internal static void Main (string[] args) {
+            Anura.Global.InitializeCore ();
+            Console.WriteLine (Global.UserAgent);
 
             // 命令行逻辑
 
 #if debug
             Tests test = Tests.Typography;
-            switch (test)
-            {
+            switch (test) {
                 case Tests.Typography:
-                    string filename = Console.ReadLine();
-                    Typography.OpenFont.OpenFontReader reader = new Typography.OpenFont.OpenFontReader();
-                    using (System.IO.FileStream fstream = new System.IO.FileStream(filename, System.IO.FileMode.Open))
-                    {
-                        var types = reader.Read(fstream);
-                        Console.WriteLine("Total " + types.Glyphs.Length + " Glyphs");
-                        for (int i = 0; i < 10; i++)
-                        {
-                            Console.WriteLine("Glyph " + (i + 1));
-                            var glyph = types.Glyphs[i];
-                            Console.WriteLine("  Bounds: " + glyph.Bounds.ToString());
-                            int c = 1;
-                            foreach (var pts in glyph.GlyphPoints)
-                            {
-                                Console.WriteLine("    Point " + c + ": (" + pts.X + ", " + pts.Y + ")");
-                                c++;
-                            }
-                        }
-                    }
                     break;
             }
 #endif
 
-            Console.WriteLine("Press Any Key To Continue ...");
-            Console.ReadLine();
+            Console.WriteLine ("Press Any Key To Continue ...");
+            Console.ReadLine ();
         }
 
 #if debug
-        internal enum Tests
-        {
+        internal enum Tests {
             Typography
         }
 #endif

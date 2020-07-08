@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Anura.Graphics.Gl 
 {
+    [System.CLSCompliant(false)]
     public class Constants 
     {
         #region OpenGL 1.2
