@@ -1,5 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime;
+using System.Runtime.CompilerServices;
+
+[assembly: CLSCompliant(true)]
+[assembly: InternalsVisibleTo("Windows")]
 
 namespace Anura {
 
@@ -57,23 +62,9 @@ namespace Anura {
 
             // 命令行逻辑
 
-#if debug
-            Tests test = Tests.Typography;
-            switch (test) {
-                case Tests.Typography:
-                    break;
-            }
-#endif
-
             Console.WriteLine ("Press Any Key To Continue ...");
             Console.ReadLine ();
         }
-
-#if debug
-        internal enum Tests {
-            Typography
-        }
-#endif
     }
 #endif
 }

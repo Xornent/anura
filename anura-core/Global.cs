@@ -1,13 +1,12 @@
+using Anura;
+using Anura.Styles;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Anura;
-using Anura.JavaScript;
-using Anura.JavaScript.Native;
-using Anura.Styles;
+using System.Runtime.CompilerServices;
 
 namespace Anura {
-    
+
     /// <summary>
     /// Anura 内核的静态实用程序和加载属性
     /// 
@@ -24,11 +23,12 @@ namespace Anura {
         /// ```
         /// </summary>
         /// <param name="clientVersion">指定客户端版本号字符串</param>
-        public static void InitializeCore (string clientVersion = "0.0.0.0") {
-            InitializeUserAgent (clientVersion);
+        public static void InitializeCore(string clientVersion = "0.0.0.0") {
+            InitializeUserAgent(clientVersion);
+            InitializeGl();
         }
 
-        private static void InitializeUserAgent (string clientVersion = "0.0.0.0") {
+        private static void InitializeUserAgent(string clientVersion = "0.0.0.0") {
             string uagent = "Anura/" + clientVersion;
             string system = "Unknown";
             if (Environment.OSVersion.Platform == System.PlatformID.Win32NT)
@@ -37,8 +37,25 @@ namespace Anura {
             string culture = Culture;
             if (Environment.Is64BitProcess) system = system + "; x64";
             uagent = uagent + " (" + system + "; " + encrypt + "; " + culture + ") ";
-            uagent = uagent + "Core/" + Versioning.CoreVersion.ToString ();
+            uagent = uagent + "Core/" + Versioning.CoreVersion.ToString();
             UserAgent = uagent;
+        }
+
+        private static void InitializeGl() {
+            if(Environment.OSVersion.Platform == PlatformID.Win32NT) {
+#if windows
+                Anura.Graphics.Gl.Current.Instance = new Anura.Graphics.Windows.WindowsOpenGl();
+                Graphics.Gl.Current.Implemented = true;
+#endif
+            }
+
+            // 如果没有检测到系统适配的 OpenGl 对象，Anura Core 的图形绘制部分
+            // 将无法运行。 抛出警告，并设定无法运行标识
+
+            if (Graphics.Gl.Current.Instance == null) {
+                throw new Exceptions.GraphicSystemIncompatibleException();
+                Graphics.Gl.Current.Implemented = false;
+            }
         }
 
         private static string Culture = "zh-cn";

@@ -5,8 +5,7 @@ using System.Text;
 
 namespace Anura.Graphics.Gl 
 {
-    [System.CLSCompliant(false)]
-    public class Constants 
+    internal class Constants 
     {
         #region OpenGL 1.2
         public const uint GL_UNSIGNED_BYTE_3_3_2 = 0x8032;

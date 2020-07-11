@@ -15,7 +15,7 @@ namespace Anura.Styles
         #region Selectors
         private readonly Dictionary<string, ISelector> _selectors =
             new Dictionary<string, ISelector>(StringComparer.OrdinalIgnoreCase) {
-                // TODO: 有些选择器没有实现 (selection, content, ...)
+                // TODO 有些选择器没有实现 (selection, content, ...)
                 // 还有一下如下，是不能肯定的 (first-line, first-letter, ...)
                 {
                 PseudoElementNames.Before,

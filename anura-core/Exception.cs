@@ -47,5 +47,15 @@ namespace Anura {
                 System.Runtime.Serialization.SerializationInfo info,
                 System.Runtime.Serialization.StreamingContext context) : base (info, context) { }
         }
+
+        [Serializable]
+        public class GraphicSystemIncompatibleException : Exception {
+            public GraphicSystemIncompatibleException() { }
+            public GraphicSystemIncompatibleException(string message) : base("没有找到与相应系统适配的图形系统实现；" + message) { }
+            public GraphicSystemIncompatibleException(string message, Exception inner) : base(message, inner) { }
+            protected GraphicSystemIncompatibleException(
+              System.Runtime.Serialization.SerializationInfo info,
+              System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        }
     }
 }

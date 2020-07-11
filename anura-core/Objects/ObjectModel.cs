@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+/*
 namespace Anura.Objects
 {
     /// <summary>
@@ -45,3 +45,4 @@ namespace Anura.Objects
         public static List<(int config, IPrototypeObjectModel obj)> ExtensionWebAPIs = new List<(int config, IPrototypeObjectModel obj)>();
     }
 }
+*/

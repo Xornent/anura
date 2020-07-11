@@ -38,10 +38,6 @@ the project has other references, but their code have already been merged into t
 project, and some changes in types, extensions and architecture have been applied. 
 the full dependencies are listed:
 
-* Esprima-dotnet ***3-Clause BSD***
-
-* Jint ***2-Clause BSD***
-
 * ExCss ***MIT***
 
 * SharpFont ***MIT***
