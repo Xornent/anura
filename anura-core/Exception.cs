@@ -51,9 +51,39 @@ namespace Anura {
         [Serializable]
         public class GraphicSystemIncompatibleException : Exception {
             public GraphicSystemIncompatibleException() { }
-            public GraphicSystemIncompatibleException(string message) : base("没有找到与相应系统适配的图形系统实现；" + message) { }
+            public GraphicSystemIncompatibleException(string message) : base("没有找到与相应系统适配的图形系统实现： " + message) { }
             public GraphicSystemIncompatibleException(string message, Exception inner) : base(message, inner) { }
             protected GraphicSystemIncompatibleException(
+              System.Runtime.Serialization.SerializationInfo info,
+              System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        }
+
+        [Serializable]
+        public class NumericException : Exception {
+            public NumericException() { }
+            public NumericException(string message) : base("运算和编解码错误： "+message) { }
+            public NumericException(string message, Exception inner) : base(message, inner) { }
+            protected NumericException(
+              System.Runtime.Serialization.SerializationInfo info,
+              System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        }
+
+        [Serializable]
+        public class OverflowException : Exception {
+            public OverflowException() { }
+            public OverflowException(string message) : base(message) { }
+            public OverflowException(string message, Exception inner) : base(message, inner) { }
+            protected OverflowException(
+              System.Runtime.Serialization.SerializationInfo info,
+              System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        }
+
+        [Serializable]
+        public class UnderflowException : Exception {
+            public UnderflowException() { }
+            public UnderflowException(string message) : base(message) { }
+            public UnderflowException(string message, Exception inner) : base(message, inner) { }
+            protected UnderflowException(
               System.Runtime.Serialization.SerializationInfo info,
               System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
         }

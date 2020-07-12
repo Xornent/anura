@@ -1,5 +1,7 @@
+using Anura.Wasm;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 
@@ -61,6 +63,12 @@ namespace Anura {
             Console.WriteLine (Global.UserAgent);
 
             // 命令行逻辑
+
+            
+            using(FileStream fs = new FileStream(@"g:\\n-wasm.wasm",FileMode.Open )) {
+                Wasm.Reader reader = new Wasm.Reader();
+                reader.Read(fs);
+            }
 
             Console.WriteLine ("Press Any Key To Continue ...");
             Console.ReadLine ();

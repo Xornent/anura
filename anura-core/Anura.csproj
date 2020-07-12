@@ -5,41 +5,41 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">                                                                     -->
 
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<OutputType>Exe</OutputType>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
 
-	    <!-- Switch the following options to automaticly build windows exe with winform or wpf support.
-		     and one should enable the Project sdk to Microsoft.Net.Sdk.WindowsDesktop.
+        <!-- Switch the following options to automaticly build windows exe with winform or wpf support.
+             and one should enable the Project sdk to Microsoft.Net.Sdk.WindowsDesktop.
         <UseWindowsForms>true</UseWindowsForms>
         <UseWPF>true</UseWPF>                                                                                        -->
-		
-		<TargetFramework>netcoreapp3.1</TargetFramework>
-		<OutputPath>.\..\.vscode\out\netcoreapp3.1</OutputPath>
+        
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <OutputPath>.\..\.vscode\out\netcoreapp3.1</OutputPath>
 
-		<!-- Switch this on to generate the XML project documentation. 
+        <!-- Switch this on to generate the XML project documentation. 
         [feature]   this will make to c# builder to generate a xml document that contains
                     all of the xml documentation comments in the project
         [warning]   allow the build of documentation will throw exceptions if your
                     exposed public classes are not equipped with documentation. and the
                     countless warnings (approximately 10000) is truly annoying.                                      -->
-		<!-- <DocumentationFile>.\..\.vscode\docs\anura-core\doc.xml</DocumentationFile> -->
-		
-		<ApplicationManifest>app.manifest</ApplicationManifest>
-	</PropertyGroup>
+        <!-- <DocumentationFile>.\..\.vscode\docs\anura-core\doc.xml</DocumentationFile> -->
+        
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+    </PropertyGroup>
 
-	<PropertyGroup>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<LangVersion>latest</LangVersion>
-		<PackageId>Anura.Core</PackageId>
-		<Version>1.3.1</Version>
-		<Authors>Anura Developers and Contributors</Authors>
-		<Company>Anura Developers and Contributors</Company>
-		<PackageProjectUrl>xornent.github.io/anura/</PackageProjectUrl>
-		<RepositoryUrl>github.com/xornent/anura/</RepositoryUrl>
-	</PropertyGroup>
+    <PropertyGroup>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>latest</LangVersion>
+        <PackageId>Anura.Core</PackageId>
+        <Version>1.3.1</Version>
+        <Authors>Anura Developers and Contributors</Authors>
+        <Company>Anura Developers and Contributors</Company>
+        <PackageProjectUrl>xornent.github.io/anura/</PackageProjectUrl>
+        <RepositoryUrl>github.com/xornent/anura/</RepositoryUrl>
+    </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <NoWarn>1701;1702;1591</NoWarn>
-	  <DefineConstants>TRACE;DEBUG;debug;windows;cli;js;js_int;js_obj;css;graphics;gi;gl;typo;net</DefineConstants>
-	</PropertyGroup> 
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+      <NoWarn>1701;1702;1591</NoWarn>
+      <DefineConstants>TRACE;DEBUG;debug;windows;cli;js;js_int;js_obj;css;graphics;gi;gl;typo;net;wasm</DefineConstants>
+    </PropertyGroup> 
 </Project>
